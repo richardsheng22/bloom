@@ -1,13 +1,13 @@
 {
   "name": "Bloom",
   "short_name": "Bloom",
-  "description": "A calm one-thumb game: launch pollen from Erwu the cat and stop amethyst gems spiralling into a lavender flower.",
+  "description": "A calm one-thumb garden game: launch pollen from Erwu the cat, coax buds into bloom, and grow a garden that remembers every shot.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F1EAF1",
-  "theme_color": "#F1EAF1",
+  "background_color": "#F3ECDD",
+  "theme_color": "#F3ECDD",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

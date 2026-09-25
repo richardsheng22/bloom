@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Bloom</title>
-<meta name="description" content="A calm one-thumb game: launch pollen from Erwu the cat and stop amethyst gems spiralling into a lavender flower.">
+<meta name="description" content="A calm one-thumb garden game: launch pollen from Erwu the cat, coax buds into bloom, and grow a garden that remembers every shot.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -11,38 +11,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#F1EAF1">
+<meta name="theme-color" content="#F3ECDD">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Fraunces:opsz,wght,SOFT@9..144,300..600,0..100&display=swap">
 <style>
-  /* One deliberate light look: lilac mist, amethyst gems, honey balls. */
+  /* A storybook garden: warm cream paper, moss and sage, walnut frames,
+     petal-pink blooms, with dusty lavender as the accent. */
   :root {
-    --ground: #F1EAF1;
-    --arena: #FBF7FA;
-    --arena-edge: #F6EEF6;
-    --petal: #F3EAF5;
-    --petal-line: #E2D5EA;
-    --petal-bloom: #DCCAEF;
-    --rim: #D6C8E0;
-    --ink: #3A3140;
-    --ink-soft: #857A8E;
-    --gem-light: #CDBCEB;
-    --gem-deep: #5A4683;
-    --honey: #D99A3E;
-    --honey-soft: #F2D9AE;
-    --blush: #F0D6DC;
-    --halo: #E4D5F0;
-    --core: #F6EAD2;
-    --stamen: #EBCB8B;
-    --fur: #7C7A8B;
-    --fur-light: #9A97A8;
+    --ground: #F3ECDD;
+    --arena: #FBF6EA;
+    --arena-edge: #E3E8CD;
+    --petal: #FFFBF3;
+    --petal-line: #E8D9C3;
+    --petal-bloom: #F4C3C9;
+    --rim: #B08A62;
+    --ink: #3F3326;
+    --ink-soft: #85745F;
+    --bud-light: #F7CBD2;
+    --bud-deep: #8A5D8F;
+    --honey: #D9A13E;
+    --honey-soft: #F5E2A6;
+    --blush: #F6DCCF;
+    --halo: #E6EBCF;
+    --core: #F6E8D0;
+    --stamen: #E8C47E;
+    --sage: #A9B994;
+    --moss: #6E8A4A;
+    --leaf-dark: #4F6B37;
+    --sky: #A8C8DF;
+    --lavender: #B7A2D6;
+    --butter: #F2D478;
+    --walnut: #8A6444;
+    --walnut-light: #C7A27A;
+    --fur: #6F6E7E;
+    --fur-light: #8F8C9E;
     --ear: #B9A2AE;
     --cat-eye: #CFA53B;
     --pupil: #29242F;
     --nose: #4A4555;
-    --chip: rgba(255, 255, 255, 0.62);
-    --hairline: rgba(58, 49, 64, 0.09);
+    --chip: #FBF4E4;
+    --stitch: rgba(138, 100, 68, 0.38);
+    --hairline: rgba(110, 80, 50, 0.16);
     --font: "Bricolage Grotesque", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
     --serif: "Fraunces", "Iowan Old Style", "Palatino", Georgia, serif;
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -132,13 +142,17 @@
     border: 1px solid var(--hairline);
     border-radius: 50%;
     background: var(--chip);
+    outline: 1.5px dashed var(--stitch);
+    outline-offset: -5px;
+    box-shadow: 0 1.5px 0 rgba(110, 80, 50, 0.12);
     color: var(--ink-soft);
     cursor: pointer;
     touch-action: manipulation;
     transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out);
   }
   .icon-btn:active { transform: scale(0.94); }
-  .icon-btn[aria-pressed="true"], .icon-btn.armed { color: var(--ink); background: #fff; }
+  .icon-btn[aria-pressed="true"], .icon-btn.armed { color: var(--ink); background: #FFFDF6; }
+  .icon-btn.armed { color: var(--walnut); outline-color: var(--walnut); }
   .icon-btn svg { width: 20px; height: 20px; }
 
   #stage { position: relative; min-height: 0; }
@@ -160,6 +174,9 @@
     border: 1px solid var(--hairline);
     border-radius: 19px;
     background: var(--chip);
+    outline: 1.5px dashed var(--stitch);
+    outline-offset: -5px;
+    box-shadow: 0 1.5px 0 rgba(110, 80, 50, 0.12);
     font-size: 17px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -171,7 +188,7 @@
     background: var(--honey);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--honey) 22%, transparent);
   }
-  #paw { padding-inline: 9px; color: var(--fur); transition: opacity 240ms var(--ease-out); }
+  #paw { padding-inline: 10px; color: var(--fur); transition: opacity 240ms var(--ease-out); }
   #paw svg { width: 20px; height: 20px; }
   #paw.used { opacity: 0.35; }
   #hint {
@@ -179,7 +196,7 @@
     font-size: 13.5px;
     color: var(--ink-soft);
     text-align: center;
-    max-width: 20ch;
+    max-width: 24ch;
     text-wrap: balance;
     line-height: 1.35;
   }
@@ -198,6 +215,9 @@
     border: 1px solid var(--hairline);
     border-radius: 19px;
     background: var(--chip);
+    outline: 1.5px dashed var(--stitch);
+    outline-offset: -5px;
+    box-shadow: 0 1.5px 0 rgba(110, 80, 50, 0.12);
     color: var(--ink);
     font: 600 14px/1 var(--font);
     display: flex;
@@ -206,8 +226,24 @@
     cursor: pointer;
     touch-action: manipulation;
   }
-  #ff svg { width: 15px; height: 15px; }
-  #ff[aria-pressed="true"] { background: var(--ink); color: var(--arena); border-color: var(--ink); }
+  #ff svg { width: 22px; height: 16px; color: #8DB3D0; }
+  #ff[aria-pressed="true"] { background: #EAF2F8; outline-color: #6E9CBF; }
+  #ff[aria-pressed="true"] svg { color: #6E9CBF; }
+  #ff[aria-pressed="true"] svg path { animation: gust 900ms linear infinite; }
+  @keyframes gust { to { stroke-dashoffset: -16; } }
+
+  /* Garden progress: five buds that fill as the garden grows. */
+  .garden { display: flex; gap: 4px; margin-top: 6px; padding-left: 2px; }
+  .garden i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-sizing: border-box;
+    border: 1.3px dashed var(--stitch);
+    transition: background-color 400ms var(--ease-out), border-color 400ms var(--ease-out);
+  }
+  .garden i.on { background: var(--petal-bloom); border: 1.3px solid color-mix(in srgb, var(--petal-bloom) 55%, var(--walnut)); }
 
   #over {
     position: fixed;
@@ -225,13 +261,15 @@
     box-sizing: border-box;
     background: var(--arena);
     border: 1px solid var(--hairline);
+    outline: 1.5px dashed var(--stitch);
+    outline-offset: -9px;
     border-radius: 28px;
     padding: 22px 24px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    box-shadow: 0 18px 50px rgba(90, 70, 131, 0.14), 0 2px 6px rgba(90, 70, 131, 0.06);
+    box-shadow: 0 18px 50px rgba(110, 80, 50, 0.16), 0 2px 6px rgba(110, 80, 50, 0.08);
     animation: rise 560ms var(--ease-out);
   }
   .card canvas { width: 104px; height: 104px; }
@@ -248,22 +286,27 @@
     color: var(--ink);
     font-variant-numeric: tabular-nums lining-nums;
   }
-  .card .newbest { color: var(--gem-deep); font-weight: 600; }
+  .card .newbest { color: var(--bud-deep); font-weight: 600; }
+  .card .note { margin-top: 10px; font-size: 13.5px; text-wrap: balance; }
   .card button {
     margin-top: 20px;
     width: 100%;
     height: 52px;
-    border: 0;
-    border-radius: 16px;
-    background: var(--ink);
-    color: var(--arena);
+    border: 1px solid #6E4E33;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #A37A55, var(--walnut) 55%, #7A573A);
+    outline: 1.5px dashed rgba(251, 244, 228, 0.55);
+    outline-offset: -6px;
+    box-shadow: 0 2px 0 #6E4E33, inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    color: #FFF8EA;
+    text-shadow: 0 1px 0 rgba(60, 40, 20, 0.35);
     font: 600 17px/1 var(--font);
     cursor: pointer;
     touch-action: manipulation;
   }
   .card button:active { transform: scale(0.98); }
 
-  button:focus-visible { outline: 2px solid var(--gem-deep); outline-offset: 2px; }
+  button:focus-visible { outline: 2px solid var(--walnut) !important; outline-offset: 2px !important; }
   .haptic { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
 
   .turn b.tick { animation: roll 520ms var(--ease-out); }
@@ -273,7 +316,7 @@
   @keyframes fade { from { opacity: 0; } }
   @keyframes rise { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
   @media (prefers-reduced-motion: reduce) {
-    #over, .card, .turn b.tick, .chip.bump { animation: none; }
+    #over, .card, .turn b.tick, .chip.bump, #ff svg path { animation: none !important; }
   }
 </style>
 </head>
@@ -282,7 +325,9 @@
 
 <div id="app">
   <header>
-    <div class="stat">Best <b id="best">0</b></div>
+    <div class="stat">Best <b id="best">0</b>
+      <div class="garden" id="garden" role="img" aria-label="Garden"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
     <div class="turn"><b id="turn">1</b><span>turn</span></div>
     <div class="tools">
       <button class="icon-btn" id="restart" aria-label="Start over" title="Start over">
@@ -299,22 +344,23 @@
   <footer>
     <div class="chips">
       <div class="chip" id="ball-chip" aria-label="Balls"><i></i><span id="balls">3</span></div>
-      <div class="chip" id="paw" title="Erwu's swat: once per run, Erwu knocks away a shape that reaches her" aria-label="Erwu's swat is ready">
+      <div class="chip" id="paw" title="Erwu's swat: once per run, Erwu bats away a bud that reaches her" aria-label="Erwu's swat is ready">
         <svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16" rx="5.2" ry="4.4"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.6"/><ellipse cx="9.4" cy="6.6" rx="2.1" ry="2.7"/><ellipse cx="14.6" cy="6.6" rx="2.1" ry="2.7"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.6"/></svg>
       </div>
     </div>
     <p id="hint" aria-live="polite">Pull back anywhere and let go to launch</p>
     <div class="ff-wrap"><button id="ff" aria-pressed="false" hidden>
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5v13l8.5-6.5zM12.5 5.5v13L21 12z"/></svg>Faster</button></div>
+      <svg viewBox="0 0 30 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="12 4"><path d="M2 8h15a4 4 0 1 0-4-4"/><path d="M2 14h21a3.5 3.5 0 1 1-3.5 3.5"/><path d="M5 11h8"/></svg>Breeze</button></div>
   </footer>
 </div>
 
 <div id="over" hidden>
   <div class="card" role="dialog" aria-labelledby="over-title">
     <canvas id="card-cat" width="312" height="312" aria-hidden="true"></canvas>
-    <p id="over-title">The bloom reached Erwu</p>
+    <p id="over-title">Erwu's curled up for a nap</p>
     <div class="big" id="over-turn">0</div>
     <p id="over-best">turns</p>
+    <p class="note" id="over-note">The garden keeps everything you grew.</p>
     <button id="again">Play again</button>
   </div>
 </div>
@@ -331,7 +377,8 @@
   const el = {
     turn: $('#turn'), best: $('#best'), balls: $('#balls'), ballChip: $('#ball-chip'), hint: $('#hint'), paw: $('#paw'),
     ff: $('#ff'), sound: $('#sound'), restart: $('#restart'),
-    over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), again: $('#again'),
+    over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
+    garden: $('#garden'),
     cardCat: $('#card-cat'), haptic: $('#haptic'), app: $('#app'),
   };
 
@@ -356,7 +403,8 @@
   function readTheme() {
     const cs = getComputedStyle(document.documentElement);
     for (const k of ['ground', 'arena', 'arena-edge', 'petal', 'petal-line', 'petal-bloom', 'rim', 'ink', 'ink-soft',
-      'gem-light', 'gem-deep', 'honey', 'honey-soft', 'blush', 'halo', 'core', 'stamen', 'fur', 'fur-light', 'ear', 'cat-eye', 'pupil', 'nose']) {
+      'bud-light', 'bud-deep', 'honey', 'honey-soft', 'blush', 'halo', 'core', 'stamen', 'sage', 'moss', 'leaf-dark', 'sky',
+      'lavender', 'butter', 'walnut', 'walnut-light', 'fur', 'fur-light', 'ear', 'cat-eye', 'pupil', 'nose']) {
       C[k] = cs.getPropertyValue('--' + k).trim() || '#888888';
     }
   }
@@ -390,7 +438,8 @@
     innerR = R * 0.31;
     outerR = R - maxShape - R * 0.02;
     dr = (outerR - innerR) / (RINGS - 1);
-    bgCache = null;
+    gTop = r.top; gBottom = r.bottom;
+    bgCache = null; gardenDirty = true;
   }
   function ringRadius(f) {
     if (f >= 1) return innerR + dr * (f - 1);
@@ -474,7 +523,7 @@
   }
 
   // ---------- Game state ----------
-  let items = [], balls = [], particles = [], floats = [], tweens = [];
+  let items = [], balls = [], particles = [], floats = [], tweens = [], blooms = [];
   let turn = 1, ballCount = START_BALLS, pending = 0, petalNext = false, pawReady = true;
   let charges = new Array(SECTORS).fill(0), shownCharges = new Array(SECTORS).fill(0);
   let best = store.get('best', 0);
@@ -517,7 +566,7 @@
     shownCharges = [...charges];
     const now = performance.now() - 1000;
     items = run.items.map((i) => ({ ...i, id: nextId++, rf: i.ring, pulse: 0, spin: 0, born: now }));
-    balls = []; particles = []; floats = []; tweens = [];
+    balls = []; particles = []; floats = []; tweens = []; blooms = [];
     shot = null; cat = freshCat();
   }
   let readySnapshot = null;
@@ -525,16 +574,254 @@
     state = 'ready';
     readySnapshot = serialize();
     store.set('run3', readySnapshot);
+    saveGarden();
     updateHud();
   }
   function newGame() {
-    items = []; balls = []; particles = []; floats = []; tweens = [];
+    items = []; balls = []; particles = []; floats = []; tweens = []; blooms = [];
     turn = 1; ballCount = START_BALLS; pending = 0; petalNext = false; pawReady = true;
     charges = new Array(SECTORS).fill(0); shownCharges = new Array(SECTORS).fill(0);
     cat = freshCat();
     spawnRing(1);
     el.over.hidden = true;
     markReady();
+  }
+
+  // ---------- The garden (kept between runs) ----------
+  // Every shot leaves something behind: pollen that bounces off the rim drops
+  // seeds, every bud that blooms plants a flower, each turn Erwu tends the bed,
+  // and a full bloom feeds all of it. Erwu keeps things tidy for a while after
+  // you leave; after that the garden slowly retreats, outermost plants first.
+  const GRACE_H = 12, DECAY_PER_H = 0.008, MAX_PLANTS = 170;
+  const GARDEN_TIERS = [3, 10, 24, 45, 75];
+  const SEED_KINDS = ['grass', 'grass', 'clover', 'clover', 'fern', 'forget'];
+  const FLOWER_KINDS = ['daisy', 'daisy', 'cosmos', 'cosmos', 'lavender', 'forget', 'buttercup'];
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  function seeded(s) {
+    return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  function loadGarden() {
+    const g = store.get('garden1', null);
+    if (g && g.v === 1 && Array.isArray(g.plants)) return g;
+    const now = Date.now();
+    return { v: 1, tended: now, decayed: now, plants: [], fresh: true };
+  }
+  let garden = loadGarden(), gardenDirty = true, gardenNote = '', tendTimer = 2;
+  function saveGarden() {
+    store.set('garden1', {
+      v: 1, tended: garden.tended, decayed: garden.decayed,
+      plants: garden.plants.map((p) => ({ a: +p.a.toFixed(3), d: +p.d.toFixed(3), k: p.k, g: +p.g.toFixed(3), s: p.s })),
+    });
+  }
+  const gardenSize = () => garden.plants.reduce((t, p) => t + p.g, 0);
+  const gardenTier = () => { const t = gardenSize(); return GARDEN_TIERS.filter((x) => t >= x).length; };
+  const plantXY = (p) => ({ x: Math.cos(p.a) * p.d * R, y: Math.sin(p.a) * p.d * R });
+
+  // Wither everything by the time since Erwu's grace period ran out. Returns how much growth was lost.
+  function decayGarden(now = Date.now()) {
+    const from = Math.max(garden.decayed, garden.tended + GRACE_H * 3.6e6);
+    garden.decayed = Math.max(garden.decayed, now);
+    if (now <= from) return 0;
+    const hours = (now - from) / 3.6e6;
+    let lost = 0;
+    for (const p of garden.plants) {
+      const rate = DECAY_PER_H * (0.6 + 0.7 * (p.d - 1)) * (0.8 + 0.4 * seeded(p.s)());
+      const g0 = p.g;
+      p.g = Math.max(0, p.g - hours * rate);
+      lost += g0 - p.g;
+    }
+    garden.plants = garden.plants.filter((p) => p.g > 0.03);
+    if (lost > 0) gardenDirty = true;
+    return lost;
+  }
+  function welcomeBack() {
+    const now = Date.now(), away = now - garden.tended, size = gardenSize(), lost = decayGarden(now);
+    if (lost > 0.4 && lost > size * 0.12) gardenNote = `The garden missed you. ${CAT_NAME} kept what she could`;
+    else if (away > 3.6e6 && garden.plants.length) gardenNote = `${CAT_NAME} kept the garden tidy while you were away`;
+  }
+  function tendGarden() {
+    garden.tended = Date.now();
+    garden.decayed = Math.max(garden.decayed, garden.tended);
+    for (const p of garden.plants) p.g = Math.min(1, p.g + 0.035);
+    gardenDirty = true;
+  }
+
+  // Find open ground outside the flower, preferring spots near the rim and near `pref` (an angle).
+  function findSpot(pref, dmin, dmax) {
+    const u = R * 0.065, gap = R * 0.08;
+    for (let i = 0; i < 36; i++) {
+      const a = pref != null && i < 18 ? pref + (Math.random() - 0.5) * 1.1 : Math.random() * TAU;
+      const d = dmin + (dmax - dmin) * Math.pow(Math.random(), 1.7);
+      const x = Math.cos(a) * d * R, y = Math.sin(a) * d * R;
+      const sx = CX + x, sy = CY + y;
+      if (sx < u || sx > W - u || sy > gBottom || sy - u * 3.2 < gTop) continue;
+      if (Math.hypot(x, y - u * 2.4) < R * 1.05) continue;
+      if (garden.plants.some((p) => { const q = plantXY(p); return Math.hypot(q.x - x, q.y - y) < gap; })) continue;
+      return { a, d };
+    }
+    return null;
+  }
+  function plant(kind, pref, g, dmin = 1.06, dmax = 2.6) {
+    if (garden.plants.length >= MAX_PLANTS) return false;
+    const spot = findSpot(pref, dmin, dmax);
+    if (!spot) return false;
+    const p = { a: spot.a, d: spot.d, k: kind, g, s: Math.floor(Math.random() * 1e9) };
+    garden.plants.push(p);
+    gardenDirty = true;
+    const q = plantXY(p);
+    glint(q.x, q.y - R * 0.05, 1.2);
+    return true;
+  }
+  // Feed the plant nearest to angle `a`, favouring the ones close to the rim.
+  function nurture(a, amount) {
+    let best = null, bd = Infinity;
+    for (const p of garden.plants) {
+      const d = Math.abs(angleDiff(p.a, a)) + (p.d - 1) * 0.4;
+      if (d < bd) { bd = d; best = p; }
+    }
+    if (!best || bd > 0.9) return false;
+    best.g = Math.min(1, best.g + amount);
+    gardenDirty = true;
+    return true;
+  }
+  function seedFromMiss(a) {
+    if (shot && shot.seeds < 5 && Math.random() < 0.3 && plant(pick(SEED_KINDS), a, 0.1, 1.06, 1.6)) shot.seeds++;
+    else nurture(a, 0.012);
+  }
+  function flowerFromBloom(a) {
+    if (shot && shot.flowers < 8 && plant(pick(FLOWER_KINDS), a, 0.3)) shot.flowers++;
+    else nurture(a, 0.06);
+  }
+  function feedGarden() {
+    for (const p of garden.plants) p.g = Math.min(1, p.g + 0.2);
+    for (let i = 0; i < 4; i++) plant(pick(FLOWER_KINDS), null, 0.45);
+    if (garden.plants.filter((p) => p.k === 'mushroom').length < 3) plant('mushroom', null, 0.5, 1.1, 2);
+    gardenDirty = true;
+  }
+  function glint(x, y, size = 1) {
+    if (reduced) return;
+    particles.push({ type: 'glint', x, y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.1, size: ballR * 0.9 * size });
+  }
+
+  // ----- Painting the garden (cached; repainted only when it changes) -----
+  let gardenCache = null, gardenPainted = 0, gTop = 0, gBottom = 0;
+  function leafAt(g, x, y, ang, len, wid, fill, stroke) {
+    g.save(); g.translate(x, y); g.rotate(ang);
+    g.beginPath(); g.moveTo(0, 0);
+    g.quadraticCurveTo(len * 0.5, -wid, len, 0);
+    g.quadraticCurveTo(len * 0.5, wid, 0, 0);
+    g.fillStyle = fill; g.fill();
+    if (stroke) { g.strokeStyle = stroke; g.lineWidth = 0.8; g.stroke(); }
+    g.restore();
+  }
+  function blossom(g, x, y, n, len, wid, petal, centre, line, spin) {
+    for (let i = 0; i < n; i++) leafAt(g, x, y, spin + i * TAU / n, len, wid, petal, line);
+    g.fillStyle = centre; g.beginPath(); g.arc(x, y, len * 0.34, 0, TAU); g.fill();
+  }
+  function drawPlant(g, p) {
+    const { x, y } = plantXY(p), rnd = seeded(p.s);
+    const u = R * 0.065, gr = p.g, lean = (rnd() - 0.5) * 0.6;
+    const h = u * (0.5 + 1.9 * gr);
+    const leaf = rgb(mix(C.sage, C.moss, 0.25 + rnd() * 0.55)), dark = rgb(hexRgb(C['leaf-dark']), 0.5);
+    const line = rgb(hexRgb(C.walnut), 0.32);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    if (p.k === 'grass') {
+      const n = 3 + Math.floor(rnd() * 3);
+      for (let i = 0; i < n; i++) {
+        const bx = x + (i - (n - 1) / 2) * u * 0.18, bh = h * (0.55 + rnd() * 0.55), tip = (i - (n - 1) / 2) * u * 0.35 + lean * u;
+        g.strokeStyle = rgb(mix(C.sage, C['leaf-dark'], rnd() * 0.6)); g.lineWidth = Math.max(1.2, u * 0.13);
+        g.beginPath(); g.moveTo(bx, y); g.quadraticCurveTo(bx, y - bh * 0.6, bx + tip, y - bh); g.stroke();
+      }
+      return;
+    }
+    if (p.k === 'clover') {
+      const tx = x + lean * u * 0.5, ty = y - h * 0.45, lr = u * (0.2 + 0.2 * gr);
+      g.strokeStyle = leaf; g.lineWidth = Math.max(1, u * 0.08);
+      g.beginPath(); g.moveTo(x, y); g.lineTo(tx, ty); g.stroke();
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + (i - 1) * 2.1;
+        g.fillStyle = leaf; g.beginPath(); g.arc(tx + Math.cos(a) * lr * 0.85, ty + Math.sin(a) * lr * 0.85, lr, 0, TAU); g.fill();
+        g.strokeStyle = dark; g.lineWidth = 0.7; g.stroke();
+      }
+      return;
+    }
+    if (p.k === 'fern') {
+      const tx = x + lean * h + u * 0.4 * (rnd() < 0.5 ? -1 : 1), ty = y - h * 1.05;
+      g.strokeStyle = leaf; g.lineWidth = Math.max(1, u * 0.08);
+      g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x, ty, tx, ty); g.stroke();
+      const n = 3 + Math.floor(gr * 5);
+      for (let i = 1; i <= n; i++) {
+        const t = i / (n + 1), mx = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * x + t * t * tx, my = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * ty + t * t * ty;
+        const l = u * 0.45 * (1 - t * 0.6);
+        leafAt(g, mx, my, -Math.PI / 2 - 0.9, l, l * 0.3, leaf);
+        leafAt(g, mx, my, -Math.PI / 2 + 0.9, l, l * 0.3, leaf);
+      }
+      return;
+    }
+    if (p.k === 'mushroom') {
+      const s = u * (0.5 + 0.8 * gr), cy = y - s * 0.9;
+      g.fillStyle = '#F7EEDC'; g.strokeStyle = line; g.lineWidth = 0.9;
+      g.beginPath(); g.moveTo(x - s * 0.22, y); g.lineTo(x - s * 0.17, cy); g.lineTo(x + s * 0.17, cy); g.lineTo(x + s * 0.22, y); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#D9665F';
+      g.beginPath(); g.ellipse(x, cy, s * 0.62, s * 0.5, 0, Math.PI, TAU); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#FFF8EA';
+      for (const [dx, dy, r] of [[-0.3, -0.12, 0.09], [0.05, -0.3, 0.1], [0.32, -0.1, 0.08], [-0.05, -0.08, 0.06]]) {
+        g.beginPath(); g.arc(x + dx * s, cy + dy * s, r * s, 0, TAU); g.fill();
+      }
+      return;
+    }
+    // Flowers: a stem and two leaves; a bud once it's grown a little; open once it's grown a lot.
+    const tx = x + lean * h, ty = y - h;
+    g.strokeStyle = leaf; g.lineWidth = Math.max(1, u * 0.09);
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x, y - h * 0.5, tx, ty); g.stroke();
+    const ll = u * (0.35 + 0.35 * gr);
+    leafAt(g, x + lean * h * 0.2, y - h * 0.3, -Math.PI / 2 - 0.8, ll, ll * 0.32, leaf, dark);
+    leafAt(g, x + lean * h * 0.35, y - h * 0.45, -Math.PI / 2 + 0.8, ll * 0.85, ll * 0.3, leaf, dark);
+    if (gr < 0.4) return;
+    const col = { daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender }[p.k] || C['petal-bloom'];
+    if (p.k === 'lavender') {
+      const n = 3 + Math.floor(gr * 6);
+      for (let i = 0; i < n; i++) {
+        const t = i / n, bx = tx + (x - tx) * t * 0.45, by = ty + (y - ty) * t * 0.45;
+        g.fillStyle = rgb(mix(col, C['bud-deep'], 0.15 + (i % 2) * 0.2));
+        g.beginPath(); g.ellipse(bx, by, u * 0.12, u * 0.16, 0, 0, TAU); g.fill();
+      }
+      return;
+    }
+    if (gr < 0.68) {
+      leafAt(g, tx, ty, -Math.PI / 2 - 0.5, u * 0.3, u * 0.1, leaf);
+      leafAt(g, tx, ty, -Math.PI / 2 + 0.5, u * 0.3, u * 0.1, leaf);
+      g.fillStyle = col; g.strokeStyle = line; g.lineWidth = 0.8;
+      g.beginPath(); g.ellipse(tx, ty - u * 0.16, u * 0.15, u * 0.22, 0, 0, TAU); g.fill(); g.stroke();
+      return;
+    }
+    const fs = u * (0.3 + 0.35 * (gr - 0.68) / 0.32), spin = rnd() * TAU;
+    if (p.k === 'forget') {
+      for (const [dx, dy] of [[0, 0], [-0.8, 0.5], [0.75, 0.55]]) {
+        blossom(g, tx + dx * fs, ty + dy * fs, 5, fs * 0.55, fs * 0.28, col, C.butter, null, spin + dx);
+      }
+      return;
+    }
+    const n = p.k === 'daisy' ? 9 : p.k === 'cosmos' ? 6 : 5;
+    blossom(g, tx, ty, n, fs, fs * (p.k === 'daisy' ? 0.22 : 0.4), col, p.k === 'buttercup' ? C.honey : C.butter, line, spin);
+  }
+  function paintGarden() {
+    const c = gardenCache || document.createElement('canvas');
+    c.width = canvas.width; c.height = canvas.height;
+    const g = c.getContext('2d');
+    g.setTransform(DPR, 0, 0, DPR, CX * DPR, CY * DPR);
+    const u = R * 0.065, moss = hexRgb(C.moss);
+    // soft moss that spreads under whatever grows
+    for (const p of garden.plants) {
+      const { x, y } = plantXY(p);
+      g.fillStyle = rgb(moss, 0.1 + 0.08 * p.g);
+      g.beginPath(); g.ellipse(x, y + u * 0.1, u * (0.7 + p.g * 1.1), u * (0.28 + p.g * 0.3), 0, 0, TAU); g.fill();
+    }
+    const sorted = [...garden.plants].sort((a, b) => plantXY(a).y - plantXY(b).y);
+    for (const p of sorted) drawPlant(g, p);
+    gardenCache = c;
+    gardenPainted = performance.now();
+    gardenDirty = false;
   }
 
   // ---------- HUD ----------
@@ -555,6 +842,9 @@
     el.best.textContent = best;
     replay(el.balls, ballCount + (pending ? ` +${pending}` : ''), 'bump', el.ballChip);
     el.paw.classList.toggle('used', !pawReady);
+    const tier = gardenTier();
+    [...el.garden.children].forEach((b, i) => b.classList.toggle('on', i < tier));
+    el.garden.setAttribute('aria-label', `Garden: ${tier} of 5`);
     el.paw.setAttribute('aria-label', pawReady ? "Erwu's swat is ready" : "Erwu's swat is used up until the next full bloom");
     el.ff.hidden = !(state === 'flying' && shot && shot.t > 2.5);
     el.ff.setAttribute('aria-pressed', String(timeScale > 1));
@@ -564,7 +854,8 @@
       el.hint.textContent = shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '';
     } else if (state === 'ready') {
       el.hint.className = '';
-      el.hint.textContent = !hinted ? 'Pull back anywhere and let go to launch' : petalNext ? 'Petal ready: this shot splits in three' : '';
+      el.hint.textContent = !hinted ? 'Pull back anywhere and let go to launch'
+        : gardenNote || (petalNext ? 'Petal ready: this shot splits in three' : '');
     }
   }
 
@@ -574,8 +865,9 @@
     if (!hinted) { hinted = true; store.set('hinted3', true); }
     lastAim = angle;
     state = 'flying';
-    shot = { angle, petal: petalNext, toLaunch: ballCount, launched: 0, timer: 0, hits: 0, t: 0 };
+    shot = { angle, petal: petalNext, toLaunch: ballCount, launched: 0, timer: 0, hits: 0, t: 0, seeds: 0, flowers: 0 };
     petalNext = false;
+    gardenNote = '';
     timeScale = 1;
     cat.mood = 'watch';
     stamenFx = 1;
@@ -589,9 +881,10 @@
     items = items.filter((i) => !i.dead);
     ballCount += pending; pending = 0;
     const hits = shot.hits;
+    tendGarden();
     shot = null; timeScale = 1; cat.mood = 'idle';
     const word = hits >= 120 ? 'Magnificent' : hits >= 60 ? 'Gorgeous' : hits >= 25 ? 'Lovely' : null;
-    if (word) addFloat(0, -coreR - R * 0.12, word, 'gem-deep', 1.35);
+    if (word) addFloat(0, -coreR - R * 0.12, word, 'bud-deep', 1.35);
     updateHud();
     if (charges.every((c) => c >= 1)) fullBloom(advance);
     else advance();
@@ -605,7 +898,8 @@
         particles.push({ type: 'dust', x: Math.cos(a) * r0, y: Math.sin(a) * r0, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: 0, life: 1, decay: 0.8, size: ballR * (0.3 + Math.random() * 0.35) });
       }
     }
-    addFloat(0, coreR + R * 0.14, 'Full bloom', 'gem-deep', 1.5);
+    addFloat(0, coreR + R * 0.14, 'Full bloom', 'bud-deep', 1.5);
+    feedGarden();
     [0, 2, 4, 7, 9].forEach((n, i) => tone(noteFreq(n + 5), 0.05, 'sine', 0.6, i * 0.07));
     haptic();
     for (const it of items) {
@@ -621,7 +915,7 @@
 
   function advance() {
     if (!items.some((i) => i.kind === 'shape' && !i.dead)) {
-      addFloat(0, -coreR - R * 0.24, 'Clear', 'gem-deep', 1.2);
+      addFloat(0, -coreR - R * 0.24, `All clear, ${CAT_NAME} purrs`, 'bud-deep', 1.1);
       cat.happy = 1.6;
     }
     for (const it of items) { it.from = it.rf; it.ring -= 1; }
@@ -647,7 +941,7 @@
       const first = items.find((i) => i.kind === 'shape' && i.ring <= 0);
       cat.bat = 1; cat.batA = itemAngle(first);
       for (const it of items) if (it.kind === 'shape' && it.ring <= 1) pop(it, true);
-      addFloat(0, coreR + R * 0.14, 'Erwu swatted it away', 'ink', 1.05);
+      addFloat(0, coreR + R * 0.14, `${CAT_NAME} batted it away`, 'ink', 1.05);
       tone(noteFreq(2), 0.06, 'triangle', 0.3); tone(noteFreq(7), 0.05, 'triangle', 0.3, 0.08);
     }
     items = items.filter((i) => !i.dead);
@@ -660,14 +954,18 @@
     state = 'over';
     cat.mood = 'startled';
     store.del('run3');
+    saveGarden();
     const isBest = turn > best;
     if (isBest) { best = turn; store.set('best', best); }
     [4, 2, 0].forEach((n, i) => tone(noteFreq(n), 0.05, 'sine', 0.5, i * 0.16));
     updateHud();
     setTimeout(() => {
-      el.overTitle.textContent = `The bloom reached ${CAT_NAME}`;
+      el.overTitle.textContent = `${CAT_NAME}'s curled up for a nap`;
       el.overTurn.textContent = turn;
       el.overBest.textContent = isBest ? 'turns, a new best' : `turns, best is ${best}`;
+      const flowers = garden.plants.filter((p) => p.g >= 0.68 && !['grass', 'clover', 'fern', 'mushroom'].includes(p.k)).length;
+      el.overNote.textContent = flowers > 1 ? `${flowers} flowers are blooming in the garden. It keeps everything you grew.`
+        : 'The garden keeps everything you grew.';
       el.overBest.classList.toggle('newbest', isBest);
       drawCardCat();
       el.over.hidden = false;
@@ -720,6 +1018,7 @@
     if (it.hp <= 0) {
       const k = petalFor(itemAngle(it));
       charges[k] = Math.min(1, charges[k] + 0.5);
+      flowerFromBloom(itemAngle(it));
       pop(it);
     }
   }
@@ -728,17 +1027,23 @@
     const p = itemPos(it);
     if (!quiet) { tone(noteFreq(Math.min(shot ? shot.hits : 0, 14)) / 2, 0.05, 'triangle', 0.35); haptic(); }
     if (reduced) return;
-    const col = gemColor(it);
-    for (let i = 0; i < 6; i++) {
-      const a = p.a + (i / 6) * TAU + Math.random() * 0.5, s = R * (0.22 + Math.random() * 0.3);
-      particles.push({ x: p.x, y: p.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, rot: a + Math.PI / 2, vr: (Math.random() - 0.5) * 6, life: 1, size: p.r * (0.34 + Math.random() * 0.18), col });
+    // The bud opens into a full flower, then lets its petals go.
+    blooms.push({ x: p.x, y: p.y, r: p.r, a: p.a, col: budColor(it), t: 0, n: 5 + (it.id % 3) });
+    if (blooms.length > 48) shed(blooms.shift());
+  }
+  const BLOOM_T = 0.62;
+  function shed(b) {
+    if (particles.length > 420) return;
+    for (let i = 0; i < b.n; i++) {
+      const a = b.a + (i / b.n) * TAU + Math.random() * 0.4, s = R * (0.12 + Math.random() * 0.2);
+      particles.push({ x: b.x + Math.cos(a) * b.r * 0.6, y: b.y + Math.sin(a) * b.r * 0.6, vx: Math.cos(a) * s, vy: Math.sin(a) * s, rot: a + Math.PI / 2, vr: (Math.random() - 0.5) * 5, life: 1, decay: 1.1, size: b.r * (0.36 + Math.random() * 0.16), col: mixA(b.col, WHITE, 0.2) });
     }
   }
   function collect(it) {
     it.dead = true;
     const p = itemPos(it);
     if (it.kind === 'orb') { pending++; addFloat(p.x, p.y - p.r, '+1', 'honey'); tone(noteFreq(9), 0.04, 'sine', 0.3); }
-    else { petalNext = true; addFloat(p.x, p.y - p.r, 'Petal', 'gem-deep'); tone(noteFreq(11), 0.04, 'sine', 0.4); }
+    else { petalNext = true; addFloat(p.x, p.y - p.r, 'Petal', 'bud-deep'); tone(noteFreq(11), 0.04, 'sine', 0.4); }
     updateHud();
   }
 
@@ -786,6 +1091,7 @@
             const l = Math.hypot(b.vx, b.vy) || 1;
             b.vx = b.vx / l * speed; b.vy = b.vy / l * speed;
             if (++b.rim > 9) b.homing = true;
+            seedFromMiss(Math.atan2(b.y, b.x));
           }
         }
         if (b.out && dd < coreR + ballR * 0.5 && (b.x * b.vx + b.y * b.vy) < 0) {
@@ -841,8 +1147,21 @@
     for (const it of items) { it.pulse *= Math.exp(-dt * 9); it.spin *= Math.exp(-dt * 12); }
     items = items.filter((i) => !i.dead || state === 'advancing');
     for (let k = 0; k < SECTORS; k++) shownCharges[k] += (charges[k] - shownCharges[k]) * Math.min(1, dt * 6);
+    for (const b of blooms) b.t += dt;
+    for (const b of blooms) if (b.t >= BLOOM_T) shed(b);
+    blooms = blooms.filter((b) => b.t < BLOOM_T);
+    // While you think, Erwu tends the garden: a little dew on something she's watching over.
+    if (state === 'ready' && garden.plants.length && !reduced) {
+      tendTimer -= dt;
+      if (tendTimer <= 0) {
+        tendTimer = 0.8 + Math.random() * 1.4;
+        const pl = pick(garden.plants), q = plantXY(pl);
+        glint(q.x + (Math.random() - 0.5) * R * 0.04, q.y - R * 0.065 * (0.5 + 1.9 * pl.g) * (0.5 + Math.random() * 0.5), 0.8 + pl.g * 0.5);
+      }
+    }
     for (const p of particles) {
-      p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.93; p.vy *= 0.93; p.vy += R * 0.12 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.93; p.vy *= 0.93;
+      if (p.type !== 'glint') p.vy += R * 0.12 * dt;
       p.rot += p.vr * dt; p.life -= dt * (p.decay || 1.3);
     }
     particles = particles.filter((p) => p.life > 0);
@@ -883,7 +1202,7 @@
       motes.push({ x: Math.random() * W, y: Math.random() * H, vy: -(5 + Math.random() * 7), ph: Math.random() * TAU, size: 1.2 + Math.random() * 1.6 });
     }
     for (let i = 0; i < 9; i++) {
-      drift.push({ x: Math.random() * W, y: Math.random() * H, vx: 4 + Math.random() * 6, vy: 7 + Math.random() * 8, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.6, size: 6 + Math.random() * 7 });
+      drift.push({ x: Math.random() * W, y: Math.random() * H, vx: 4 + Math.random() * 6, vy: 7 + Math.random() * 8, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.6, size: 6 + Math.random() * 7, leaf: i % 3 === 0 });
     }
   }
   function paintBackground() {
@@ -893,33 +1212,28 @@
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
     g.fillStyle = C.ground; g.fillRect(0, 0, W, H);
 
-    // warm blush from the top corner, lavender from below
-    let gr = g.createRadialGradient(W * 0.1, -H * 0.02, 0, W * 0.1, -H * 0.02, H * 0.55);
-    gr.addColorStop(0, rgb(hexRgb(C.blush), 0.75)); gr.addColorStop(1, rgb(hexRgb(C.blush), 0));
+    // warm sunlight from the top corner, a cool sage wash from below
+    let gr = g.createRadialGradient(W * 0.12, -H * 0.02, 0, W * 0.12, -H * 0.02, H * 0.6);
+    gr.addColorStop(0, rgb(hexRgb(C.blush), 0.8)); gr.addColorStop(0.5, rgb(hexRgb(C['honey-soft']), 0.18)); gr.addColorStop(1, rgb(hexRgb(C.blush), 0));
     g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    gr = g.createRadialGradient(W * 0.9, H * 1.02, 0, W * 0.9, H * 1.02, H * 0.6);
-    gr.addColorStop(0, rgb(hexRgb(C.halo), 0.9)); gr.addColorStop(1, rgb(hexRgb(C.halo), 0));
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-
-    // flower-of-life lattice: overlapping circles that form six-petal rosettes
-    const a = Math.max(26, R * 0.19), rowH = a * Math.sqrt(3) / 2;
-    const ink = hexRgb(C['gem-deep']);
-    g.lineWidth = 1;
-    for (let row = -1; row * rowH < H + a; row++) {
-      for (let col = -1; col * a < W + a; col++) {
-        const x = col * a + (row % 2 ? a / 2 : 0), y = row * rowH;
-        const d = Math.hypot(x - CX, y - CY);
-        const k = Math.min(1, Math.max(0, (d - R * 1.02) / (R * 0.6))) * Math.min(1, 0.35 + y / (H * 0.5));
-        if (k <= 0) continue;
-        g.strokeStyle = rgb(ink, 0.06 * k);
-        g.beginPath(); g.arc(x, y, a, 0, TAU); g.stroke();
-      }
-    }
-
-    // soft halo around the flower
-    gr = g.createRadialGradient(CX, CY, R * 0.9, CX, CY, R * 1.45);
+    gr = g.createRadialGradient(W * 0.85, H * 1.04, 0, W * 0.85, H * 1.04, H * 0.62);
     gr.addColorStop(0, rgb(hexRgb(C.halo), 0.95)); gr.addColorStop(1, rgb(hexRgb(C.halo), 0));
-    g.fillStyle = gr; g.beginPath(); g.arc(CX, CY, R * 1.45, 0, TAU); g.fill();
+    g.fillStyle = gr; g.fillRect(0, 0, W, H);
+
+    // the garden bed the flower sits in
+    gr = g.createRadialGradient(CX, CY + R * 0.04, R * 0.92, CX, CY + R * 0.04, R * 1.5);
+    gr.addColorStop(0, rgb(hexRgb(C.sage), 0.42)); gr.addColorStop(0.45, rgb(hexRgb(C.halo), 0.7)); gr.addColorStop(1, rgb(hexRgb(C.halo), 0));
+    g.fillStyle = gr; g.beginPath(); g.arc(CX, CY, R * 1.5, 0, TAU); g.fill();
+
+    // a few faint pencil ticks of grass on the paper
+    const tick = hexRgb(C.moss), rnd = seeded(7);
+    g.lineCap = 'round'; g.lineWidth = 1;
+    for (let i = 0; i < Math.round(W * H / 5200); i++) {
+      const x = rnd() * W, y = rnd() * H, l = 3 + rnd() * 4;
+      if (Math.hypot(x - CX, y - CY) < R * 1.05) continue;
+      g.strokeStyle = rgb(tick, 0.1 + rnd() * 0.08);
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - l * 0.35, y - l); g.moveTo(x + 2, y); g.lineTo(x + 2 + l * 0.3, y - l * 0.8); g.stroke();
+    }
 
     // paper grain
     const n = document.createElement('canvas'); n.width = n.height = 96;
@@ -935,10 +1249,10 @@
   }
 
   // ---------- Drawing ----------
-  function gemColor(it) {
+  function budColor(it) {
     const t = Math.min(1, Math.log(Math.max(1, it.maxHp)) / Math.log(60));
     const cur = Math.min(1, Math.log(Math.max(1, it.hp)) / Math.log(60));
-    return mix(C['gem-light'], C['gem-deep'], 0.08 + 0.92 * Math.max(cur, t * 0.4));
+    return mix(C['bud-light'], C['bud-deep'], 0.08 + 0.92 * Math.max(cur, t * 0.4));
   }
   const easeOutBack = (p) => { const c = 1.5; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
   const LX = -0.5, LY = -0.86;  // light from the upper left
@@ -956,6 +1270,43 @@
     g.closePath();
   }
 
+  // A band of woven wicker: a walnut hoop with short slanted strands.
+  function drawWicker(g, r, w) {
+    const wal = hexRgb(C.walnut), light = hexRgb(C['walnut-light']);
+    g.lineWidth = w; g.strokeStyle = rgb(light);
+    g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke();
+    g.lineWidth = 0.9; g.strokeStyle = rgb(wal, 0.55);
+    g.beginPath(); g.arc(0, 0, r - w / 2, 0, TAU); g.stroke();
+    g.beginPath(); g.arc(0, 0, r + w / 2, 0, TAU); g.stroke();
+    const n = Math.max(12, Math.round(TAU * r / (w * 0.9))), tilt = w * 0.45 / r;
+    g.strokeStyle = rgb(wal, 0.38); g.lineWidth = Math.max(0.7, w * 0.14); g.lineCap = 'round';
+    g.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = i * TAU / n, t = i % 2 ? tilt : -tilt, r0 = r - w * 0.36, r1 = r + w * 0.36;
+      g.moveTo(Math.cos(a - t) * r0, Math.sin(a - t) * r0); g.lineTo(Math.cos(a + t) * r1, Math.sin(a + t) * r1);
+    }
+    g.stroke();
+  }
+  // Erwu's nest: a patchwork cushion in a little wicker basket.
+  function drawNest(g, r) {
+    g.fillStyle = rgb(hexRgb(C.walnut), 0.16);
+    g.beginPath(); g.arc(0, r * 0.1, r * 1.08, 0, TAU); g.fill();
+    const patches = ['petal-bloom', 'core', 'lavender', 'butter', 'sky', 'core', 'petal-bloom', 'sage'];
+    const n = patches.length, a0 = -Math.PI / 2 + 0.3;
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = rgb(mix(C[patches[i]], C.core, 0.42));
+      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, r * 0.94, a0 + i * TAU / n, a0 + (i + 1) * TAU / n); g.closePath(); g.fill();
+    }
+    g.save();
+    g.setLineDash([Math.max(1.5, r * 0.07), Math.max(1.5, r * 0.07)]);
+    g.strokeStyle = rgb(hexRgb(C.walnut), 0.35); g.lineWidth = Math.max(0.7, r * 0.025);
+    g.beginPath();
+    for (let i = 0; i < n; i++) { const a = a0 + i * TAU / n; g.moveTo(Math.cos(a) * r * 0.12, Math.sin(a) * r * 0.12); g.lineTo(Math.cos(a) * r * 0.86, Math.sin(a) * r * 0.86); }
+    g.stroke();
+    g.restore();
+    drawWicker(g, r * 0.97, Math.max(3, r * 0.16));
+  }
+
   function drawFlower(now) {
     const g = ctx;
     // arena disc
@@ -965,7 +1316,7 @@
     g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill();
 
     const r0 = coreR * 1.05, r1 = R * 0.965, w = R * 0.215;
-    const bloomCol = hexRgb(C['petal-bloom']), deep = hexRgb(C['gem-deep']), gold = hexRgb(C.honey);
+    const bloomCol = hexRgb(C['petal-bloom']), deep = hexRgb(C['bud-deep']), gold = hexRgb(C.honey);
     g.save();
     const swell = 1 + bloomFx * 0.045;
     g.scale(swell, swell);
@@ -997,7 +1348,7 @@
       g.strokeStyle = C['petal-line']; g.lineWidth = 1; g.stroke();
       // centre vein, darker once the petal is fully charged
       const full = charges[k] >= 1 || bloomFx > 0;
-      g.strokeStyle = full ? rgb(deep, 0.28) : rgb(hexRgb(C['petal-line']), 0.9);
+      g.strokeStyle = full ? rgb(deep, 0.3) : rgb(hexRgb(C.sage), 0.45);
       g.beginPath();
       g.moveTo(Math.cos(a) * (r0 + 6), Math.sin(a) * (r0 + 6));
       g.lineTo(Math.cos(a) * r1 * 0.9, Math.sin(a) * r1 * 0.9);
@@ -1005,16 +1356,14 @@
     }
     g.restore();
 
-    // double rim, like the frame of a rose window
-    g.strokeStyle = C.rim; g.lineWidth = 1.4;
-    g.beginPath(); g.arc(0, 0, R, 0, TAU); g.stroke();
-    g.strokeStyle = rgb(hexRgb(C.rim), 0.55); g.lineWidth = 1;
-    g.beginPath(); g.arc(0, 0, R + 5, 0, TAU); g.stroke();
-    // small gold beads on the frame, one per petal tip
+    // a woven wicker rim, like the edge of Erwu's basket
+    drawWicker(g, R + 3.5, 6.5);
+    // small butter buttons on the rim, one per petal tip, bright when that petal is full
     for (let k = 0; k < SECTORS; k++) {
-      const a = k * STEP - Math.PI / 2, x = Math.cos(a) * (R + 5), y = Math.sin(a) * (R + 5);
-      g.fillStyle = C.arena; g.beginPath(); g.arc(x, y, 3.4, 0, TAU); g.fill();
-      g.fillStyle = rgb(gold, charges[k] >= 1 ? 1 : 0.7); g.beginPath(); g.arc(x, y, 2.3, 0, TAU); g.fill();
+      const a = k * STEP - Math.PI / 2, x = Math.cos(a) * (R + 3.5), y = Math.sin(a) * (R + 3.5);
+      g.fillStyle = C.arena; g.beginPath(); g.arc(x, y, 4, 0, TAU); g.fill();
+      g.strokeStyle = rgb(hexRgb(C.walnut), 0.5); g.lineWidth = 0.8; g.stroke();
+      g.fillStyle = rgb(gold, charges[k] >= 1 ? 1 : 0.55); g.beginPath(); g.arc(x, y, 2.5, 0, TAU); g.fill();
     }
 
     // slot marks: the spiral lattice shapes travel along
@@ -1022,7 +1371,7 @@
     for (let ring = 1; ring <= RINGS; ring++) {
       const rr = ringRadius(ring);
       const warn = ring === 1 && danger;
-      g.fillStyle = warn ? rgb(hexRgb(C.honey), 0.55 + Math.sin(now / 280) * 0.25) : rgb(hexRgb(C.rim), 0.75);
+      g.fillStyle = warn ? rgb(hexRgb(C.honey), 0.55 + Math.sin(now / 280) * 0.25) : rgb(hexRgb(C.sage), 0.6);
       for (let s = 0; s < SECTORS; s++) {
         const a = (s + ring * 0.5) * STEP - Math.PI / 2;
         g.beginPath(); g.arc(Math.cos(a) * rr, Math.sin(a) * rr, warn ? 2.2 : 1.4, 0, TAU); g.fill();
@@ -1034,7 +1383,7 @@
     if (!aim || aim.angle == null) return;
     const angle = aim.angle;
     const dirs = petalNext ? [0, 1, 2].map((k) => angle + k * TAU / 3) : [angle];
-    const honey = hexRgb(C.honey), ink = hexRgb(C['gem-deep']);
+    const honey = hexRgb(C.honey), ink = hexRgb(C['bud-deep']), sage = hexRgb(C.moss);
     for (const a of dirs) {
       const dx = Math.cos(a), dy = Math.sin(a);
       const start = coreR + ballR + 2;
@@ -1052,6 +1401,13 @@
       }
       const gap = Math.max(10, R * 0.06);
       const off = (now / 1000 * 30) % gap;
+      // a soft vine along the path, with pollen travelling down it
+      ctx.strokeStyle = rgb(sage, 0.45); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(dx * start, dy * start); ctx.lineTo(dx * (start + len - ballR), dy * (start + len - ballR)); ctx.stroke();
+      for (let i = 1, d = gap * 1.5; d < len - ballR * 3; d += gap * 1.5, i++) {
+        const side = i % 2 ? 1 : -1, k = d / len;
+        leafAt(ctx, dx * (start + d), dy * (start + d), a + side * 0.9, ballR * (1.6 - k * 0.6), ballR * 0.5, rgb(sage, 0.75 - k * 0.35));
+      }
       for (let d = off; d < len - ballR; d += gap) {
         const k = d / len;
         g2dot(dx * (start + d), dy * (start + d), ballR * (0.5 - k * 0.15), rgb(mixA(honey, ink, k * 0.6), 0.85 - k * 0.45));
@@ -1064,50 +1420,72 @@
   }
   function g2dot(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, Math.max(0.8, r), 0, TAU); ctx.fill(); }
 
-  // Faceted amethyst: a flat table in the middle, bevelled facets lit from the upper left.
-  function drawGem(it, now) {
+  // A flower bud. Its green sepals reach the corners of its hit shape, so their
+  // count still reads as hits left (six, five, four, three), and the bud swells
+  // and shows petal tips as it's coaxed open.
+  function drawBud(it, now) {
     const p = itemPos(it);
-    const born = Math.min(1, (now - it.born) / 420);
+    const born = Math.max(0, Math.min(1, (now - it.born) / 420));
     const s = (reduced ? 1 : easeOutBack(born)) * (1 + 0.18 * it.pulse);
-    const base = gemColor(it), deep = hexRgb(C['gem-deep']);
+    if (s <= 0.01) return;
+    const base = budColor(it), deep = hexRgb(C['bud-deep']);
     const n = sidesFor(it.hp), rot = p.a + it.spin, r = p.r * s;
-    const O = [], I = [];
-    for (let i = 0; i < n; i++) {
-      const t = rot + i * TAU / n;
-      O.push([p.x + Math.cos(t) * r, p.y + Math.sin(t) * r]);
-      I.push([p.x + Math.cos(t) * r * 0.5, p.y + Math.sin(t) * r * 0.5]);
-    }
-    const poly = (pts, dx = 0, dy = 0) => {
-      ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1] + dy);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] + dx, pts[i][1] + dy);
-      ctx.closePath();
-    };
+    const open = it.maxHp > 1 ? 1 - it.hp / it.maxHp : 0;
+    const moss = hexRgb(C.moss), sage = hexRgb(C.sage), leafLine = rgb(hexRgb(C['leaf-dark']), 0.45);
     // soft shadow
-    ctx.fillStyle = rgb(deep, 0.13);
-    poly(O, 0, r * 0.2); ctx.fill();
-    // facets
-    ctx.lineJoin = 'round'; ctx.lineWidth = 0.8;
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n, m = rot + (i + 0.5) * TAU / n;
-      const lit = Math.cos(m) * LX + Math.sin(m) * LY;
-      const col = lit > 0 ? mixA(base, WHITE, lit * 0.42) : mixA(base, deep, -lit * 0.3);
-      ctx.fillStyle = ctx.strokeStyle = rgb(col);
-      ctx.beginPath();
-      ctx.moveTo(O[i][0], O[i][1]); ctx.lineTo(O[j][0], O[j][1]);
-      ctx.lineTo(I[j][0], I[j][1]); ctx.lineTo(I[i][0], I[i][1]);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.13);
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + r * 0.2, r * 0.82, r * 0.72, 0, 0, TAU); ctx.fill();
+    // petal tips peek out between the sepals as it opens
+    if (open > 0.05) {
+      const pc = rgb(mixA(base, WHITE, 0.25));
+      for (let i = 0; i < n; i++) {
+        const t = rot + (i + 0.5) * TAU / n;
+        leafAt(ctx, p.x, p.y, t, r * (0.62 + 0.3 * open), r * 0.26, pc, rgb(deep, 0.25));
+      }
     }
-    const table = mixA(base, WHITE, 0.16);
-    ctx.fillStyle = rgb(table); poly(I); ctx.fill();
-    ctx.strokeStyle = rgb(WHITE, 0.45); ctx.lineWidth = 1; ctx.stroke();
-    if (it.pulse > 0.05) { ctx.fillStyle = rgb(WHITE, it.pulse * 0.45); poly(O); ctx.fill(); }
+    // sepals, lit from the upper left
+    for (let i = 0; i < n; i++) {
+      const t = rot + i * TAU / n, lit = Math.cos(t) * LX + Math.sin(t) * LY;
+      leafAt(ctx, p.x, p.y, t, r, r * 0.3, rgb(mixA(moss, sage, 0.45 + lit * 0.4)), leafLine);
+    }
+    // the bud itself
+    const br = r * (0.5 + 0.08 * open);
+    const bg = ctx.createRadialGradient(p.x - br * 0.35, p.y - br * 0.4, br * 0.1, p.x, p.y, br);
+    bg.addColorStop(0, rgb(mixA(base, WHITE, 0.45))); bg.addColorStop(0.6, rgb(base)); bg.addColorStop(1, rgb(mixA(base, deep, 0.25)));
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(p.x, p.y, br, 0, TAU); ctx.fill();
+    // furled petal seams
+    ctx.save();
+    ctx.beginPath(); ctx.arc(p.x, p.y, br, 0, TAU); ctx.clip();
+    ctx.strokeStyle = rgb(mixA(base, deep, 0.4), 0.5); ctx.lineWidth = Math.max(0.8, r * 0.05);
+    for (let i = 0; i < 3; i++) {
+      const a = rot * 0.5 + i * TAU / 3;
+      ctx.beginPath(); ctx.arc(p.x + Math.cos(a) * br * 0.55, p.y + Math.sin(a) * br * 0.55, br * 0.62, a + Math.PI * 0.55, a + Math.PI * 1.25); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = rgb(mixA(base, deep, 0.35), 0.6); ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.arc(p.x, p.y, br, 0, TAU); ctx.stroke();
+    if (it.pulse > 0.05) { ctx.fillStyle = rgb(WHITE, it.pulse * 0.5); ctx.beginPath(); ctx.arc(p.x, p.y, br * 1.05, 0, TAU); ctx.fill(); }
     if (it.hp > 4) {
-      ctx.fillStyle = lum(table) > 0.58 ? C.ink : '#FFFFFF';
-      const size = it.hp > 99 ? r * 0.5 : r * 0.62;
+      ctx.fillStyle = lum(base) > 0.62 ? C.ink : '#FFFFFF';
+      const size = it.hp > 99 ? br * 0.95 : br * 1.15;
       ctx.font = `600 ${size}px ${FONT}`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(it.hp, p.x, p.y + size * 0.06);
+    } else {
+      ctx.fillStyle = rgb(WHITE, 0.6);
+      ctx.beginPath(); ctx.ellipse(p.x - br * 0.32, p.y - br * 0.38, br * 0.2, br * 0.12, -0.6, 0, TAU); ctx.fill();
     }
+  }
+
+  // A bud that's just been coaxed open: it blooms fully, then sheds its petals.
+  function drawBloom(b) {
+    const k = Math.min(1, b.t / (BLOOM_T * 0.7)), e = reduced ? 1 : easeOutBack(k);
+    const alpha = b.t < BLOOM_T * 0.7 ? 1 : 1 - (b.t - BLOOM_T * 0.7) / (BLOOM_T * 0.3);
+    const len = b.r * (0.45 + 0.75 * e);
+    ctx.globalAlpha = Math.max(0, alpha);
+    blossom(ctx, b.x, b.y, b.n, len, len * 0.42, rgb(mixA(b.col, WHITE, 0.3)), C.butter, rgb(mixA(b.col, hexRgb(C['bud-deep']), 0.3), 0.5), b.a + b.t * 1.2);
+    ctx.globalAlpha = 1;
   }
 
   function drawPickup(it, now) {
@@ -1317,9 +1695,8 @@
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, c.width, c.height);
     g.translate(c.width / 2, c.height / 2);
-    g.fillStyle = C.core;
-    g.beginPath(); g.arc(0, 0, c.width * 0.46, 0, TAU); g.fill();
-    drawCat(g, c.width * 0.36, 0, { mood: 'startled', look: null, blink: 0, happy: 0, bounce: 0, bat: 0, batA: 0, earsBack: 1 });
+    drawNest(g, c.width * 0.44);
+    drawCat(g, c.width * 0.36, 0, { mood: 'sleepy', look: null, blink: 0, happy: 0, bounce: 0, bat: 0, batA: 0, earsBack: 0 });
   }
 
   function draw(now) {
@@ -1329,10 +1706,10 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
     // drifting petals behind the flower
-    const driftCol = hexRgb(C['petal-bloom']);
+    const driftCol = hexRgb(C['petal-bloom']), driftLeaf = hexRgb(C.sage);
     for (const d of drift) {
       ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot);
-      ctx.fillStyle = rgb(driftCol, 0.55); lens(ctx, d.size); ctx.fill();
+      ctx.fillStyle = rgb(d.leaf ? driftLeaf : driftCol, 0.6); lens(ctx, d.size); ctx.fill();
       ctx.restore();
     }
     const gold = hexRgb(C.honey);
@@ -1344,14 +1721,19 @@
       ctx.beginPath(); ctx.arc(m.x, m.y, m.size, 0, TAU); ctx.fill();
     }
 
+    // the garden, repainted at most a few times a second as it changes
+    if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
+    if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+
     ctx.translate(CX, CY);
     drawFlower(now);
     drawAim(now);
 
     for (const it of items) {
       if (it.dead) continue;
-      if (it.kind === 'shape') drawGem(it, now); else drawPickup(it, now);
+      if (it.kind === 'shape') drawBud(it, now); else drawPickup(it, now);
     }
+    for (const b of blooms) drawBloom(b);
 
     const goldA = hexRgb(C.honey);
     for (const p of particles) {
@@ -1359,6 +1741,18 @@
       if (p.type === 'dust') {
         ctx.fillStyle = rgb(goldA, a);
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+        continue;
+      }
+      if (p.type === 'glint') {
+        // a dewdrop catching the light: a four-point twinkle
+        const k = Math.sin(Math.min(1, p.life) * Math.PI), r = p.size * (0.4 + 0.6 * k);
+        ctx.fillStyle = rgb(WHITE, 0.9 * k);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y - r); ctx.quadraticCurveTo(p.x, p.y, p.x + r, p.y); ctx.quadraticCurveTo(p.x, p.y, p.x, p.y + r);
+        ctx.quadraticCurveTo(p.x, p.y, p.x - r, p.y); ctx.quadraticCurveTo(p.x, p.y, p.x, p.y - r);
+        ctx.fill();
+        ctx.fillStyle = rgb(hexRgb(C.sky), 0.35 * k);
+        ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.35, 0, TAU); ctx.fill();
         continue;
       }
       ctx.save();
@@ -1394,13 +1788,7 @@
       ctx.fillStyle = rgb(honey, long ? 0.95 : 0.7);
       ctx.beginPath(); ctx.arc(Math.cos(a) * r1, Math.sin(a) * r1, long ? Math.max(1.6, ballR * 0.36) : Math.max(1.2, ballR * 0.26), 0, TAU); ctx.fill();
     }
-    // Erwu's cushion
-    ctx.fillStyle = rgb(hexRgb(C['gem-deep']), 0.08);
-    ctx.beginPath(); ctx.arc(0, coreR * 0.08, coreR * 1.02, 0, TAU); ctx.fill();
-    ctx.fillStyle = C.core;
-    ctx.beginPath(); ctx.arc(0, 0, coreR, 0, TAU); ctx.fill();
-    ctx.strokeStyle = C.stamen; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(0, 0, coreR, 0, TAU); ctx.stroke();
+    drawNest(ctx, coreR);
     if (swatFx > 0) {
       ctx.strokeStyle = rgb(honey, swatFx * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, 0, coreR + (1 - swatFx) * R * 0.35, 0, TAU); ctx.stroke();
@@ -1432,7 +1820,7 @@
     // thumb joystick: where you pressed, and how far you've pulled
     if (aim && aim.sx != null) {
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const ink = hexRgb(C['gem-deep']);
+      const ink = hexRgb(C['bud-deep']);
       const dx = aim.cx - aim.sx, dy = aim.cy - aim.sy, len = Math.hypot(dx, dy), max = 46;
       const k = len > max ? max / len : 1;
       ctx.strokeStyle = rgb(ink, 0.22); ctx.lineWidth = 1.2;
@@ -1526,6 +1914,18 @@
     new ResizeObserver(() => { layout(); }).observe(stage);
     window.addEventListener('resize', layout);
     setSound(soundOn);
+    welcomeBack();
+    if (garden.fresh) {
+      // a brand-new garden: a few sprouts around the bed to start from
+      delete garden.fresh;
+      for (let i = 0; i < 6; i++) plant(i % 2 ? 'grass' : pick(['clover', 'daisy', 'cosmos']), null, 0.12 + Math.random() * 0.15, 1.06, 1.4);
+      saveGarden();
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) saveGarden();
+      else { welcomeBack(); updateHud(); }
+    });
+    window.addEventListener('pagehide', saveGarden);
     const run = (data && data.run) || store.get('run3', null);
     if (run && run.v === 3 && run.items && run.items.length) { restore(run); markReady(); }
     else newGame();
