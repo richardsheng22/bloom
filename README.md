@@ -8,9 +8,13 @@ Open the GitHub Pages site on your iPhone in Safari, tap Share, then **Add to Ho
 
 ## How it plays
 
+The game opens on Erwu asleep in the middle of your garden, just as you left it: a bare patch with a few sprouts at first, flowering once you've played a while. Tap **Play** (or **Continue**) and she wakes as the flower grows in around her.
+
 - **Aim:** pull back anywhere on the screen like a slingshot, then let go. Letting go near where you started cancels the shot.
 - **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Pollen pips under a bud (or a number, for tough ones) show the hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
 - **Pollen clusters** give you one more ball. The **petal** pickup splits your next shot three ways.
+- **Power-ups** (from turn 4): a **dewdrop** splashes every bud around it, a **bee** buzzes from bud to bud for a few seconds, and a **sunbeam** hits every bud in a line straight out from Erwu for two.
+- **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Each new thing gets a short introduction the first time it appears.
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
 

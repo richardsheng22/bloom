@@ -289,9 +289,8 @@
   }
   .card .newbest { color: var(--bud-deep); font-weight: 600; }
   .card .note { margin-top: 10px; font-size: 13.5px; text-wrap: balance; }
-  .card button {
-    margin-top: 20px;
-    width: 100%;
+  .card .wood { margin-top: 20px; width: 100%; }
+  .wood {
     height: 52px;
     border: 1px solid #6E4E33;
     border-radius: 14px;
@@ -305,7 +304,71 @@
     cursor: pointer;
     touch-action: manipulation;
   }
-  .card button:active { transform: scale(0.98); }
+  .wood:active { transform: scale(0.98); }
+  .linkish {
+    margin-top: 10px;
+    border: 0;
+    background: none;
+    color: var(--ink-soft);
+    font: 500 14.5px/1 var(--font);
+    padding: 8px 12px;
+    cursor: pointer;
+    text-decoration: underline dashed color-mix(in srgb, var(--walnut) 45%, transparent);
+    text-underline-offset: 4px;
+    touch-action: manipulation;
+  }
+
+  /* ---------- Landing ---------- */
+  header, footer { transition: opacity 500ms var(--ease-out); }
+  body.titling header, body.titling footer { opacity: 0; visibility: hidden; }
+  #title {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 22px) 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+    text-align: center;
+    pointer-events: none;
+    transition: opacity 450ms var(--ease-out), transform 450ms var(--ease-out);
+  }
+  #title.leaving { opacity: 0; transform: translateY(-8px); }
+  #title .t-top, #title .t-bottom { position: relative; justify-self: center; width: min(100%, 420px); }
+  #title .t-bottom { grid-row: 3; }
+  /* a soft haze of paper behind the words, so the garden never fights them */
+  #title .t-top::before, #title .t-bottom::before {
+    content: "";
+    position: absolute;
+    inset: -26px -40px;
+    z-index: -1;
+    background: radial-gradient(closest-side, var(--ground) 55%, color-mix(in srgb, var(--ground) 0%, transparent));
+  }
+  .logo {
+    margin: 0;
+    font-family: var(--serif);
+    font-variation-settings: "SOFT" 100, "opsz" 144;
+    font-size: clamp(76px, 24vw, 116px);
+    font-weight: 480;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    color: var(--ink);
+  }
+  .logo span { display: inline-block; }
+  .logo span:nth-child(3) { color: #D9667E; }
+  .logo span:nth-child(4) { color: #B06CB8; }
+  .tagline {
+    margin: 8px 0 0;
+    font-size: 17px;
+    color: var(--ink-soft);
+    text-wrap: balance;
+  }
+  .t-status { margin: 0 0 14px; font-size: 14px; color: var(--ink-soft); text-wrap: balance; }
+  .t-note { margin: 12px 0 0; font-size: 13.5px; color: var(--bud-deep); min-height: 1em; text-wrap: balance; }
+  #play { width: min(100%, 300px); pointer-events: auto; font-size: 18px; }
+  #title.enter .logo span { animation: letter 760ms var(--spring) both; animation-delay: calc(var(--i) * 70ms + 150ms); }
+  #title.enter .tagline { animation: fade 700ms var(--ease-out) 650ms both; }
+  #title.enter .t-bottom { animation: rise 700ms var(--spring) 850ms both; }
+  #title .logo span { animation-play-state: running; }
 
   button:focus-visible { outline: 2px solid var(--walnut) !important; outline-offset: 2px !important; }
   .haptic { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
@@ -355,7 +418,8 @@
   @keyframes fade { from { opacity: 0; } }
   @keyframes rise { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
   @media (prefers-reduced-motion: reduce) {
-    #over, .card, .turn b.tick, .chip.bump, #ff svg path, .ribbon-in, .ribbon .word span, .ribbon .sub, .garden i.pop { animation: none !important; }
+    #over, .card, .turn b.tick, .chip.bump, #ff svg path, .ribbon-in, .ribbon .word span, .ribbon .sub, .garden i.pop,
+    #title.enter .logo span, #title.enter .tagline, #title.enter .t-bottom { animation: none !important; }
   }
 </style>
 </head>
@@ -395,6 +459,19 @@
 
 <div id="banner" role="status" aria-live="polite"></div>
 
+<!-- Landing: Erwu asleep in the middle of your garden, as it is right now. -->
+<section id="title" hidden aria-labelledby="t-logo">
+  <div class="t-top">
+    <h1 id="t-logo" class="logo" aria-label="Bloom"><span style="--i:0">B</span><span style="--i:1">l</span><span style="--i:2">o</span><span style="--i:3">o</span><span style="--i:4">m</span></h1>
+    <p class="tagline">Helping Erwu make her garden bloom</p>
+  </div>
+  <div class="t-bottom">
+    <p class="t-status" id="t-status"></p>
+    <button id="play" class="wood">Play</button>
+    <p class="t-note" id="t-note"></p>
+  </div>
+</section>
+
 <div id="over" hidden>
   <div class="card" role="dialog" aria-labelledby="over-title">
     <canvas id="card-cat" width="312" height="312" aria-hidden="true"></canvas>
@@ -402,7 +479,8 @@
     <div class="big" id="over-turn">0</div>
     <p id="over-best">turns</p>
     <p class="note" id="over-note">The garden keeps everything you grew.</p>
-    <button id="again">Play again</button>
+    <button id="again" class="wood">Play again</button>
+    <button id="to-garden" class="linkish">Back to the garden</button>
   </div>
 </div>
 
@@ -420,6 +498,7 @@
     ff: $('#ff'), sound: $('#sound'), restart: $('#restart'),
     over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
     garden: $('#garden'), banner: $('#banner'),
+    title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
     cardCat: $('#card-cat'), haptic: $('#haptic'), app: $('#app'),
   };
 
@@ -566,7 +645,7 @@
   // ---------- Game state ----------
   let items = [], balls = [], particles = [], floats = [], tweens = [], blooms = [];
   // show-and-tell: seeds flying out to the garden, plants sprouting, confetti, butterflies
-  let flights = [], growing = [], confetti = [], flies = [];
+  let flights = [], growing = [], confetti = [], flies = [], bees = [], beams = [];
   let petalFx = new Array(SECTORS).fill(-1), fbT = -1, raysFx = 0, launchFx = 0, lastTier = -1;
   let turn = 1, ballCount = START_BALLS, pending = 0, petalNext = false, pawReady = true;
   let charges = new Array(SECTORS).fill(0), shownCharges = new Array(SECTORS).fill(0);
@@ -580,23 +659,45 @@
 
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
-    const base = 0.4 * t + 0.3 * ballCount;
-    let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.5)));
-    if (t > 8 && Math.random() < 0.1) h = Math.round(h * 1.7);
+    const base = 0.46 * t + 0.34 * ballCount;
+    let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.55)));
+    if (t > 6 && Math.random() < 0.12) h = Math.round(h * 1.8);
     return h;
   }
+  // Later stages bring mushrooms (bouncy, can't be picked) and flower rings
+  // (pollen that threads one turns golden and hits twice), and power-ups:
+  // a dewdrop that splashes, a bee that helps, a sunbeam that cuts a line.
+  const POWERS = ['dew', 'bee', 'sun'];
+  const INTRO = {
+    mushroom: ['Mushrooms', "bouncy, and they can't be picked"],
+    ring: ['Flower rings', 'pollen through a ring turns golden and hits twice'],
+    dew: ['Dewdrop', 'splashes every bud around it'],
+    bee: ['Bee', 'buzzes about, nudging buds open'],
+    sun: ['Sunbeam', 'a beam of light straight out from Erwu'],
+  };
+  let seen = store.get('seen', {}), introQueue = [];
   function spawnRing(t) {
     const free = [...Array(SECTORS).keys()].sort(() => Math.random() - 0.5);
-    const maxN = t < 4 ? 3 : Math.min(6, 3 + Math.floor(t / 8));
+    const maxN = t < 4 ? 3 : Math.min(7, 3 + Math.floor(t / 7));
     const n = 2 + Math.floor(Math.random() * (maxN - 1));
     const now = performance.now();
+    const add = (o) => {
+      if (!free.length) return;
+      items.push({ id: nextId++, sector: free.pop(), ring: RINGS, rf: RINGS, born: now, pulse: 0, spin: 0, ...o });
+      if (INTRO[o.kind] && !seen[o.kind]) { seen[o.kind] = true; store.set('seen', seen); introQueue.push(o.kind); }
+    };
     for (let i = 0; i < n; i++) {
       const hp = hpFor(t);
-      items.push({ id: nextId++, kind: 'shape', sector: free.pop(), ring: RINGS, rf: RINGS, hp, maxHp: hp, pulse: 0, spin: 0, born: now,
-        sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4) });
+      add({ kind: 'shape', hp, maxHp: hp, pulse: 0, spin: 0, sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4) });
     }
-    items.push({ id: nextId++, kind: 'orb', sector: free.pop(), ring: RINGS, rf: RINGS, born: now });
-    if (t > 2 && Math.random() < 0.12) items.push({ id: nextId++, kind: 'petal', sector: free.pop(), ring: RINGS, rf: RINGS, born: now });
+    add({ kind: 'orb' });
+    if (t >= 10 && Math.random() < Math.min(0.75, 0.35 + (t - 10) * 0.025)) {
+      add({ kind: 'mushroom' });
+      if (t >= 22 && Math.random() < 0.35) add({ kind: 'mushroom' });
+    }
+    if (t >= 8 && Math.random() < 0.2) add({ kind: 'ring' });
+    if (t > 3 && Math.random() < 0.22) add({ kind: pick(POWERS) });
+    if (t > 2 && Math.random() < 0.12) add({ kind: 'petal' });
   }
 
   function serialize() {
@@ -617,6 +718,10 @@
   let readySnapshot = null;
   function markReady() {
     state = 'ready';
+    if (introQueue.length) {
+      const k = introQueue.shift();
+      setTimeout(() => banner(INTRO[k][0], INTRO[k][1]), 700);
+    }
     readySnapshot = serialize();
     store.set('run3', readySnapshot);
     saveGarden();
@@ -1142,6 +1247,13 @@
       if (it.kind === 'shape') reached = true;
       else if (it.kind === 'orb') { ballCount++; it.dead = true; addFloat(0, -coreR - 14, '+1', 'honey'); }
       else if (it.kind === 'petal') { petalNext = true; it.dead = true; }
+      else if (it.kind === 'mushroom') {
+        // it hops out into the garden
+        it.dead = true;
+        const q = itemPos(it);
+        const a = Math.atan2(q.y, q.x);
+        plant('mushroom', a + Math.PI, 0.45, 1.1, 2, { x: q.x, y: q.y });
+      } else it.dead = true;
     }
     if (reached) {
       if (!pawReady) { items = items.filter((i) => !i.dead); return gameOver(); }
@@ -1161,6 +1273,36 @@
     markReady();
   }
 
+  // ---------- Landing ----------
+  let titleT = 0;
+  const bloomingCount = () => garden.plants.filter((p) => p.g >= 0.68 && !['grass', 'clover', 'fern', 'mushroom'].includes(p.k)).length;
+  function showTitle() {
+    state = 'title'; titleT = 1;
+    cat = freshCat(); cat.mood = 'sleepy';
+    document.body.classList.add('titling');
+    const flowers = bloomingCount();
+    el.tStatus.textContent = flowers === 0
+      ? (garden.plants.length > 12 ? 'The garden is green, and waiting for its first flowers' : 'A quiet patch of earth, waiting for its first flowers')
+      : `${flowers} ${flowers === 1 ? 'flower' : 'flowers'} in bloom${best ? ` · best ${best} turns` : ''}`;
+    el.play.textContent = readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
+    el.tNote.textContent = gardenNote;
+    el.title.hidden = false;
+    el.title.classList.remove('enter', 'leaving'); void el.title.offsetWidth; el.title.classList.add('enter');
+    el.over.hidden = true;
+    requestAnimationFrame(() => el.play.focus({ preventScroll: true }));
+  }
+  function leaveTitle() {
+    if (state !== 'title' || titleT < 1) return;
+    if (soundOn && audio && audio.state === 'suspended') audio.resume();
+    el.title.classList.add('leaving');
+    setTimeout(() => { el.title.hidden = true; el.title.classList.remove('leaving'); }, 460);
+    document.body.classList.remove('titling');
+    // Erwu wakes up, and the flower grows in around her
+    cat.mood = 'watch'; cat.happy = 0.9; cat.bounce = 1;
+    [0, 4, 7].forEach((n, i) => tone(noteFreq(n + 5), 0.035, 'sine', 0.6, i * 0.09));
+    haptic();
+    tween(reduced ? 0.05 : 1.1, (p) => { titleT = 1 - p; }, () => { titleT = 0; cat.mood = 'idle'; markReady(); });
+  }
   function countUp(node, to) {
     if (reduced) { node.textContent = to; return; }
     const t0 = performance.now(), dur = Math.min(1200, 300 + to * 40);
@@ -1231,14 +1373,18 @@
     }
   }
   function onHit(it, b) {
-    it.hp--;
+    // wobble, and lean away from the side the pollen came in on; golden pollen hits twice
+    const p = itemPos(it);
+    hurt(it, b.gold ? 2 : 1, Math.sign((b.x - p.x) * b.vy - (b.y - p.y) * b.vx || 1));
+  }
+  function hurt(it, dmg, lean) {
+    if (it.dead) return;
+    it.hp -= dmg;
     it.pulse = 1;
-    // wobble, and lean away from the side the pollen came in on
     const p = itemPos(it);
     it.wobV = (it.wobV || 0) + 7;
-    it.tiltV = (it.tiltV || 0) + Math.sign((b.x - p.x) * b.vy - (b.y - p.y) * b.vx || 1) * 6;
-    shot.hits++;
-    hitNote(shot.hits - 1);
+    it.tiltV = (it.tiltV || 0) + lean * 6;
+    if (shot) { shot.hits++; hitNote(shot.hits - 1); }
     if (it.hp <= 0) {
       const k = petalFor(itemAngle(it));
       const was = charges[k];
@@ -1284,8 +1430,107 @@
     it.dead = true;
     const p = itemPos(it);
     if (it.kind === 'orb') { pending++; addFloat(p.x, p.y - p.r, '+1', 'honey'); tone(noteFreq(9), 0.04, 'sine', 0.3); }
-    else { petalNext = true; addFloat(p.x, p.y - p.r, 'Petal', 'bud-deep'); tone(noteFreq(11), 0.04, 'sine', 0.4); }
+    else if (it.kind === 'petal') { petalNext = true; addFloat(p.x, p.y - p.r, 'Petal', 'bud-deep'); tone(noteFreq(11), 0.04, 'sine', 0.4); }
+    else if (it.kind === 'dew') dewSplash(p);
+    else if (it.kind === 'bee') releaseBee(p);
+    else if (it.kind === 'sun') sunbeam(p);
     updateHud();
+  }
+
+  // ----- Bumpers, rings and power-ups -----
+  function bounceOff(b, cx, cy, rad) {
+    const dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy), min = rad + ballR;
+    if (d >= min || d < 1e-6) return false;
+    const nx = dx / d, ny = dy / d;
+    b.x = cx + nx * min; b.y = cy + ny * min;
+    const vn = b.vx * nx + b.vy * ny;
+    if (vn >= 0) return false;
+    b.vx -= 2 * vn * nx; b.vy -= 2 * vn * ny;
+    return true;
+  }
+  function boing(it, b) {
+    it.wobV = (it.wobV || 0) + 9;
+    it.pulse = 1;
+    const now = performance.now();
+    if (!it.lastBoing || now - it.lastBoing > 60) { tone(noteFreq(2) * 0.75, 0.035, 'triangle', 0.16); it.lastBoing = now; }
+    spark(b);
+  }
+  function goldify(b, it) {
+    b.gold = true;
+    it.pulse = 1; it.wobV = (it.wobV || 0) + 4;
+    tone(noteFreq(12), 0.025, 'sine', 0.4);
+    glint(b.x, b.y, 1.1);
+  }
+  const leanFrom = (x, it) => (x < itemPos(it).x ? 1 : -1);
+  // Dewdrop: a splash that nudges every bud nearby.
+  function dewSplash(p) {
+    const rad = R * 0.36;
+    particles.push({ type: 'ripple', x: p.x, y: p.y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.6, size: rad });
+    particles.push({ type: 'ripple', x: p.x, y: p.y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.6, size: rad * 0.7, delay: 0.08 });
+    for (let i = 0; i < 10 && !reduced; i++) {
+      const a = Math.random() * TAU, sp = R * (0.3 + Math.random() * 0.4);
+      particles.push({ type: 'drop', x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R * 0.2, rot: 0, vr: 0, life: 1, decay: 1.6, size: ballR * (0.35 + Math.random() * 0.3) });
+    }
+    for (const it of items) {
+      if (it.kind !== 'shape' || it.dead) continue;
+      const q = itemPos(it);
+      if (Math.hypot(q.x - p.x, q.y - p.y) < rad + q.r * 0.5) hurt(it, 1, leanFrom(p.x, it));
+    }
+    addFloat(p.x, p.y - p.r, 'Splash', 'sky');
+    [9, 12, 14].forEach((n, i) => tone(noteFreq(n), 0.025, 'sine', 0.3, i * 0.04));
+    haptic();
+  }
+  // Bee: buzzes from bud to bud for a few seconds, then heads home to Erwu.
+  function releaseBee(p) {
+    bees.push({ x: p.x, y: p.y, vx: 0, vy: -R, life: 4.2, cd: 0, ph: Math.random() * TAU, trail: [] });
+    addFloat(p.x, p.y - p.r, 'Bee!', 'honey');
+    tone(noteFreq(4), 0.03, 'sawtooth', 0.12); tone(noteFreq(5), 0.02, 'sawtooth', 0.12, 0.08);
+  }
+  function updateBees(dt) {
+    for (const bee of bees) {
+      bee.life -= dt; bee.cd -= dt; bee.ph += dt * 50;
+      let tx = 0, ty = 0;
+      if (bee.life > 0) {
+        let best = null, bd = Infinity;
+        for (const it of items) {
+          if (it.kind !== 'shape' || it.dead) continue;
+          const q = itemPos(it), d = Math.hypot(q.x - bee.x, q.y - bee.y);
+          if (d < bd) { bd = d; best = { it, q }; }
+        }
+        if (best) {
+          tx = best.q.x; ty = best.q.y;
+          if (bd < best.q.r + R * 0.03 && bee.cd <= 0) {
+            hurt(best.it, 1, leanFrom(bee.x, best.it));
+            bee.cd = 0.32;
+            const a = Math.atan2(bee.y - ty, bee.x - tx) + (Math.random() - 0.5) * 1.2;
+            bee.vx = Math.cos(a) * R * 1.3; bee.vy = Math.sin(a) * R * 1.3;
+          }
+        } else bee.life = Math.min(bee.life, 0);
+      }
+      const dx = tx - bee.x, dy = ty - bee.y, d = Math.hypot(dx, dy) || 1, sp = R * (bee.life > 0 ? 1.4 : 1.8);
+      const k = Math.min(1, dt * (bee.cd > 0.15 ? 1.2 : 4));
+      bee.vx += (dx / d * sp - bee.vx) * k + (Math.random() - 0.5) * R * 4 * dt;
+      bee.vy += (dy / d * sp - bee.vy) * k + (Math.random() - 0.5) * R * 4 * dt;
+      bee.x += bee.vx * dt; bee.y += bee.vy * dt;
+      const rr = Math.hypot(bee.x, bee.y);
+      if (rr > R - ballR) { bee.x *= (R - ballR) / rr; bee.y *= (R - ballR) / rr; }
+      bee.trail.push(bee.x, bee.y); if (bee.trail.length > 20) bee.trail.splice(0, 2);
+      if ((bee.life <= 0 && d < coreR * 1.2) || bee.life < -4) { bee.done = true; cat.bounce = 1; }
+    }
+    bees = bees.filter((b) => !b.done);
+  }
+  // Sunbeam: a line of light straight out from Erwu through the pickup.
+  function sunbeam(p) {
+    const a = Math.atan2(p.y, p.x), ca = Math.cos(a), sa = Math.sin(a);
+    beams.push({ a, t: 0 });
+    for (const it of items) {
+      if (it.kind !== 'shape' || it.dead) continue;
+      const q = itemPos(it), along = q.x * ca + q.y * sa, across = Math.abs(-q.x * sa + q.y * ca);
+      if (along > 0 && across < q.r + R * 0.05) hurt(it, 2, across > 0 ? 1 : -1);
+    }
+    addFloat(p.x, p.y - p.r, 'Sunbeam', 'honey');
+    [7, 11, 14].forEach((n, i) => tone(noteFreq(n), 0.03, 'sine', 0.6, i * 0.03));
+    haptic(2);
   }
 
   const speedNow = () => R * 2.3;
@@ -1310,7 +1555,13 @@
           for (const it of items) {
             if (it.dead) continue;
             if (it.kind === 'shape') { if (collideShape(b, it)) { onHit(it, b); spark(b); } }
-            else {
+            else if (it.kind === 'mushroom') {
+              const p = itemPos(it);
+              if (bounceOff(b, p.x, p.y - p.r * 0.1, p.r * 0.8)) boing(it, b);
+            } else if (it.kind === 'ring') {
+              const p = itemPos(it);
+              if (!b.gold && (b.x - p.x) ** 2 + (b.y - p.y) ** 2 < (p.r * 0.72) ** 2) goldify(b, it);
+            } else {
               const p = itemPos(it);
               if ((b.x - p.x) ** 2 + (b.y - p.y) ** 2 < (p.r * 0.7 + ballR) ** 2) collect(it);
             }
@@ -1379,9 +1630,10 @@
       }
       let left = sdt;
       while (left > 0) { const d = Math.min(left, 1 / 90); stepBalls(d); left -= d; }
-      if (shot.t > 22) balls.forEach((b) => (b.homing = true));
+      updateBees(sdt);
+      if (shot.t > 22) { balls.forEach((b) => (b.homing = true)); bees.forEach((b) => (b.life = Math.min(b.life, 0))); }
       if (shot.t > 2.5 && el.ff.hidden) updateHud();
-      if (shot.launched >= shot.toLaunch && balls.length === 0) endTurn();
+      if (shot.launched >= shot.toLaunch && balls.length === 0 && bees.length === 0) endTurn();
       else if (shot && shot.hits !== shot.shownHits) { shot.shownHits = shot.hits; updateHud(); }
     }
 
@@ -1404,6 +1656,8 @@
     for (const pl of growing) { pl.live += dt / 0.75; if (pl.live >= 1) { delete pl.live; gardenDirty = true; } }
     growing = growing.filter((pl) => pl.live != null);
     raysFx = Math.max(0, raysFx - dt * 0.55);
+    for (const bm of beams) bm.t += dt;
+    beams = beams.filter((bm) => bm.t < 0.8);
     if (fbT >= 0) fbT += dt;
     launchFx = Math.max(0, launchFx - dt * 2.4);
     updateConfetti(dt);
@@ -1414,7 +1668,7 @@
     for (const b of blooms) if (b.t >= BLOOM_T) shed(b);
     blooms = blooms.filter((b) => b.t < BLOOM_T);
     // While you think, Erwu tends the garden: a little dew on something she's watching over.
-    if (state === 'ready' && garden.plants.length && !reduced) {
+    if ((state === 'ready' || state === 'title') && garden.plants.length && !reduced) {
       tendTimer -= dt;
       if (tendTimer <= 0) {
         tendTimer = 0.8 + Math.random() * 1.4;
@@ -1431,7 +1685,7 @@
         p.ph += dt * 3; p.vx = Math.sin(p.ph) * R * 0.08; p.vy *= 0.99;
       } else {
         p.vx *= 0.93; p.vy *= 0.93;
-        if (p.type !== 'glint') p.vy += R * 0.12 * dt;
+        if (p.type !== 'glint' && p.type !== 'ripple') p.vy += R * 0.12 * dt;
       }
       p.rot += p.vr * dt; p.life -= dt * (p.decay || 1.3);
     }
@@ -1455,7 +1709,8 @@
     cat.bat = Math.max(0, cat.bat - dt * 3.2);
     cat.happy = Math.max(0, cat.happy - dt);
     cat.blink = Math.max(0, cat.blink - dt);
-    if (state === 'ready' && !aim) {
+    if (state === 'title') cat.idle = 0;
+    else if (state === 'ready' && !aim) {
       cat.idle += dt;
       if (cat.idle > 1.6 && cat.mood === 'watch') cat.mood = 'idle';
       if (cat.idle > 12) cat.mood = 'sleepy';
@@ -1607,6 +1862,46 @@
     g.stroke();
     g.restore();
     drawWicker(g, r * 0.97, Math.max(3, r * 0.16));
+  }
+
+  // The landing's clearing: moss, a stepping-stone path up to Erwu's nest,
+  // tufts of grass, and fallen petals once the garden is doing well.
+  function drawClearing(now, k) {
+    const heroR = R * 0.34;
+    ctx.save();
+    ctx.globalAlpha = k;
+    const gr = ctx.createRadialGradient(0, heroR * 0.2, heroR * 0.5, 0, heroR * 0.2, R * 1.08);
+    gr.addColorStop(0, rgb(hexRgb(C.sage), 0.55)); gr.addColorStop(0.55, rgb(hexRgb(C.halo), 0.6)); gr.addColorStop(1, rgb(hexRgb(C.halo), 0));
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, R * 1.08, 0, TAU); ctx.fill();
+    const rnd = seeded(77), line = rgb(hexRgb(C.walnut), 0.3);
+    // fallen petals, more of them the more the garden has grown
+    const tier = gardenTier(), petalCols = [C['petal-bloom'], '#FFFDF5', C.lavender, C.butter];
+    for (let i = 0; i < 2 + tier * 5; i++) {
+      const a = rnd() * TAU, d = heroR * 1.35 + rnd() * (R * 0.85 - heroR * 1.35);
+      bentPetal(ctx, Math.cos(a) * d, Math.sin(a) * d, rnd() * TAU, R * (0.035 + rnd() * 0.02), R * 0.014, (rnd() - 0.5) * 0.8, rgb(hexRgb(petalCols[i % 4]), 0.85), line);
+    }
+    // stepping stones from the bottom of the clearing up to the nest
+    for (let i = 0; i < 5; i++) {
+      const t = i / 4, y = heroR * 1.45 + (R * 0.95 - heroR * 1.45) * t, x = Math.sin(t * Math.PI * 1.3 + 0.4) * R * 0.1;
+      const w = R * (0.065 + 0.03 * t), h = w * (0.52 + rnd() * 0.08), rot = (rnd() - 0.5) * 0.4;
+      ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.12); ctx.beginPath(); ctx.ellipse(x + w * 0.08, y + h * 0.3, w, h, rot, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#E6DDCB'; ctx.strokeStyle = line; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(x, y, w, h, rot, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.ellipse(x - w * 0.3, y - h * 0.3, w * 0.35, h * 0.2, rot, 0, TAU); ctx.fill();
+      ctx.fillStyle = rgb(hexRgb(C.moss), 0.35);
+      ctx.beginPath(); ctx.ellipse(x + w * 0.5, y + h * 0.6, w * 0.25, h * 0.2, 0, 0, TAU); ctx.fill();
+    }
+    // grass tufts around the nest
+    for (let i = 0; i < 9; i++) {
+      const a = Math.PI * (0.05 + 0.9 * i / 8) + (rnd() - 0.5) * 0.2, d = heroR * (1.12 + rnd() * 0.25);
+      const x = Math.cos(a) * d, y = Math.sin(a) * d * 0.9 + heroR * 0.1, hgt = R * (0.04 + rnd() * 0.035);
+      ctx.lineCap = 'round'; ctx.lineWidth = 1.4;
+      for (let j = -1; j <= 1; j++) {
+        ctx.strokeStyle = rgb(mix(C.sage, C['leaf-dark'], rnd() * 0.6));
+        ctx.beginPath(); ctx.moveTo(x + j * 2, y); ctx.quadraticCurveTo(x + j * 2, y - hgt * 0.6, x + j * hgt * 0.4, y - hgt); ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   // Full bloom: slow sunbeams turning out from Erwu.
@@ -1772,9 +2067,9 @@
         if (x * x + y * y > (R - ballR) ** 2) { hit = true; break; }
         let blocked = false;
         for (const it of items) {
-          if (it.kind !== 'shape' || it.dead) continue;
+          if ((it.kind !== 'shape' && it.kind !== 'mushroom') || it.dead) continue;
           const p = itemPos(it);
-          if ((x - p.x) ** 2 + (y - p.y) ** 2 < (p.r * 0.9 + ballR) ** 2) { blocked = true; break; }
+          if ((x - p.x) ** 2 + (y - p.y) ** 2 < (p.r * (it.kind === 'mushroom' ? 0.8 : 0.9) + ballR) ** 2) { blocked = true; break; }
         }
         if (blocked) { hit = true; break; }
       }
@@ -2061,9 +2356,10 @@
 
   function drawPickup(it, now) {
     const p = itemPos(it);
-    const born = Math.min(1, (now - it.born) / 420);
+    const born = Math.max(0, Math.min(1, (now - it.born) / 420));
     const breathe = 1 + Math.sin(now / 420 + it.id) * 0.06;
-    const s = (reduced ? 1 : easeOutBack(born)) * breathe;
+    const s = (reduced ? 1 : easeOutBack(born)) * (it.kind === 'mushroom' || it.kind === 'ring' ? 1 : breathe);
+    if (s <= 0.01) return;
     const honey = hexRgb(C.honey), soft = hexRgb(C['honey-soft']);
     ctx.save();
     ctx.translate(p.x, p.y); ctx.scale(s, s);
@@ -2084,18 +2380,132 @@
       og.addColorStop(0, '#FFF3D6'); og.addColorStop(1, rgb(honey));
       ctx.fillStyle = og;
       ctx.beginPath(); ctx.arc(0, 0, ballR * 1.05, 0, TAU); ctx.fill();
-    } else {
+    } else if (it.kind === 'petal') {
       ctx.rotate(now / 1800);
+      const rnd = seeded(it.id * 5 + 1);
       for (let k = 0; k < 5; k++) {
-        ctx.save(); ctx.rotate(k * TAU / 5);
-        ctx.fillStyle = rgb(k % 2 ? soft : honey, 0.95);
-        ctx.beginPath(); ctx.ellipse(0, -p.r * 0.36, p.r * 0.2, p.r * 0.34, 0, 0, TAU); ctx.fill();
-        ctx.restore();
+        bentPetal(ctx, 0, 0, k * TAU / 5 + (rnd() - 0.5) * 0.3 - Math.PI / 2, p.r * (0.62 + rnd() * 0.18), p.r * 0.24, (rnd() - 0.5) * 0.6, rgb(k % 2 ? soft : honey, 0.95));
       }
       ctx.fillStyle = rgb(honey);
       ctx.beginPath(); ctx.arc(0, 0, p.r * 0.14, 0, TAU); ctx.fill();
+    } else if (it.kind === 'dew') {
+      // a fat dewdrop, wobbling
+      const w = 1 + Math.sin(now / 190 + it.id) * 0.05, r = p.r * 0.55;
+      ctx.scale(w, 2 - w);
+      const dg = ctx.createRadialGradient(-r * 0.3, -r * 0.1, r * 0.1, 0, r * 0.2, r * 1.2);
+      dg.addColorStop(0, '#FFFFFF'); dg.addColorStop(0.45, '#D6E9F5'); dg.addColorStop(1, '#88B6D6');
+      ctx.fillStyle = dg; ctx.strokeStyle = 'rgba(80,130,170,0.55)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, -r * 1.35);
+      ctx.bezierCurveTo(r * 0.5, -r * 0.6, r, -r * 0.1, r, r * 0.35);
+      ctx.arc(0, r * 0.35, r, 0, Math.PI);
+      ctx.bezierCurveTo(-r, -r * 0.1, -r * 0.5, -r * 0.6, 0, -r * 1.35);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.ellipse(-r * 0.35, r * 0.05, r * 0.16, r * 0.3, -0.4, 0, TAU); ctx.fill();
+    } else if (it.kind === 'bee') {
+      ctx.translate(0, Math.sin(now / 160 + it.id) * p.r * 0.1);
+      drawBee(ctx, p.r * 0.62, now + it.id * 97, 0);
+    } else if (it.kind === 'sun') {
+      // a little sun, rays turning
+      const r = p.r * 0.38;
+      ctx.save(); ctx.rotate(now / 1600);
+      ctx.fillStyle = rgb(hexRgb(C.butter));
+      for (let k = 0; k < 10; k++) {
+        const a = k * TAU / 10, l = r * (k % 2 ? 1.55 : 1.85);
+        ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.16) * r * 0.9, Math.sin(a - 0.16) * r * 0.9); ctx.lineTo(Math.cos(a) * l, Math.sin(a) * l); ctx.lineTo(Math.cos(a + 0.16) * r * 0.9, Math.sin(a + 0.16) * r * 0.9); ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalCompositeOperation = 'lighter';
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
+      sg.addColorStop(0, rgb(hexRgb(C.butter), 0.4)); sg.addColorStop(1, rgb(hexRgb(C.butter), 0));
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, r * 2.2, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      const cg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+      cg.addColorStop(0, '#FFF6D8'); cg.addColorStop(1, rgb(hexRgb(C.honey)));
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+    } else if (it.kind === 'mushroom') {
+      // a springy toadstool bumper
+      const wob = it.wob || 0, sq = 1 + wob * 0.16;
+      ctx.translate(0, p.r * 0.55); ctx.scale(sq, 2 - sq); ctx.translate(0, -p.r * 0.55);
+      const r = p.r;
+      ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.14);
+      ctx.beginPath(); ctx.ellipse(r * 0.08, r * 0.62, r * 0.7, r * 0.18, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#F7EEDC'; ctx.strokeStyle = rgb(hexRgb(C.walnut), 0.45); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-r * 0.3, r * 0.6); ctx.quadraticCurveTo(-r * 0.2, r * 0.1, -r * 0.22, -r * 0.05);
+      ctx.lineTo(r * 0.22, -r * 0.05); ctx.quadraticCurveTo(r * 0.2, r * 0.1, r * 0.3, r * 0.6); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const cg = ctx.createLinearGradient(0, -r * 0.8, 0, 0);
+      cg.addColorStop(0, '#E8766C'); cg.addColorStop(1, '#C9544E');
+      ctx.fillStyle = cg;
+      ctx.beginPath(); ctx.moveTo(-r * 0.85, -r * 0.02);
+      ctx.bezierCurveTo(-r * 0.9, -r * 0.75, r * 0.9, -r * 0.8, r * 0.85, -r * 0.02);
+      ctx.quadraticCurveTo(0, r * 0.12, -r * 0.85, -r * 0.02); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#FFF8EA';
+      for (const [dx, dy, rr] of [[-0.45, -0.3, 0.13], [0.05, -0.52, 0.15], [0.48, -0.26, 0.11], [0.1, -0.18, 0.08], [-0.2, -0.55, 0.07]]) {
+        ctx.beginPath(); ctx.ellipse(dx * r, dy * r, rr * r, rr * r * 0.8, 0, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.5, r * 0.22, r * 0.08, -0.5, 0, TAU); ctx.fill();
+      if (it.pulse > 0.05) {
+        ctx.strokeStyle = rgb(hexRgb(C.butter), it.pulse * 0.8); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, -r * 0.2, r * (1 + (1 - it.pulse) * 0.5), 0, TAU); ctx.stroke();
+      }
+    } else if (it.kind === 'ring') {
+      // a wreath of tiny flowers to thread pollen through
+      const r = p.r * 0.86, rnd = seeded(it.id * 11 + 3);
+      ctx.globalCompositeOperation = 'lighter';
+      const rg = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 1.25);
+      rg.addColorStop(0, rgb(hexRgb(C.butter), 0)); rg.addColorStop(0.7, rgb(hexRgb(C.butter), 0.18 + it.pulse * 0.4)); rg.addColorStop(1, rgb(hexRgb(C.butter), 0));
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, r * 1.25, 0, TAU); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = rgb(mix(C.sage, C.moss, 0.4)); ctx.lineWidth = Math.max(1.5, r * 0.12);
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke();
+      ctx.rotate(now / 5000 + it.id);
+      const cols = [C['petal-bloom'], '#FFFDF5', C.butter, C.lavender];
+      for (let k = 0; k < 8; k++) {
+        const a = k * TAU / 8, x = Math.cos(a) * r, y = Math.sin(a) * r;
+        leafAt(ctx, x, y, a + Math.PI / 2 + 0.6, r * 0.3, r * 0.1, rgb(mix(C.sage, C.moss, 0.3)));
+        blossom(ctx, x, y, 5, r * 0.24, r * 0.12, cols[k % 4], k % 4 === 2 ? C.honey : C.butter, null, a, rnd);
+      }
     }
     ctx.restore();
+  }
+  // A round little bee with flickering wings.
+  function drawBee(g, s, now, heading) {
+    g.save(); g.rotate(heading);
+    const flap = Math.abs(Math.sin(now / 22));
+    g.fillStyle = 'rgba(255,255,255,0.75)'; g.strokeStyle = 'rgba(120,140,160,0.5)'; g.lineWidth = 0.8;
+    for (const side of [-1, 1]) {
+      g.beginPath(); g.ellipse(-s * 0.1, side * s * (0.35 + flap * 0.2), s * 0.42, s * (0.18 + flap * 0.12), side * 0.5, 0, TAU); g.fill(); g.stroke();
+    }
+    g.fillStyle = '#F2C94C'; g.strokeStyle = '#5A4A3E'; g.lineWidth = 1;
+    g.beginPath(); g.ellipse(0, 0, s * 0.62, s * 0.42, 0, 0, TAU); g.fill(); g.stroke();
+    g.save(); g.beginPath(); g.ellipse(0, 0, s * 0.62, s * 0.42, 0, 0, TAU); g.clip();
+    g.fillStyle = '#4A3D33';
+    for (const x of [-0.25, 0.08]) g.fillRect(x * s, -s * 0.5, s * 0.16, s);
+    g.restore();
+    g.fillStyle = '#4A3D33'; g.beginPath(); g.arc(s * 0.46, -s * 0.08, s * 0.07, 0, TAU); g.fill();
+    g.restore();
+  }
+  function drawBeesAndBeams() {
+    for (const bm of beams) {
+      const k = 1 - bm.t / 0.8, len = R * 1.1, w = R * 0.07 * (0.6 + 0.4 * k);
+      ctx.save(); ctx.rotate(bm.a); ctx.globalCompositeOperation = 'lighter';
+      const bg = ctx.createLinearGradient(0, -w, 0, w);
+      bg.addColorStop(0, rgb(hexRgb(C.butter), 0)); bg.addColorStop(0.5, rgb(hexRgb(C.butter), 0.85 * k)); bg.addColorStop(1, rgb(hexRgb(C.butter), 0));
+      ctx.fillStyle = bg; ctx.fillRect(coreR, -w, len, w * 2);
+      ctx.fillStyle = rgb(WHITE, 0.6 * k); ctx.fillRect(coreR, -w * 0.18, len, w * 0.36);
+      ctx.restore();
+    }
+    for (const bee of bees) {
+      for (let i = 0; i < bee.trail.length; i += 4) {
+        ctx.fillStyle = rgb(hexRgb(C.honey), 0.25 * i / bee.trail.length);
+        ctx.beginPath(); ctx.arc(bee.trail[i], bee.trail[i + 1], ballR * 0.25, 0, TAU); ctx.fill();
+      }
+      ctx.save(); ctx.translate(bee.x, bee.y);
+      const h = Math.atan2(bee.vy, bee.vx);
+      ctx.scale(Math.cos(h) < 0 ? -1 : 1, 1);
+      drawBee(ctx, R * 0.05, performance.now() + bee.ph, Math.cos(h) < 0 ? Math.PI - h : h);
+      ctx.restore();
+    }
   }
 
   function lens(g, s) {
@@ -2317,18 +2727,26 @@
       drawPlant(ctx, pl);
       ctx.restore();
     }
+    // On the landing page Erwu sleeps in a mossy clearing; the flower grows in around her when you play.
+    const te = titleT * titleT * (3 - 2 * titleT);
+    if (te > 0) drawClearing(now, te);
     // the whole flower swells a touch at the moment of full bloom
     const zoom = raysFx > 0 ? 1 + 0.035 * Math.sin(Math.min(1, (1 - raysFx) / 0.35) * Math.PI) : 1;
-    ctx.scale(zoom, zoom);
-    drawFlower(now);
-    if (raysFx > 0) drawRays(now);
-    drawAim(now);
-
-    for (const it of items) {
-      if (it.dead) continue;
-      if (it.kind === 'shape') drawBud(it, now); else drawPickup(it, now);
+    if (te < 1) {
+      ctx.save();
+      ctx.scale(zoom * (1 - 0.3 * te), zoom * (1 - 0.3 * te));
+      ctx.rotate(-te * 0.35);
+      ctx.globalAlpha = 1 - te;
+      drawFlower(now);
+      if (raysFx > 0) drawRays(now);
+      drawAim(now);
+      for (const it of items) {
+        if (it.dead) continue;
+        if (it.kind === 'shape') drawBud(it, now); else drawPickup(it, now);
+      }
+      for (const b of blooms) drawBloom(b);
+      ctx.restore();
     }
-    for (const b of blooms) drawBloom(b);
     drawFlights();
 
     const goldA = hexRgb(C.honey);
@@ -2352,6 +2770,16 @@
         continue;
       }
       if (p.delay > 0) continue;
+      if (p.type === 'ripple') {
+        ctx.strokeStyle = rgb(hexRgb(C.sky), p.life * 0.9); ctx.lineWidth = 1 + p.life * 2.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - p.life * 0.85), 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (p.type === 'drop') {
+        ctx.fillStyle = rgb(mix('#FFFFFF', C.sky, 0.5), a);
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+        continue;
+      }
       if (p.type === 'flutter') {
         const flip = Math.cos(p.ph);
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, 0.2 + 0.8 * Math.abs(flip));
@@ -2400,11 +2828,22 @@
       bg.addColorStop(0, '#FFF3D6'); bg.addColorStop(0.55, rgb(mixA(honey, WHITE, 0.2))); bg.addColorStop(1, rgb(honey));
       ctx.fillStyle = bg;
       ctx.beginPath(); ctx.arc(b.x, b.y, ballR, 0, TAU); ctx.fill();
+      if (b.gold) {
+        // golden pollen: a brighter glow and a twinkle
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = rgb(hexRgb(C.butter), 0.45);
+        ctx.beginPath(); ctx.arc(b.x, b.y, ballR * 2.1, 0, TAU); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(b.x - ballR * 1.6, b.y); ctx.lineTo(b.x + ballR * 1.6, b.y); ctx.moveTo(b.x, b.y - ballR * 1.6); ctx.lineTo(b.x, b.y + ballR * 1.6); ctx.stroke();
+      }
     }
+    drawBeesAndBeams();
 
     // The golden heart of the flower: a ring of stamens around Erwu's cushion.
     const st = hexRgb(C.stamen);
-    for (let i = 0; i < 22; i++) {
+    ctx.globalAlpha = 1 - te;
+    for (let i = 0; i < 22 && te < 1; i++) {
       const a = i * TAU / 22 + 0.07, long = i % 2 === 0;
       const r1 = coreR * (long ? 1.3 : 1.18) + stamenFx * coreR * 0.14 * (long ? 1 : 0.6);
       ctx.strokeStyle = rgb(st, 0.8); ctx.lineWidth = 1;
@@ -2412,7 +2851,9 @@
       ctx.fillStyle = rgb(honey, long ? 0.95 : 0.7);
       ctx.beginPath(); ctx.arc(Math.cos(a) * r1, Math.sin(a) * r1, long ? Math.max(1.6, ballR * 0.36) : Math.max(1.2, ballR * 0.26), 0, TAU); ctx.fill();
     }
-    drawNest(ctx, coreR);
+    ctx.globalAlpha = 1;
+    const nestR = coreR + (R * 0.34 - coreR) * te;
+    drawNest(ctx, nestR);
     if (launchFx > 0) {
       ctx.strokeStyle = rgb(hexRgb(C.butter), launchFx * 0.8); ctx.lineWidth = 2 + launchFx * 2;
       ctx.beginPath(); ctx.arc(0, 0, coreR * 1.1 + (1 - launchFx) * R * 0.22, 0, TAU); ctx.stroke();
@@ -2421,7 +2862,17 @@
       ctx.strokeStyle = rgb(honey, swatFx * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, 0, coreR + (1 - swatFx) * R * 0.35, 0, TAU); ctx.stroke();
     }
-    drawCat(ctx, coreR, now, catPose());
+    drawCat(ctx, nestR, now, catPose());
+    if (te > 0.2 && cat.mood === 'sleepy' && !reduced) {
+      // z's drifting up from a sleeping Erwu
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i = 0; i < 3; i++) {
+        const t = ((now / 1700) + i / 3) % 1;
+        ctx.font = `600 ${Math.round(nestR * (0.22 + t * 0.2))}px ${SERIF}`;
+        ctx.fillStyle = rgb(hexRgb(C['bud-deep']), Math.sin(t * Math.PI) * 0.65 * te);
+        ctx.fillText('z', nestR * (0.7 + t * 0.5 + Math.sin(t * 6 + i) * 0.08), -nestR * (0.75 + t * 0.9));
+      }
+    }
 
     // petal charge: three small petals around Erwu
     if (petalNext && state !== 'over') {
@@ -2513,6 +2964,8 @@
   el.ff.addEventListener('click', () => { timeScale = timeScale > 1 ? 1 : 3; updateHud(); });
   el.sound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
   el.again.addEventListener('click', newGame);
+  el.toGarden.addEventListener('click', () => { newGame(); showTitle(); });
+  el.play.addEventListener('click', leaveTitle);
   el.restart.addEventListener('click', () => {
     if (state === 'flying' || state === 'advancing') return;
     if (restartArmed) {
@@ -2561,6 +3014,7 @@
     if (run && run.v === 3 && run.items && run.items.length) { restore(run); markReady(); }
     else newGame();
     updateHud();
+    showTitle();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { updateHud(); });
     requestAnimationFrame(frame);
   }
