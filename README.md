@@ -9,17 +9,18 @@ Open the GitHub Pages site on your iPhone in Safari, tap Share, then **Add to Ho
 ## How it plays
 
 - **Aim:** pull back anywhere on the screen like a slingshot, then let go. Letting go near where you started cancels the shot.
-- **Buds:** each hit peels back one sepal: six, five, four, three, then the bud blooms open and lets its petals go. Tougher buds show a number and a deeper colour.
+- **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Pollen pips under a bud (or a number, for tough ones) show the hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
 - **Pollen clusters** give you one more ball. The **petal** pickup splits your next shot three ways.
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
 
 ## The garden
 
-- Every bud you bloom plants a flower (daisy, cosmos, lavender, buttercup, forget-me-not) out in the garden near where it bloomed.
+- Every bud you bloom sends a glowing seed arcing out into the garden, where it sprouts a flower (daisy, cosmos, lavender, buttercup, forget-me-not).
 - Pollen that bounces off the rim drops seeds, so even a miss grows grass, clover and ferns, or feeds the nearest plant.
 - Each turn Erwu tends the garden and everything grows a little. While you're aiming, she keeps an eye on it (the little glints of dew).
-- The five buds under **Best** show how grown the garden is.
+- The five buds under **Best** show how grown the garden is. Once it's growing well, butterflies start to visit.
+- **Full bloom** lights the petals one by one, then bursts: sunbeams, a petal shower, hearts from Erwu and a couple of butterflies set free.
 - Erwu keeps things tidy for about half a day after you stop playing. After that the garden slowly retreats, outermost plants first, back to sprouts and then bare ground over about a week.
 
 ## Files
