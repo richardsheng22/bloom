@@ -63,3 +63,22 @@ The full motion set is the largest and least certain piece of the series, so it 
 - The run nest keeps the compact face and paws, so aiming, ball-tracking, danger ears and the swat are untouched. Play switches immediately.
 - Both reuse `drawCat` with a new `noPaws` option, so the face stays identical across all three presentations.
 - **Provisional:** proportions, tail length and the lack of chest markings are guesses. Please compare them with the real Erwu; the reference pack will settle them in phase B.
+
+## Reference received — 2026-09-26
+
+The owner shared a front-on photo of Erwu sitting. It is reference only: it is not stored in this public repository. Observations, as seen in the photo:
+
+- British Shorthair build, blue-grey plush coat with slightly lighter, silvery tips. Faint darker banding on the chest and legs, not a strong tabby pattern.
+- A very round body, much wider at the base than the head, like an egg. The head sinks straight into the shoulders with full cheeks and no visible neck.
+- Short, thick, straight front legs set close together; big round paws.
+- Large, round, pale golden-amber eyes; small ears set wide apart on a broad, flat-topped head; a short nose.
+- Sitting pose: upright and square-on, weight settled low, tail hidden behind.
+
+Changes made from it:
+
+- Seated pose rebuilt: an egg-shaped body wider than the head, full cheeks merging the head into the shoulders, soft chevrons across a plush chest ruff, short thick legs and larger paws, tail tucked behind with only the tip showing.
+- Curled pose made rounder and plusher, with fainter back stripes, a thicker tail and fuller cheeks.
+- Fur colour warmed slightly from violet-grey (#6F6E7E) to blue-grey (#6E6C78); eyes lightened to a paler gold (#D9B452). The run view uses the same colours.
+- The face itself (and its half-lidded, faintly unimpressed look) is unchanged, keeping the earlier correction that it should not look too chubby.
+
+Still to confirm from references: her sleeping pose, tail length and carriage, and the chest colour. Photos of her asleep and from the side would settle the curled pose.

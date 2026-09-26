@@ -106,7 +106,8 @@
     const top = Math.max(scene.nest + 48, h * 0.30);
     const side = Math.max(scene.nest + 14, h * 0.24);
     const lower = Math.max(scene.nest * 0.65, Math.min(72, h * 0.18));
-    const points = [[-x*.78,-side],[0,-top],[x*.78,-side],[-x*.83,lower],[x*.83,lower]];
+    // The cushion sits on the lawn in front of the rose bed, clear of the fountain on the left.
+    const points = [[-x*.78,-side],[0,-top],[x*.78,-side],[-x*.5,lower+Math.max(8,h*.05)],[x*.83,lower]];
     return anchors.map((a,i) => {
       const [px,py] = points[i], sign = px < 0 ? -1 : 1;
       return {...a, x:px,y:py,width:a.type==='patch'?64:58,height:a.type==='patch'?30:36,
@@ -115,20 +116,39 @@
       };
     });
   }
+  // Fixed scenery from the real garden: the rose bed Erwu naps in, the stone fountain
+  // on the left, and the deadwood by the back wall. Display geometry only; never saved.
+  function landmarks(scene) {
+    const x = Math.max(62, scene.width / 2 - 40), h = scene.height, n = scene.nest;
+    const rx = Math.min(n * 1.9, scene.width * 0.3), ry = rx * 0.62;
+    const fh = Math.max(44, Math.min(n * 1.4, h * 0.2));
+    // The back wall always stays behind the high bed, even on short screens.
+    const top = Math.max(n + 48, h * 0.30), wall = Math.min(-h / 2 + Math.max(16, h * 0.07), -top - 30);
+    return {
+      wall,
+      roses: { x: 0, y: n * 0.35, rx, ry },
+      fountain: { x: -Math.min(x * 0.95, scene.width / 2 - fh * 0.42), y: h * 0.02, width: fh * 0.72, height: fh },
+      deadwood: { x: x * 0.42, y: wall + fh * 0.62, width: fh * 0.6, height: fh * 0.62 },
+    };
+  }
   function projectPlant(plant, scene) {
     // Retain every legacy plant as a deterministic border. This is display-only.
     const rx=Math.max(20,scene.width/2-16), ry=Math.max(20,scene.height/2-42);
     const band=4+Math.max(0,Math.min(1,(plant.d-1)/1.6))*10;
-    const slots=geometry(scene);
+    const slots=geometry(scene), marks=landmarks(scene);
+    // Scenery is kept clear too; heights run upward from each base point.
+    const fixed=[marks.fountain,marks.deadwood];
     for(let step=0;step<100;step++) {
       const angle=plant.a+(step%2?1:-1)*Math.ceil(step/2)*0.10;
       const x=Math.cos(angle)*(rx-band), y=Math.sin(angle)*(ry-band);
       const clashes=slots.some(a => Math.abs(x-a.x)<a.width/2+14 && y>a.y-a.height/2-8 && y-30<a.y+a.height/2+8);
       const route=y>0&&Math.abs(x)<26;
       const approach=slots.some(a=>Math.hypot(x-a.interaction.x,y-12-a.interaction.y)<25);
-      if(!clashes&&!route&&!approach&&Math.hypot(x,y)>scene.nest+28)return {x,y};
+      const scenery=fixed.some(m => Math.abs(x-m.x)<m.width/2+12 && y>m.y-m.height-6 && y-24<m.y+8);
+      const inRoses=((x-marks.roses.x)/(marks.roses.rx+14))**2+((y-marks.roses.y)/(marks.roses.ry+14))**2<1;
+      if(!clashes&&!route&&!approach&&!scenery&&!inRoses&&Math.hypot(x,y)>scene.nest+28)return {x,y};
     }
     return {x:Math.cos(plant.a)<0?-rx:rx,y:-ry};
   }
-  return {VERSION,anchors,kinds,homes,records,find,at,valid,initialize,upgrade,label,placeName,plan,reverse,apply,preview,describe,geometry,projectPlant};
+  return {VERSION,anchors,kinds,homes,records,find,at,valid,initialize,upgrade,label,placeName,plan,reverse,apply,preview,describe,geometry,landmarks,projectPlant};
 });

@@ -70,3 +70,16 @@ All seven outstanding items above are done.
 7. This record. Evidence: `v08-evidence/`.
 
 Beds carry their plantings (`flower`, `growth`, optional `puffed`) from ticket 04, so moving or putting away a bed never loses what grows in it.
+
+## The real garden — 2026-09-26
+
+The owner shared photos of their garden. The garden view now follows it (photos not stored here):
+
+- **Centre:** a round rose bed with a ring of flagstones and dark mulch; Erwu's basket sits in it. Rose bushes in pink, coral and red with autumn-red foliage round the back and sides, a lavender clump at the front and a small red shrub, and a black metal rose arch behind the basket with a climbing rose.
+- **Left:** the three-tier stone fountain, with live water trickling over each bowl (slower while the garden rests; still with reduced motion).
+- **Back:** a timber retaining wall with hedges above it (including the golden patch on the right), a gravel strip along the wall where the three beds sit, and the weathered deadwood sculpture with a log beside it.
+- **Corners and path:** pine needles at the top left, weeping willow fronds at the top right, stepping stones up the lawn to the rose bed. The bin was left out on purpose.
+- The cushion's place moved to the lawn at the lower left, in front of the rose bed and clear of the fountain; the sunny stone stays on the right. Saved places are unchanged (only where they're drawn).
+- `BloomGardenLayout.landmarks(scene)` gives the scenery's geometry. Wild plants keep clear of the fountain, deadwood and rose bed, and the back wall always stays behind the high bed on short screens. A unit test checks this at five phone sizes.
+- The scenery is painted once into the cached garden layer; only the fountain's water animates per frame.
+- The run view is unchanged apart from Erwu's colours.

@@ -8,7 +8,7 @@ Open the GitHub Pages site on your iPhone in Safari, tap Share, then **Add to Ho
 
 ## How it plays
 
-The game opens in Erwu's garden, with Erwu curled up asleep in her basket. Tap her and she sits up to say hello; left alone, she curls back up. Tap a flower bed to plant it, tap a plant to look closer, or use **Look around** to choose a plant by name. **Play** or **Continue** starts immediately, even while Erwu is responding.
+The game opens in Erwu's garden, drawn after the real one: a round rose bed with a rose arch in the middle, where Erwu is curled up asleep in her basket; a three-tier stone fountain to the left; a weathered piece of deadwood by the timber wall at the back; and stepping stones up the lawn. Tap her and she sits up to say hello; left alone, she curls back up. Tap a flower bed to plant it, tap a plant to look closer, or use **Look around** to choose a plant by name. **Play** or **Continue** starts immediately, even while Erwu is responding.
 
 The leaf button brings you back to the garden without resetting your run. During a shot it waits for the turn to finish; tap it again to cancel. After a run ends, **Back to the garden** lets you linger, and **Play again** explicitly starts the next run.
 
