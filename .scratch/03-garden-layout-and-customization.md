@@ -1,6 +1,6 @@
 # 03 — Give the player a small, personally arranged garden
 
-Status: planned. Priority: core. Dependencies: 01, 02.
+Status: in progress — arrangement code committed in `26eac78` without an implementation record or tests. Priority: core. Dependencies: 01, 02.
 
 ## Outcome
 
@@ -39,3 +39,20 @@ None for layout and placement mechanics. Optional: a photo of Erwu's real cushio
 ## Out of scope
 
 Pixel-perfect landscaping, rotating every plant, large inventories, shops, and cosmetic catalogs.
+
+## Progress — 2026-09-26
+
+Already on `develop` (from a code review, not yet verified against the acceptance criteria):
+
+- `garden-layout.js`: five anchors (three beds, two nooks), three starter kinds (flower patch, cushion, sunny stone), validation, swap-aware placement plans, preview, undo by reversal, and put-away to the collection. Legacy plants are projected into a deterministic border that avoids anchors, approach points, and the path.
+- `index.html`: an Arrange mode with a picker, highlighted anchor targets, Place / Cancel / Put away / Undo, and object inspection.
+
+Outstanding before this ticket can be marked complete:
+
+1. Unit tests for `garden-layout.js` (valid/invalid layouts, place/swap/remove/undo plans, stale plans rejected, `initialize` on legacy and fresh saves), and a browser pass over the acceptance criteria at 320 px using taps alone.
+2. Place the cushion and sunny stone on their nooks by default. They currently start put away, so a new garden shows no furnishings.
+3. Until ticket 04 lands, beds are bare soil and read as stepping stones. Give an empty bed a planted look (tilled rows, a few seedlings) so it looks like somewhere to grow.
+4. The beds are also projected above the arena in the run view, where they crowd the top border. Make them smaller, fainter, or omit them during play (requirement 2).
+5. `preview()` applies each change twice (inside `copy` and again in `rows`); simplify when adding tests.
+6. Replace numbered labels (“Flower patch 2”) with place names, consistent with ticket 02's review notes.
+7. Write the implementation record and evidence as for 01 and 02.

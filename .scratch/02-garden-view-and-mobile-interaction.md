@@ -1,6 +1,6 @@
 # 02 — Make the garden a usable place on a phone
 
-Status: implemented and locally verified; physical iPhone acceptance remains in ticket 10. Priority: foundation. Dependencies: 01.
+Status: implemented and locally verified; presentation follow-ups below; physical iPhone acceptance remains in ticket 10. Priority: foundation. Dependencies: 01.
 
 ## Outcome
 
@@ -69,3 +69,10 @@ This ticket delivers inspection and safe input routing. Arrange/placement will b
 ### Remaining acceptance
 
 Physical iPhone Safari touch feel, real safe-area behavior, audio, and haptics are not claimed verified by Chromium emulation. Those remain ticket 10 checks. The large new Erwu animation set, customization, and reference gathering remain in their own tickets.
+
+## Review notes — 2026-09-26
+
+- Browser suites failed on `develop` after ticket 03 added `garden-layout.js`, because the test server's allowlist did not include it. Fixed; both suites pass again.
+- **Style:** the plant picker and the “Look around / Arrange” button row read as a form. Keep tapping in the scene as the main path and the `<select>` as the keyboard and screen-reader equivalent, styled or visually secondary. Replace numbered names (“Daisy 1”) with place-based or characterful names (“the daisy by the path”), generated from saved position so they stay stable.
+- **Composition:** Erwu is small in a wide, mostly empty clearing. Once 04 and 05 phase A land, review whether the garden-view scale should bring Erwu and the beds closer together.
+- **Copy:** the landing tagline changed from “Helping Erwu make her garden bloom” to “A little time with Erwu”. Owner to confirm.

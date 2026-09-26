@@ -1,6 +1,6 @@
 # 04 — Let ordinary play grow a chosen patch
 
-Status: planned. Priority: core. Dependencies: 01, 03.
+Status: planned, next after 03. Release: v0.8. Priority: core. Dependencies: 01, 03. Ticket 11 builds on the same patch progress model.
 
 ## Outcome
 
@@ -39,3 +39,7 @@ None. Start with lavender, daisies, and cosmos using the current palette. Option
 ## Out of scope
 
 Skill trees, breeding, resource conversion, watering chores, and power advantages from garden choices.
+
+## Coordination with ticket 11
+
+Design the progress model so a bed can hold either a chosen common flower or a unique plant from a rare seed, with the same planted → growing → flowering → established stages. Rare-seed plants may take a little longer to establish but use the same reward routing; do not build a second growth system.

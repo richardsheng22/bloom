@@ -1,6 +1,6 @@
 # 08 — Bring Erwu's personality into play and make returns welcoming
 
-Status: planned. Priority: complete the core experience. Dependencies: 01, 02, 05, 06, 07.
+Status: planned. Release: v0.9. Priority: complete the core experience. Dependencies: 01, 02, 05, 06, 07.
 
 ## Outcome
 

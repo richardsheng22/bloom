@@ -1,6 +1,6 @@
 # 06 — Give Erwu contextual intentions and gentle interaction
 
-Status: planned. Priority: core. Dependencies: 02, 03, 05.
+Status: planned. Release: v0.9. Priority: core. Dependencies: 02, 03, 05.
 
 ## Outcome
 

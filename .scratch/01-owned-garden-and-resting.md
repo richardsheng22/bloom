@@ -1,6 +1,6 @@
 # 01 — Preserve the garden; let it rest while unattended
 
-Status: implemented; automated checks passed, visual tuning ready for owner review. Priority: foundation. Dependencies: none.
+Status: implemented; automated checks passed. Visual tuning outstanding: resting is currently too subtle (see review notes). Priority: foundation. Dependencies: none.
 
 ## Outcome
 
@@ -61,3 +61,7 @@ Implemented on `develop`, based on `3df8d53`. Changes are uncommitted; no deploy
 ### Practical limits and review
 
 Physical iPhone Safari, haptics, and audio were not tested in this ticket; those remain ticket 10 acceptance. The original valid legacy state is preserved, but plants already deleted by the old decay cannot be reconstructed. No changes from tickets 02–09 are included. Owner visual feedback may tune the degree of flower folding and overgrowth; the non-destructive ownership behavior is implemented and verified.
+
+## Review notes — 2026-09-26
+
+- In `01-evidence`, the awake and seven-day resting captures are nearly identical apart from the sleeping “z”s and the status line. The ownership model is right; the look is too faint for a return to feel like one. Before acceptance, make rest readable at a glance on a phone: flowers visibly closed or cupped, a softer, cooler light over the clearing, fewer drifting petals, and the edge tufts a little more present. It should still read as serene, not neglected. Capture the before/after at 390 × 844 again for owner review.

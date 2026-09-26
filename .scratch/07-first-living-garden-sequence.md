@@ -1,6 +1,6 @@
 # 07 — Connect cultivation, visitors, and Erwu in one complete scene
 
-Status: planned. Priority: first playable milestone. Dependencies: 04, 06.
+Status: planned. Release: v0.9. Priority: first playable milestone. Dependencies: 04, 06.
 
 ## Outcome
 

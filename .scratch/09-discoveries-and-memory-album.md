@@ -1,6 +1,6 @@
 # 09 — Preserve a few personal discoveries and moments
 
-Status: planned, later enrichment. Priority: after the first playable slice feels good. Dependencies: 07, 08.
+Status: planned, later enrichment (after v0.9). Priority: after the first playable slice feels good. Dependencies: 07, 08.
 
 ## Outcome
 
@@ -34,3 +34,7 @@ None for the basic event/album system. Optional: preferred caption tone, a few p
 ## Out of scope
 
 Social feeds, leaderboards, cloud albums, accounts, monetization, and mandatory collection goals.
+
+## Coordination with ticket 11
+
+A first rare seed found and a first unique plant in flower are natural album entries. Record them as ticket 11 events so this ticket can pick them up without new tracking.

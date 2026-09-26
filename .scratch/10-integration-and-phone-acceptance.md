@@ -1,6 +1,6 @@
 # 10 — Validate the whole experience on phones and protect saved progress
 
-Status: planned. Priority: release acceptance. Dependencies: 01–08; include 09 when shipping it.
+Status: planned. Priority: release acceptance. Applied per release: v0.8 covers 01–04, 05 phase A, and 11; v0.9 covers 05 phase B and 06–08; include 09 when shipping it.
 
 ## Outcome
 

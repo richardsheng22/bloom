@@ -1,6 +1,6 @@
 # 05 — Build a recognizable full-body Erwu
 
-Status: planned. Priority: core. Dependencies: reference gathering can start now; integrate with 02 and 03.
+Status: planned in two phases. Phase A: release v0.8. Phase B: release v0.9. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
 
 ## Outcome
 
@@ -47,3 +47,11 @@ Engineering and labeled placeholder poses can proceed without the pack. Final bo
 ## Out of scope
 
 Photorealism, a large cosmetic wardrobe, complex skeletal tooling without demonstrated need, and dozens of unverified behaviors.
+
+## Phasing — 2026-09-26
+
+The full motion set is the largest and least certain piece of the series, so it is split.
+
+**Phase A (v0.8): still poses close to the current drawing.** A curled sleeping pose (used for the resting garden, the landing, and game over) and a seated pose (used when she is awake in the garden). Both extend the existing head and paws rather than redrawing her, and blend to the run nest immediately on Play. May ship as clearly labelled provisional art if the reference pack is not ready; the owner reviews both at actual phone size. Reduced motion uses the same poses without transitions.
+
+**Phase B (v0.9): the motion set.** Stand, walk, sniff, turn, stretch/yawn, settle, and crouch/pounce, plus the character sheet, from the reference pack. This is the foundation for 06–08.
