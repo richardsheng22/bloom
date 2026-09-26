@@ -17,7 +17,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
   const server = http.createServer((req, res) => {
     const rel = req.url.split('?')[0];
     const file = rel === '/' ? 'index.html' : rel.slice(1);
-    if (!['index.html', 'garden-state.js', 'garden-view.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'].includes(file)) { res.statusCode=404; res.end(); return; }
+    if (!['index.html', 'garden-layout.js', 'garden-state.js', 'garden-view.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'].includes(file)) { res.statusCode=404; res.end(); return; }
     res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : file.endsWith('.html') ? 'text/html' : file.endsWith('.png') ? 'image/png' : 'application/json');
     res.end(fs.readFileSync(path.join(root,file)));
   }).listen(0,'127.0.0.1');

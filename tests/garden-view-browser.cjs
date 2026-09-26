@@ -7,7 +7,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
 (async()=>{
  fs.mkdirSync(out,{recursive:true});
  const server=http.createServer((req,res)=>{const file=req.url==='/'?'index.html':req.url.slice(1);
-  if(!['index.html','garden-state.js','garden-view.js','manifest.webmanifest'].includes(file)){res.statusCode=404;res.end();return;}
+  if(!['index.html','garden-layout.js','garden-state.js','garden-view.js','manifest.webmanifest'].includes(file)){res.statusCode=404;res.end();return;}
   res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.html')?'text/html':'application/json');res.end(fs.readFileSync(path.join(root,file)));
  }).listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));
  let browser;const errors=[];
