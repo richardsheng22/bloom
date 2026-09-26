@@ -75,22 +75,26 @@ test('beds move with their plantings, and everything is named by place', () => {
   assert.match(L.describe(g, L.plan(g, g.objects[0].id, null)), /cushion goes back to your collection/);
 });
 
-test('the real-garden scenery stays clear of beds and furnishings at every phone size', () => {
+test('the scenery, beds and furnishings keep clear of each other at every phone size', () => {
   const V = require('../garden-view.js');
   for (const [w, h] of [[288, 250], [343, 330], [358, 400], [398, 470], [536, 270]]) {
     const scene = V.layout({ left: 0, top: 0, width: w, height: h });
     const m = L.landmarks(scene), slots = L.geometry(scene);
-    const top = slots.find((a) => a.id === 'bed-top');
-    assert.ok(m.wall < top.y - top.height / 2, `wall behind the high bed at ${w}x${h}`);
     for (const a of slots) {
-      const f = m.fountain;
-      const overlap = Math.abs(a.x - f.x) < a.width / 2 + f.width / 2 && a.y + a.height / 2 > f.y - f.height && a.y - a.height / 2 < f.y;
-      assert.ok(!overlap, `fountain clear of ${a.id} at ${w}x${h}`);
-      if (a.type === 'object') {
-        // furnishings sit outside the rose bed
-        const r = m.roses, e = ((a.x - r.x) / r.rx) ** 2 + ((a.y - r.y) / r.ry) ** 2;
-        assert.ok(e > 1, `${a.id} outside the rose bed at ${w}x${h}`);
+      for (const [name, f] of [['fountain', m.fountain], ['deadwood', m.deadwood]]) {
+        const overlap = Math.abs(a.x - f.x) < a.width / 2 + f.width / 2 && a.y + a.height / 2 > f.y - f.height && a.y - a.height / 2 < f.y;
+        assert.ok(!overlap, `${name} clear of ${a.id} at ${w}x${h}`);
       }
+      // beds and furnishings sit outside the rose bed and off the path
+      const r = m.roses, e = ((a.x - r.x) / (r.rx + a.width / 2)) ** 2 + ((a.y - r.y) / (r.ry + a.height / 2)) ** 2;
+      assert.ok(e > 1 || a.id === 'bed-top', `${a.id} outside the rose bed at ${w}x${h}`);
+      assert.ok(Math.abs(a.x) - a.width / 2 > m.path.width / 2 || a.y < m.path.top, `${a.id} off the path at ${w}x${h}`);
+      assert.ok(Math.abs(a.x) + a.width / 2 <= w / 2 + 4, `${a.id} on screen at ${w}x${h}`);
+    }
+    // wild plants always land somewhere on the lawn, never on scenery
+    for (let i = 0; i < 60; i++) {
+      const q = L.projectPlant({ a: i * 0.7, d: 1.05 + (i % 7) * 0.22 }, scene);
+      assert.ok(Math.abs(q.x) <= w / 2 && Math.abs(q.y) <= h / 2, `plant ${i} on screen at ${w}x${h}`);
     }
   }
 });

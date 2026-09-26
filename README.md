@@ -8,7 +8,7 @@ Open the GitHub Pages site on your iPhone in Safari, tap Share, then **Add to Ho
 
 ## How it plays
 
-The game opens in Erwu's garden, drawn after the real one: a round rose bed with a rose arch in the middle, where Erwu is curled up asleep in her basket; a three-tier stone fountain to the left; a weathered piece of deadwood by the timber wall at the back; and stepping stones up the lawn. Tap her and she sits up to say hello; left alone, she curls back up. Tap a flower bed to plant it, tap a plant to look closer, or use **Look around** to choose a plant by name. **Play** or **Continue** starts immediately, even while Erwu is responding.
+The game opens in Erwu's garden, drawn after the real one: a round rose bed with a rose arch in the middle, where Erwu is curled up asleep in her basket; a three-tier stone fountain and a weathered piece of deadwood at the back; and stepping stones up a lawn that fades softly into the page. Tap her and she sits up to say hello; left alone, she curls back up. Tap a flower bed to plant it, tap a plant to look closer, or use **Look around** to choose a plant by name. **Play** or **Continue** starts immediately, even while Erwu is responding.
 
 The leaf button brings you back to the garden without resetting your run. During a shot it waits for the turn to finish; tap it again to cancel. After a run ends, **Back to the garden** lets you linger, and **Play again** explicitly starts the next run.
 
@@ -50,7 +50,8 @@ The leaf button brings you back to the garden without resetting your run. During
 - The garden has its own uncluttered view, with a detail area below the scene. On a short landscape screen, the details sit beside it. Rotating the phone changes the presentation, never saved plant positions.
 - The five buds under **Best** show how grown the garden is. Once it's growing well, butterflies start to visit.
 - **Full bloom** lights the petals one by one, then bursts: sunbeams, a petal shower, hearts from Erwu and a couple of butterflies set free.
-- Your plants and their growth stay yours, however long you are away. After about half a day, the garden gradually rests: the light turns soft and cool like evening, flowers fold and droop a little, fewer petals drift by, visitors grow quieter, and tufts of grass appear along the edges. It never withers away.
+- Everything growing on the lawn comes from play. As the garden grows, lawn daisies and clover spread, a wildflower meadow creeps in from the edges, moss finds the stepping stones, ferns unfurl by the deadwood, ivy climbs the fountain, a robin starts visiting it, and a fairy ring appears.
+- Your plants and their growth stay yours, however long you are away. After about half a day, the garden gradually rests: the light turns soft and cool like evening, flowers fold and droop a little, fewer petals drift by, visitors grow quieter, and tufts of grass appear along the edges. Autumn leaves settle on the lawn, the fountain stills with a leaf floating in it, the grass grows a little long with a few dandelion clocks, fireflies drift in the evening light, and a snail takes its time across the path. It never withers away.
 - Returning gently wakes the garden even if you just sit with Erwu. Playing a few turns helps it wake sooner; there are no cleanup chores or lost progress.
 
 ## Files

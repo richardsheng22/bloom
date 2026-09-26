@@ -104,10 +104,10 @@
   function geometry(scene) {
     const x = Math.max(62, scene.width / 2 - 40), h = scene.height;
     const top = Math.max(scene.nest + 48, h * 0.30);
-    const side = Math.max(scene.nest + 14, h * 0.24);
-    const lower = Math.max(scene.nest * 0.65, Math.min(72, h * 0.18));
-    // The cushion sits on the lawn in front of the rose bed, clear of the fountain on the left.
-    const points = [[-x*.78,-side],[0,-top],[x*.78,-side],[-x*.5,lower+Math.max(8,h*.05)],[x*.83,lower]];
+    // The high bed stays at the back; the morning and evening beds come forward to flank
+    // the path, and the cushion and stone sit on the lawn at the front.
+    const front = Math.max(scene.nest * 0.9, h * 0.24), near = Math.max(front + 38, h * 0.4);
+    const points = [[-x*.84,front],[0,-top],[x*.84,front],[-x*.58,near],[x*.58,near]];
     return anchors.map((a,i) => {
       const [px,py] = points[i], sign = px < 0 ? -1 : 1;
       return {...a, x:px,y:py,width:a.type==='patch'?64:58,height:a.type==='patch'?30:36,
@@ -117,38 +117,43 @@
     });
   }
   // Fixed scenery from the real garden: the rose bed Erwu naps in, the stone fountain
-  // on the left, and the deadwood by the back wall. Display geometry only; never saved.
+  // at the back left and the deadwood at the back right. Display geometry only; never saved.
   function landmarks(scene) {
     const x = Math.max(62, scene.width / 2 - 40), h = scene.height, n = scene.nest;
     const rx = Math.min(n * 1.9, scene.width * 0.3), ry = rx * 0.62;
     const fh = Math.max(44, Math.min(n * 1.4, h * 0.2));
-    // The back wall always stays behind the high bed, even on short screens.
-    const top = Math.max(n + 48, h * 0.30), wall = Math.min(-h / 2 + Math.max(16, h * 0.07), -top - 30);
     return {
-      wall,
       roses: { x: 0, y: n * 0.35, rx, ry },
-      fountain: { x: -Math.min(x * 0.95, scene.width / 2 - fh * 0.42), y: h * 0.02, width: fh * 0.72, height: fh },
-      deadwood: { x: x * 0.42, y: wall + fh * 0.62, width: fh * 0.6, height: fh * 0.62 },
+      fountain: { x: -Math.min(x * 0.82, scene.width / 2 - fh * 0.42), y: -h * 0.19, width: fh * 0.72, height: fh },
+      deadwood: { x: Math.min(x * 0.8, scene.width / 2 - fh * 0.5), y: -h * 0.2, width: fh * 0.6, height: fh * 0.62 },
+      // the stepping-stone path from the front of the lawn up to the rose bed
+      path: { top: n * 0.35 + ry + 6, width: 24 },
     };
   }
+  // Wild plants from play spread across the whole lawn: a plant's saved distance chooses
+  // how far out it grows, from just beside the rose bed to the soft edge of the garden.
+  // Display only; the saved position never changes.
   function projectPlant(plant, scene) {
-    // Retain every legacy plant as a deterministic border. This is display-only.
-    const rx=Math.max(20,scene.width/2-16), ry=Math.max(20,scene.height/2-42);
-    const band=4+Math.max(0,Math.min(1,(plant.d-1)/1.6))*10;
-    const slots=geometry(scene), marks=landmarks(scene);
-    // Scenery is kept clear too; heights run upward from each base point.
-    const fixed=[marks.fountain,marks.deadwood];
-    for(let step=0;step<100;step++) {
-      const angle=plant.a+(step%2?1:-1)*Math.ceil(step/2)*0.10;
-      const x=Math.cos(angle)*(rx-band), y=Math.sin(angle)*(ry-band);
-      const clashes=slots.some(a => Math.abs(x-a.x)<a.width/2+14 && y>a.y-a.height/2-8 && y-30<a.y+a.height/2+8);
-      const route=y>0&&Math.abs(x)<26;
-      const approach=slots.some(a=>Math.hypot(x-a.interaction.x,y-12-a.interaction.y)<25);
-      const scenery=fixed.some(m => Math.abs(x-m.x)<m.width/2+12 && y>m.y-m.height-6 && y-24<m.y+8);
-      const inRoses=((x-marks.roses.x)/(marks.roses.rx+14))**2+((y-marks.roses.y)/(marks.roses.ry+14))**2<1;
-      if(!clashes&&!route&&!approach&&!scenery&&!inRoses&&Math.hypot(x,y)>scene.nest+28)return {x,y};
+    const slots = geometry(scene), m = landmarks(scene), r = m.roses;
+    const ox = Math.max(20, scene.width / 2 - 14), oy = Math.max(20, scene.height / 2 - 16);
+    const ix = Math.min(ox - 8, r.rx + 16), iy = Math.min(oy - 8, r.ry + 16);
+    const t0 = Math.max(0, Math.min(1, (plant.d - 1.04) / 1.56));
+    const free = (x, y) => {
+      if (slots.some(a => Math.abs(x - a.x) < a.width / 2 + 10 && y > a.y - a.height / 2 - 6 && y - 26 < a.y + a.height / 2 + 6)) return false;
+      if (slots.some(a => Math.hypot(x - a.interaction.x, y - 12 - a.interaction.y) < 22)) return false;
+      if ([m.fountain, m.deadwood].some(f => Math.abs(x - f.x) < f.width / 2 + 10 && y > f.y - f.height - 6 && y - 22 < f.y + 8)) return false;
+      if (((x - r.x) / (r.rx + 10)) ** 2 + ((y - r.y) / (r.ry + 10)) ** 2 < 1) return false;
+      if (y > m.path.top - 6 && Math.abs(x) < m.path.width) return false;
+      return Math.abs(x) < scene.width / 2 - 8 && y > -scene.height / 2 + 26 && y < scene.height / 2 - 4;
+    };
+    for (let step = 0; step < 160; step++) {
+      const ring = Math.floor(step / 16), turn = step % 16;
+      const angle = plant.a + (turn % 2 ? 1 : -1) * Math.ceil(turn / 2) * 0.13;
+      const t = Math.max(0, Math.min(1, t0 + (ring % 2 ? 1 : -1) * Math.ceil(ring / 2) * 0.12));
+      const x = r.x + Math.cos(angle) * (ix + (ox - ix) * t), y = r.y * 0.5 + Math.sin(angle) * (iy + (oy - iy) * t);
+      if (free(x, y)) return { x, y };
     }
-    return {x:Math.cos(plant.a)<0?-rx:rx,y:-ry};
+    return { x: Math.cos(plant.a) < 0 ? -ox : ox, y: oy * 0.9 };
   }
   return {VERSION,anchors,kinds,homes,records,find,at,valid,initialize,upgrade,label,placeName,plan,reverse,apply,preview,describe,geometry,landmarks,projectPlant};
 });

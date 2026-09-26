@@ -75,3 +75,18 @@ Implemented on the working branch with tickets 03, 04, 05 phase A and 11. Owners
 - Drifting petals and motes thin out by up to 75%.
 - Edge tufts now appear in the garden view too (previously they were suppressed once beds existed), at most twelve, kept clear of beds, furnishings and the path.
 - Captured side by side at 390 × 844 (awake vs. fully rested): the difference is readable at a glance while staying serene. Owner review of the degree is still welcome.
+
+### More resting details — 2026-09-26
+
+At the owner's request, rest has more character. It is all derived from `rest`, so it appears gradually and clears gradually as the garden wakes, with no chores:
+
+- **Autumn leaves** settle on the lawn, the stepping stones and the rose bed's flagstones (up to about 38).
+- **The fountain stills** to a slow trickle, with a leaf or two floating in its bowls.
+- **The lawn grows a little long,** in tufts, and a few **dandelion clocks** appear. The edge meadow's grasses grow taller and lean.
+- **Fireflies** drift and glow softly in the evening light (up to eight).
+- **A snail** inches across a stepping stone, once a minute or so, while the garden is well rested.
+- **The robin** stays away while the garden is deeply resting.
+
+This is on top of the evening light, folded flowers, fewer drifting petals and edge tufts from earlier. With reduced motion the fireflies and snail hold still.
+
+Fixed in passing: wild lavender drew as black spikes after the earlier resting-colour change, because a colour string was mixed as if it were hex.

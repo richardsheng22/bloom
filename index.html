@@ -1165,12 +1165,13 @@
     leafAt(g, x + lean * h * 0.35, y - h * 0.45, -Math.PI / 2 + 0.8 + rest * 0.24, ll * 0.85, ll * 0.3, leaf, dark);
     if (gr < 0.4) return;
     // Resting flowers keep their colour, just a little softer, as if in evening light.
-    const col = rgb(mix({ daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender }[p.k] || C['petal-bloom'], C.ground, rest * 0.25));
+    const base = { daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender }[p.k] || C['petal-bloom'];
+    const col = rgb(mix(base, C.ground, rest * 0.25));
     if (p.k === 'lavender') {
       const n = 3 + Math.floor(gr * 6);
       for (let i = 0; i < n; i++) {
         const t = i / n, bx = tx + (x - tx) * t * 0.45, by = ty + (y - ty) * t * 0.45;
-        g.fillStyle = rgb(mix(col, C['bud-deep'], 0.15 + (i % 2) * 0.2));
+        g.fillStyle = rgb(mixA(mix(base, C['bud-deep'], 0.15 + (i % 2) * 0.2), hexRgb(C.ground), rest * 0.25));
         g.beginPath(); g.ellipse(bx, by, u * 0.12 * (1 - rest * 0.2), u * 0.16, rest * 0.12, 0, TAU); g.fill();
       }
       return;
@@ -1464,75 +1465,121 @@
     }
   }
   // ----- The garden itself, after the real one: a rose bed with its arch in the middle,
-  // the stone fountain to the left, deadwood by the timber wall at the back, the pine and
-  // the willow at the corners, and stepping stones up from the lawn. -----
+  // the stone fountain and the deadwood at the back, stepping stones up the lawn, and a
+  // lawn that fades softly into the paper on every side. What grows around them comes
+  // from play: the more the garden has grown, the more the lawn fills in. -----
+  function yardClear(sc, m) {
+    const slots = BloomGardenLayout.geometry(sc), r = m.roses;
+    return (x, y, pad = 8) => {
+      if (slots.some((a) => Math.abs(x - a.x) < a.width / 2 + pad && Math.abs(y - a.y) < a.height / 2 + pad + 10)) return false;
+      if ([m.fountain, m.deadwood].some((f) => Math.abs(x - f.x) < f.width / 2 + pad && y > f.y - f.height - pad && y < f.y + pad)) return false;
+      if (((x - r.x) / (r.rx + pad)) ** 2 + ((y - r.y) / (r.ry + pad)) ** 2 < 1) return false;
+      if (y > m.path.top - pad && Math.abs(x) < m.path.width + pad * 0.5) return false;
+      return Math.abs(x) < sc.width / 2 - 4 && Math.abs(y) < sc.height / 2 - 4 && Math.hypot(x, y) > sc.nest + pad;
+    };
+  }
+  function pathStones(m, H2, k) {
+    const out = [], front = m.path.top;
+    for (let i = 0; i < 4; i++) {
+      const t = i / 3, y = front + 8 + (H2 - front - 14) * t, x = Math.sin(t * 3.6 + 0.4) * 9;
+      out.push({ x, y, w: (13 + 4 * t) * k, h: (13 + 4 * t) * k * 0.52, rot: [0.12, -0.15, 0.08, -0.05][i] });
+    }
+    return out;
+  }
   function drawYard(g) {
-    const sc = gardenScene, m = BloomGardenLayout.landmarks(sc), rest = garden.rest, rnd = seeded(2718);
-    const W2 = sc.width / 2, H2 = sc.height / 2, line = rgb(hexRgb(C.walnut), 0.4);
+    const sc = gardenScene, m = BloomGardenLayout.landmarks(sc), rest = garden.rest, tier = gardenTier(), rnd = seeded(2718);
+    const W2 = sc.width / 2, H2 = sc.height / 2, line = rgb(hexRgb(C.walnut), 0.4), clear = yardClear(sc, m);
     const k = Math.max(0.6, Math.min(1.15, sc.height / 400));
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-    // lawn, with faint mown stripes
-    let gr = g.createRadialGradient(0, H2 * 0.25, 10, 0, H2 * 0.25, Math.max(W2, H2) * 1.1);
-    gr.addColorStop(0, 'rgba(150,180,110,0.36)'); gr.addColorStop(0.7, 'rgba(160,185,125,0.22)'); gr.addColorStop(1, 'rgba(160,185,125,0)');
-    g.fillStyle = gr; g.fillRect(-W2 - 20, m.wall, sc.width + 40, H2 - m.wall + 20);
-    g.strokeStyle = 'rgba(255,255,255,0.08)'; g.lineWidth = 14;
-    for (let i = -3; i <= 3; i++) { g.beginPath(); g.moveTo(i * 38 - 30, H2 + 10); g.lineTo(i * 38 + 30, m.wall + 40); g.stroke(); }
-    // hedges and the golden patch above the back wall
-    const hedge = [[-0.95, 0.9, '#6E8A4A'], [-0.6, 1.05, '#5E7B45'], [-0.2, 0.95, '#6A874C'], [0.2, 1.1, '#61804A'], [0.55, 0.9, '#B9B04A'], [0.9, 1, '#D4B94E']];
-    for (const [fx, fs, col] of hedge) {
-      for (let j = 0; j < 4; j++) {
-        const hx = fx * W2 + (rnd() - 0.5) * 30, hr = (16 + rnd() * 12) * fs * k;
-        g.fillStyle = rgb(mix(col, C.ground, 0.22 + rest * 0.15 + rnd() * 0.08));
-        for (let q = 0; q < 3; q++) { g.beginPath(); g.arc(hx + (q - 1) * hr * 0.7, m.wall - hr * (0.2 + (q === 1 ? 0.45 : 0.15)), hr * (q === 1 ? 0.8 : 0.6), 0, TAU); g.fill(); }
+    // the lawn, fading into nothing at every edge, with faint mown stripes
+    g.save(); g.translate(0, m.roses.y * 0.5); g.scale(W2 / H2 * 1.08, 1);
+    let gr = g.createRadialGradient(0, 0, 10, 0, 0, H2 * 1.02);
+    gr.addColorStop(0, 'rgba(150,182,112,0.42)'); gr.addColorStop(0.62, 'rgba(160,186,124,0.3)'); gr.addColorStop(1, 'rgba(160,186,124,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, H2 * 1.02, 0, TAU); g.fill();
+    g.beginPath(); g.arc(0, 0, H2 * 0.8, 0, TAU); g.clip();
+    g.setTransform(g.getTransform().scale(H2 / W2 / 1.08, 1));
+    g.strokeStyle = 'rgba(255,255,255,0.07)'; g.lineWidth = 16;
+    for (let i = -4; i <= 4; i++) { g.beginPath(); g.moveTo(i * 40 - 36, H2); g.lineTo(i * 40 + 36, -H2); g.stroke(); }
+    g.restore();
+    // a wildflower meadow creeping in from the edges as the garden grows
+    const meadow = 6 + tier * 9;
+    for (let i = 0; i < meadow; i++) {
+      const a = rnd() * TAU, e = 0.86 + rnd() * 0.12, x = Math.cos(a) * (W2 - 6) * e, y = m.roses.y * 0.5 + Math.sin(a) * (H2 - 8) * e;
+      if (!clear(x, y, 6)) continue;
+      const fade = 0.45 + 0.4 * (1 - (e - 0.86) / 0.12);
+      g.globalAlpha = fade;
+      for (let b = 0; b < 4; b++) {
+        const bh = (7 + rnd() * 7) * k * (1 + rest * 0.35);
+        g.strokeStyle = rgb(mix(C.sage, C['leaf-dark'], rnd() * 0.5)); g.lineWidth = 1;
+        g.beginPath(); g.moveTo(x + (b - 1.5) * 1.6, y); g.quadraticCurveTo(x + (b - 1.5) * 2, y - bh * 0.6, x + (b - 1.5) * 3.5 + rest * 2, y - bh); g.stroke();
+      }
+      if (tier >= 2 && rnd() < 0.6) {
+        const col = ['#7FA6D9', '#F2D478', '#FFFDF5', '#E9A3B8', '#B7A2D6'][Math.floor(rnd() * 5)];
+        const fx = x + (rnd() - 0.5) * 6, fy = y - (9 + rnd() * 6) * k;
+        g.strokeStyle = rgb(hexRgb(C.moss), 0.8); g.lineWidth = 0.8; g.beginPath(); g.moveTo(fx, y); g.lineTo(fx, fy); g.stroke();
+        g.fillStyle = rgb(mix(col, C.ground, rest * 0.3));
+        for (let q = 0; q < 5; q++) { const qa = q / 5 * TAU; g.beginPath(); g.arc(fx + Math.cos(qa) * 1.6 * (1 - rest * 0.4), fy + Math.sin(qa) * 1.6 * (1 - rest * 0.4), 1.2, 0, TAU); g.fill(); }
+        g.fillStyle = C.butter; g.beginPath(); g.arc(fx, fy, 0.8, 0, TAU); g.fill();
       }
     }
-    // the timber retaining wall
-    const wh = 11 * k;
-    g.fillStyle = 'rgba(243,236,221,0.4)'; g.fillRect(-W2 - 20, m.wall - 60, sc.width + 40, 8);
-    g.fillStyle = '#CDB891'; g.fillRect(-W2 - 20, m.wall - 2, sc.width + 40, wh);
-    g.strokeStyle = line; g.lineWidth = 1;
-    g.beginPath(); g.moveTo(-W2 - 20, m.wall - 2); g.lineTo(W2 + 20, m.wall - 2); g.moveTo(-W2 - 20, m.wall + wh * 0.5); g.lineTo(W2 + 20, m.wall + wh * 0.5); g.moveTo(-W2 - 20, m.wall + wh - 2); g.lineTo(W2 + 20, m.wall + wh - 2); g.stroke();
-    for (let xx = -W2 + 40; xx < W2; xx += 92) { g.beginPath(); g.moveTo(xx, m.wall - 2); g.lineTo(xx, m.wall + wh - 2); g.stroke(); }
-    // the gravel strip along the back, where the beds are
-    const gy0 = m.wall + wh - 2, gy1 = gy0 + Math.max(40, sc.height * 0.26);
-    gr = g.createLinearGradient(0, gy0, 0, gy1);
-    gr.addColorStop(0, 'rgba(212,202,184,0.95)'); gr.addColorStop(0.8, 'rgba(214,205,188,0.7)'); gr.addColorStop(1, 'rgba(214,205,188,0)');
-    g.fillStyle = gr; g.fillRect(-W2 - 20, gy0, sc.width + 40, gy1 - gy0);
-    for (let i = 0; i < sc.width * 0.6; i++) {
-      const gx = (rnd() - 0.5) * sc.width, gyy = gy0 + rnd() * (gy1 - gy0) * 0.85;
-      g.fillStyle = rnd() < 0.5 ? 'rgba(160,148,126,0.45)' : 'rgba(255,252,244,0.6)'; g.beginPath(); g.arc(gx, gyy, 0.6 + rnd() * 0.9, 0, TAU); g.fill();
+    g.globalAlpha = 1;
+    // little lawn daisies and clover, more of them as the garden grows
+    const lawn = 3 + tier * 8;
+    for (let i = 0; i < lawn; i++) {
+      const x = (rnd() - 0.5) * sc.width * 0.9, y = (rnd() - 0.5) * sc.height * 0.9;
+      if (!clear(x, y, 6)) continue;
+      if (rnd() < 0.55) {
+        for (let q = 0; q < 6; q++) { const qa = q / 6 * TAU; g.fillStyle = rgb(mix('#FFFDF5', C.ground, rest * 0.3)); g.beginPath(); g.ellipse(x + Math.cos(qa) * 1.5, y + Math.sin(qa) * 1.5, 1.1 * (1 - rest * 0.3), 0.7, qa, 0, TAU); g.fill(); }
+        g.fillStyle = C.butter; g.beginPath(); g.arc(x, y, 0.9, 0, TAU); g.fill();
+      } else for (let q = 0; q < 3; q++) {
+        const qa = -Math.PI / 2 + (q - 1) * 2.1; g.fillStyle = 'rgba(110,138,74,0.75)'; g.beginPath(); g.arc(x + Math.cos(qa) * 1.6, y + Math.sin(qa) * 1.6, 1.5, 0, TAU); g.fill();
+      }
     }
-    // a few edging stones where gravel meets lawn
-    for (let i = 0; i < 9; i++) {
-      const ex = -W2 + (i + 0.5) * sc.width / 9, ey = gy1 - (gy1 - gy0) * 0.12 + (rnd() - 0.5) * 4;
-      g.fillStyle = '#DAD3C4'; g.strokeStyle = 'rgba(138,100,68,0.25)'; g.beginPath(); g.ellipse(ex, ey, 11 * k, 4 * k, (rnd() - 0.5) * 0.2, 0, TAU); g.fill(); g.stroke();
+    // the stepping stones, gathering moss as the garden settles in
+    for (const st of pathStones(m, H2, k)) {
+      g.fillStyle = 'rgba(79,107,55,0.14)'; g.beginPath(); g.ellipse(st.x + 1.5, st.y + 2, st.w, st.h, 0, 0, TAU); g.fill();
+      g.fillStyle = '#E6DDCB'; g.strokeStyle = line; g.lineWidth = 1; g.beginPath(); g.ellipse(st.x, st.y, st.w, st.h, st.rot, 0, TAU); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.4)'; g.beginPath(); g.ellipse(st.x - st.w * 0.3, st.y - st.h * 0.3, st.w * 0.3, st.h * 0.2, st.rot, 0, TAU); g.fill();
+      if (tier >= 2) { g.fillStyle = 'rgba(110,138,74,0.45)'; g.beginPath(); g.ellipse(st.x + st.w * 0.55, st.y + st.h * 0.35, st.w * 0.3, st.h * 0.28, 0.3, 0, TAU); g.fill(); }
     }
-    drawDeadwood(g, m.deadwood, k);
-    // pine at the top left, willow fronds at the top right
-    for (let i = 0; i < 7; i++) {
-      const bx = -W2 - 6 + i * 9 * k, by = m.wall - 34 * k + i * 7 * k;
-      g.strokeStyle = 'rgba(79,107,55,0.55)'; g.lineWidth = 1;
-      for (let j = 0; j < 9; j++) { const a = -0.6 + j * 0.22; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + Math.cos(a) * 14 * k, by + Math.sin(a) * 14 * k); g.stroke(); }
+    drawDeadwood(g, m.deadwood, k, tier);
+    drawRoseBed(g, m.roses, k, sc.nest, tier);
+    drawFountain(g, m.fountain, k, tier, rest);
+    // While the garden rests: the lawn grows a little long, a few dandelion clocks
+    // appear, and autumn leaves settle on the grass and the stones. Waking clears them.
+    if (rest > 0.02) {
+      const rr = seeded(9091), tufts = Math.round(rest * 12), clocks = Math.round(rest * 6), leaves = Math.round(rest * 38);
+      for (let i = 0; i < tufts; i++) {
+        const x = (rr() - 0.5) * sc.width * 0.85, y = (rr() - 0.5) * sc.height * 0.85;
+        if (!clear(x, y, 8)) continue;
+        g.strokeStyle = rgb(hexRgb(C.moss), 0.35 + rest * 0.35); g.lineWidth = 1.1;
+        for (let b = -2; b <= 2; b++) { g.beginPath(); g.moveTo(x + b, y); g.quadraticCurveTo(x + b * 2, y - 7, x + b * 3.2 + 2, y - 11 - rr() * 4); g.stroke(); }
+      }
+      for (let i = 0; i < clocks; i++) {
+        const x = (rr() - 0.5) * sc.width * 0.8, y = (rr() - 0.5) * sc.height * 0.8;
+        if (!clear(x, y, 8)) continue;
+        g.strokeStyle = rgb(hexRgb(C.moss), 0.7); g.lineWidth = 0.8; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 1, y - 12); g.stroke();
+        g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 0.5;
+        for (let q = 0; q < 14; q++) { const qa = q / 14 * TAU; g.beginPath(); g.moveTo(x + 1, y - 12); g.lineTo(x + 1 + Math.cos(qa) * 3.4, y - 12 + Math.sin(qa) * 3.4); g.stroke(); }
+      }
+      const stones = pathStones(m, H2, k);
+      for (let i = 0; i < leaves; i++) {
+        let x, y;
+        if (i % 5 === 0) { const st = stones[i % stones.length]; x = st.x + (rr() - 0.5) * st.w; y = st.y + (rr() - 0.5) * st.h; }
+        else if (i % 7 === 1) { const a = rr() * TAU; x = m.roses.x + Math.cos(a) * m.roses.rx; y = m.roses.y + Math.sin(a) * m.roses.ry; }
+        else { x = (rr() - 0.5) * sc.width * 0.9; y = (rr() - 0.5) * sc.height * 0.9; if (!clear(x, y, 2)) continue; }
+        fallenLeaf(g, x, y, (3 + rr() * 2) * k, rr() * TAU, ['#C8552F', '#E08A3C', '#D9A13E', '#B5673A', '#C9A15E'][Math.floor(rr() * 5)]);
+      }
     }
-    for (let i = 0; i < 16; i++) {
-      const fx = W2 + 8 - i * 4.5 * k, len = (40 + rnd() * 50) * k;
-      g.strokeStyle = rgb(mix('#9CB86A', C.ground, rest * 0.2), 0.55); g.lineWidth = 1.1;
-      g.beginPath(); g.moveTo(fx, m.wall - 40 * k); g.quadraticCurveTo(fx - 4, m.wall - 40 * k + len * 0.6, fx - 8 - i * 0.5, m.wall - 40 * k + len); g.stroke();
-      for (let j = 0.3; j < 1; j += 0.14) { const yy = m.wall - 40 * k + len * j; leafAt(g, fx - 5 * j - 2, yy, 1.8, 3.5 * k, 1 * k, 'rgba(156,184,106,0.6)'); }
-    }
-    // stepping stones from the bottom of the lawn to the rose bed
-    const r = m.roses, front = r.y + r.ry + 6;
-    for (let i = 0; i < 4; i++) {
-      const t = i / 3, y = front + 8 + (H2 - front - 12) * t, xx = Math.sin(t * 3.6 + 0.4) * 10;
-      const w = (13 + 4 * t) * k, hh = w * 0.52;
-      g.fillStyle = 'rgba(79,107,55,0.14)'; g.beginPath(); g.ellipse(xx + 1.5, y + 2, w, hh, 0, 0, TAU); g.fill();
-      g.fillStyle = '#E6DDCB'; g.strokeStyle = line; g.lineWidth = 1; g.beginPath(); g.ellipse(xx, y, w, hh, (rnd() - 0.5) * 0.4, 0, TAU); g.fill(); g.stroke();
-    }
-    drawRoseBed(g, r, k, sc.nest);
-    drawFountain(g, m.fountain, k);
     g.restore();
   }
-  function drawDeadwood(g, d, k) {
+  function fallenLeaf(g, x, y, s, rot, col) {
+    g.save(); g.translate(x, y); g.rotate(rot);
+    g.fillStyle = col; g.beginPath(); g.moveTo(-s, 0); g.quadraticCurveTo(0, -s * 0.6, s, 0); g.quadraticCurveTo(0, s * 0.6, -s, 0); g.fill();
+    g.strokeStyle = 'rgba(90,50,30,0.45)'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(-s, 0); g.lineTo(s * 0.9, 0); g.stroke();
+    g.restore();
+  }
+  function drawDeadwood(g, d, k, tier = 0) {
     // weathered driftwood: silver-grey spikes curling up out of the gravel, and a log beside it
     const base = d.y, hgt = d.height;
     g.fillStyle = 'rgba(79,70,55,0.16)'; g.beginPath(); g.ellipse(d.x, base + 2, d.width * 0.7, 5, 0, 0, TAU); g.fill();
@@ -1546,9 +1593,25 @@
       for (const t of [-0.35, 0.15]) { g.beginPath(); g.moveTo(x0 + t * w, base - 2); g.quadraticCurveTo(x0 + t * w + lean * h * 0.15, base - h * 0.5, tipx + t * 2, base - h * 0.88); g.stroke(); }
     }
     g.fillStyle = '#B9A98F'; g.strokeStyle = '#8E8170'; g.lineWidth = 0.9;
-    g.beginPath(); g.roundRect(d.x + d.width * 0.45, base - 4 * k, d.width * 1.3, 6 * k, 3 * k); g.fill(); g.stroke();
+    g.beginPath(); g.roundRect(d.x - d.width * 0.2, base - 1 * k, d.width * 1.1, 5 * k, 2.5 * k); g.fill(); g.stroke();
+    // ferns unfurl around it once the garden is growing; later, a little fairy ring
+    if (tier >= 1) for (const [ox, dir] of [[-0.62, -1], [0.55, 1], [-0.2, -1]].slice(0, 1 + Math.min(2, tier - 1))) {
+      const fx = d.x + ox * d.width, len = 12 * k;
+      g.strokeStyle = rgb(hexRgb(C.moss), 0.9); g.lineWidth = 1;
+      const tx = fx + dir * len * 0.8, ty = base - len;
+      g.beginPath(); g.moveTo(fx, base + 1); g.quadraticCurveTo(fx, ty, tx, ty); g.stroke();
+      for (let i = 1; i <= 5; i++) {
+        const t = i / 6, mx = fx + (tx - fx) * t * t, my = base + 1 + (ty - base - 1) * (2 * t - t * t), l = 4 * k * (1 - t * 0.5);
+        leafAt(g, mx, my, -Math.PI / 2 - 0.9, l, l * 0.35, rgb(hexRgb(C.moss), 0.85)); leafAt(g, mx, my, -Math.PI / 2 + 0.9, l, l * 0.35, rgb(hexRgb(C.moss), 0.85));
+      }
+    }
+    if (tier >= 4) for (let i = 0; i < 7; i++) {
+      const a = i / 7 * TAU, mx = d.x - d.width * 0.1 + Math.cos(a) * 13 * k, my = base + 12 * k + Math.sin(a) * 5 * k, ms = 2.2 * k;
+      g.fillStyle = '#F7EEDC'; g.fillRect(mx - 0.5, my - ms, 1, ms);
+      g.fillStyle = i % 2 ? '#D9665F' : '#C9A56E'; g.beginPath(); g.ellipse(mx, my - ms, ms, ms * 0.7, 0, Math.PI, TAU); g.fill();
+    }
   }
-  function drawRoseBed(g, r, k, n) {
+  function drawRoseBed(g, r, k, n, tier = 0) {
     const rest = garden.rest, rnd = seeded(6011);
     // dark mulch inside a ring of flagstones
     g.fillStyle = 'rgba(79,70,55,0.14)'; g.beginPath(); g.ellipse(r.x, r.y + 4, r.rx + 6, r.ry + 5, 0, 0, TAU); g.fill();
@@ -1593,7 +1656,13 @@
         leafAt(g, bx + (rnd() - 0.5) * 8 * k, by - rnd() * 6 * k, la + rest * 0.2, ll, ll * 0.45,
           rgb(mix(autumn < 0.5 ? '#5F7F45' : autumn < 0.8 ? '#C8552F' : '#E08A3C', C.ground, rest * 0.2)));
       }
-      for (let j = 0; j < 2 + Math.round(s * 1.5); j++) rose(g, bx + (rnd() - 0.5) * 16 * k * s, by - (5 + rnd() * 12) * k * s, (3.8 + rnd() * 1.4) * k, rnd, rest);
+      // the roses open up as the garden grows: mostly buds at first, full blooms later
+      const open = Math.max(1, Math.round(s * (0.8 + tier * 0.55)));
+      for (let j = 0; j < 4; j++) {
+        const rx2 = bx + (rnd() - 0.5) * 16 * k * s, ry2 = by - (5 + rnd() * 12) * k * s, rs = (3.8 + rnd() * 1.4) * k;
+        if (j < open) rose(g, rx2, ry2, rs, rnd, rest);
+        else { g.fillStyle = '#C96A7A'; g.beginPath(); g.ellipse(rx2, ry2, rs * 0.35, rs * 0.55, 0, 0, TAU); g.fill(); leafAt(g, rx2, ry2 + rs * 0.3, -2.3, rs * 0.5, rs * 0.2, C.moss); }
+      }
     }
     const lx = r.x - r.rx * 0.5, ly = r.y + r.ry * 0.62;
     for (let j = 0; j < 9; j++) {
@@ -1613,7 +1682,7 @@
     g.beginPath(); g.arc(x, y + s * 0.1, s * 0.55 * cup, Math.PI * 1.1, Math.PI * 1.95); g.stroke();
     g.beginPath(); g.arc(x - s * 0.15, y - s * 0.05, s * 0.3 * cup, 0, Math.PI * 1.3); g.stroke();
   }
-  function drawFountain(g, f, k) {
+  function drawFountain(g, f, k, tier = 0, rest = 0) {
     // the three-tier stone fountain from the garden
     const x = f.x, base = f.y, h = f.height, w = f.width, stone = '#D8D4CA', shade = '#AFAAA0', water = 'rgba(170,205,225,0.9)';
     g.fillStyle = 'rgba(79,70,55,0.18)'; g.beginPath(); g.ellipse(x + 3, base + 3, w * 0.62, w * 0.18, 0, 0, TAU); g.fill();
@@ -1635,13 +1704,26 @@
     col(base - h * 0.64, base - h * 0.82, w * 0.06);
     bowl(base - h * 0.85, w * 0.18, h * 0.06);
     g.fillStyle = stone; g.strokeStyle = shade; g.beginPath(); g.moveTo(x - w * 0.05, base - h * 0.86); g.quadraticCurveTo(x, base - h * 1.02, x + w * 0.05, base - h * 0.86); g.fill(); g.stroke();
+    // ivy finds its way up the pedestal as the garden matures
+    if (tier >= 3) {
+      g.strokeStyle = rgb(hexRgb(C['leaf-dark']), 0.8); g.lineWidth = 0.9;
+      g.beginPath(); g.moveTo(x - w * 0.12, base); g.bezierCurveTo(x + w * 0.1, base - h * 0.1, x - w * 0.14, base - h * 0.2, x + w * 0.08, base - h * 0.3); g.stroke();
+      for (let i = 0; i < 6; i++) { const t = i / 6; leafAt(g, x - w * 0.1 + Math.sin(i * 1.7) * w * 0.12, base - h * 0.3 * t, i % 2 ? -0.5 : -2.6, 3.2 * k, 2 * k, rgb(hexRgb(C.moss), 0.9)); }
+    }
+    // a resting garden's fountain is still, with a few leaves floating in it
+    if (rest > 0.15) {
+      const rr = seeded(313);
+      for (const [cy, bw] of [[base - h * 0.36, w * 0.5], [base - h * 0.64, w * 0.32]].slice(0, rest > 0.5 ? 2 : 1)) {
+        for (let i = 0; i < (rest > 0.6 ? 2 : 1); i++) fallenLeaf(g, x + (rr() - 0.5) * bw, cy + (rr() - 0.3) * bw * 0.12, 2.6 * k, rr() * TAU, ['#E08A3C', '#C8552F', '#D9A13E'][i % 3]);
+      }
+    }
   }
   // Live water on the fountain: a thin trickle over each bowl and a slow shimmer.
   function drawFountainFx(now) {
     if (!gardenScene) return;
     const f = BloomGardenLayout.landmarks(gardenScene).fountain, x = f.x, base = f.y, h = f.height, w = f.width;
     ctx.save(); ctx.translate(gardenScene.cx, gardenScene.cy);
-    const flow = garden.rest > 0.5 ? 0.5 : 1;
+    const flow = 1 - garden.rest * 0.8;
     for (const [cy, bw] of [[base - h * 0.85, w * 0.18], [base - h * 0.64, w * 0.32], [base - h * 0.36, w * 0.5]]) {
       for (const side of [-1, 1]) {
         ctx.strokeStyle = `rgba(190,220,236,${0.55 * flow})`; ctx.lineWidth = 1;
@@ -1656,6 +1738,52 @@
         const s = 0.5 + 0.5 * Math.sin(now / 900 + cy);
         ctx.strokeStyle = `rgba(255,255,255,${0.35 * s})`; ctx.lineWidth = 0.8;
         ctx.beginPath(); ctx.ellipse(x - bw * 0.2, cy, bw * 0.3, bw * 0.06, 0, 0, TAU); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  // Small lives in the garden, drawn live: fireflies in the evening light of a resting
+  // garden, a snail inching across a stepping stone, and later a robin at the fountain.
+  function drawGardenLife(now) {
+    if (!gardenScene) return;
+    const sc = gardenScene, m = BloomGardenLayout.landmarks(sc), rest = garden.rest, tier = gardenTier(), k = Math.max(0.6, Math.min(1.15, sc.height / 400));
+    ctx.save(); ctx.translate(sc.cx, sc.cy);
+    const t = reduced ? 0 : now / 1000;
+    if (rest > 0.2) {
+      const n = Math.round(rest * 8);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < n; i++) {
+        const ph = i * 2.3, x = Math.sin(t * 0.13 + ph) * sc.width * 0.42, y = Math.cos(t * 0.11 + ph * 1.7) * sc.height * 0.38 - 10;
+        const glow = reduced ? 0.7 : Math.max(0, Math.sin(t * 0.9 + ph * 3)) ** 2;
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, 9);
+        gr.addColorStop(0, `rgba(255,236,150,${0.75 * glow * rest})`); gr.addColorStop(1, 'rgba(255,236,150,0)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, 9, 0, TAU); ctx.fill();
+        ctx.fillStyle = `rgba(255,250,215,${glow * rest})`; ctx.beginPath(); ctx.arc(x, y, 1.3, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    if (rest > 0.45) {
+      // a snail taking its time: once across the second stone every minute or so
+      const st = pathStones(m, sc.height / 2, k)[1], p = reduced ? 0.4 : (t / 70) % 1, sx = st.x - st.w + p * st.w * 2, sy = st.y - 1;
+      ctx.fillStyle = '#B9A58C'; ctx.beginPath(); ctx.ellipse(sx + 2.5 * k, sy + 1, 5 * k, 1.6 * k, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#B9A58C'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(sx + 6 * k, sy); ctx.lineTo(sx + 8 * k, sy - 3 * k); ctx.moveTo(sx + 5.5 * k, sy); ctx.lineTo(sx + 6.5 * k, sy - 3.4 * k); ctx.stroke();
+      ctx.fillStyle = '#C98A5A'; ctx.strokeStyle = '#8A5A3A'; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.arc(sx, sy - 2 * k, 3.4 * k, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx + 0.4, sy - 2 * k, 1.8 * k, 0, TAU * 0.8); ctx.stroke();
+    }
+    if (tier >= 3 && rest < 0.6) {
+      // a robin drops by the fountain's top bowl every so often, dips to drink, and goes
+      const cyc = reduced ? 3 : t % 26, f = m.fountain;
+      if (cyc < 9) {
+        const bx = f.x + f.width * 0.14, by = f.y - f.height * 0.87, dip = !reduced && cyc > 3 && cyc < 5 ? Math.sin((cyc - 3) * Math.PI * 2) * 0.35 : 0, s = 3.2 * k;
+        ctx.save(); ctx.translate(bx, by); ctx.rotate(dip);
+        ctx.fillStyle = '#7A6250'; ctx.beginPath(); ctx.ellipse(0, -s, s * 1.3, s, -0.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#E07A4A'; ctx.beginPath(); ctx.ellipse(-s * 0.55, -s * 0.8, s * 0.7, s * 0.65, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#7A6250'; ctx.beginPath(); ctx.arc(-s * 1.05, -s * 1.7, s * 0.62, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#2B2420'; ctx.beginPath(); ctx.arc(-s * 1.25, -s * 1.8, 0.6, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#D9A13E'; ctx.beginPath(); ctx.moveTo(-s * 1.6, -s * 1.7); ctx.lineTo(-s * 2.1, -s * 1.6); ctx.lineTo(-s * 1.6, -s * 1.5); ctx.fill();
+        ctx.fillStyle = '#6A5242'; ctx.beginPath(); ctx.moveTo(s * 1.1, -s * 1.2); ctx.lineTo(s * 2.1, -s * 1.7); ctx.lineTo(s * 1.2, -s * 0.6); ctx.fill();
+        ctx.restore();
       }
     }
     ctx.restore();
@@ -3943,7 +4071,7 @@
     // the garden, repainted at most a few times a second as it changes
     if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
     if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
-    if (presentation === 'garden') drawFountainFx(now);
+    if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); }
     if (presentation === 'garden' && garden.rest > 0.02) {
       // a resting garden sits in soft, cool evening light
       const k = garden.rest, gr = ctx.createLinearGradient(0, 0, 0, H);

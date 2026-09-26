@@ -4,13 +4,13 @@ Captured from the working branch in headless Chromium with generated garden data
 
 ## Beds and planting (tickets 03, 04)
 
-- [A new garden](new-beds-390x844.png): the real-garden layout — Erwu curled up in the rose bed under the arch, the fountain on the left, deadwood by the back wall, three empty beds on the gravel strip, the cushion and sunny stone already out.
+- [A new garden](new-beds-390x844.png): Erwu curled up in the rose bed under the arch, the fountain at the back left, the deadwood at the back right, three empty beds (two forward, flanking the path), a few sprouts, and roses mostly in bud. The lawn fades into the paper at every edge.
 - [Planting preview](planting-preview-390x844.png): an empty bed previewing daisies as they'll look in flower, with Plant and Cancel.
 - [Small phone](small-planting-320x568.png): choosing a moonflower seed for the morning bed at 320 × 568; the chosen seed is first and visible.
 
 ## Rest (ticket 01)
 
-- [Grown garden, awake](grown-awake-390x844.png) and [the same garden fully rested](grown-resting-390x844.png): cooler light, folded flowers, fewer drifting petals, edge tufts. Ownership is identical.
+- [A mature garden, awake](grown-awake-390x844.png): wild plants across the whole lawn, a wildflower meadow, ivy on the fountain, the robin, the fairy ring. [The same garden fully rested](grown-resting-390x844.png): evening light, autumn leaves, long grass and dandelion clocks, the fountain stilled, a snail on the path, fireflies. Ownership is identical.
 
 ## Erwu (ticket 05, phase A, provisional)
 

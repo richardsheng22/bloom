@@ -83,3 +83,22 @@ The owner shared photos of their garden. The garden view now follows it (photos 
 - `BloomGardenLayout.landmarks(scene)` gives the scenery's geometry. Wild plants keep clear of the fountain, deadwood and rose bed, and the back wall always stays behind the high bed on short screens. A unit test checks this at five phone sizes.
 - The scenery is painted once into the cached garden layer; only the fountain's water animates per frame.
 - The run view is unchanged apart from Erwu's colours.
+
+### Revision after owner review — 2026-09-26
+
+- **Removed:** the timber wall, hedges, gravel strip, pine and willow. The lawn fades softly into the paper on every side again.
+- **Scenery:** the fountain moved to the back left and the deadwood to the back right. The rose bed and arch stay in the centre.
+- **Beds and furnishings:** the morning and evening beds came forward to flank the path. The high bed stays at the back, and the cushion and sunny stone sit on the lawn at the front. Saved places are unchanged; only where they're drawn moved.
+- **Wild plants from play** now spread across the whole lawn instead of lining its edge. Each plant's saved distance picks how far out it grows, from beside the rose bed to the soft edge, and it keeps clear of beds, furnishings, scenery and the path.
+- **Growth touches:** the garden's growth level (the five buds under Best) adds deterministic touches. None of these are saved or owned records.
+
+| Growth level | What appears |
+|---|---|
+| 0 | a few meadow grasses at the edges, a sprinkle of lawn daisies and clover; roses mostly in bud |
+| 1 | ferns unfurl beside the deadwood; more meadow and lawn flowers; more roses open |
+| 2 | wildflowers (cornflower, buttercup, white, pink, lavender) through the edge meadow; moss on the stepping stones |
+| 3 | ivy climbs the fountain; a robin drops by the fountain every half minute or so, dips to drink and leaves |
+| 4 | a small fairy ring of mushrooms by the deadwood |
+| 5 | the meadow and lawn at their fullest; every rose open |
+
+- A unit test checks at five phone sizes that beds, furnishings, the fountain, the deadwood, the rose bed and the path keep clear of one another, and that wild plants always land on screen.
