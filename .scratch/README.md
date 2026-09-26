@@ -1,6 +1,6 @@
 # Bloom: an owned garden and a life for Erwu
 
-Status: **v0.8 implemented** on the working branch (01–04, 05 phase A, 11), awaiting owner review and on-phone checks (ticket 10) before release. v0.9 tickets (05 phase B, 06–08) and 09 remain planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
+Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 tickets (05 phase B, 06–08) and 09 remain planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
 Planning date: 2026-09-25. Roadmap revised 2026-09-26 (release split, Erwu phasing, review notes, ticket 11).
 Source baseline: `3df8d53` (Bloom v0.7). Working branch: `develop`.
 

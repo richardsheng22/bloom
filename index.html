@@ -462,12 +462,11 @@
   #erwu-touch:hover { background: rgba(255,255,255,0.06); }
   #title .t-bottom { width: min(100%, 460px); }
   #garden-detail-space { height: 108px; display: grid; align-items: center; }
-  #garden-invitation { color: var(--ink-soft); font-size: 14px; max-width: 240px; margin: 0 auto; line-height: 1.4; }
+  #garden-invitation { color: var(--ink-soft); font-size: 14px; max-width: 260px; margin: 0 auto; line-height: 1.4; text-wrap: balance; }
   #garden-inspection { display: grid; grid-template-columns: 1fr 44px; gap: 2px 8px; text-align: left; border-top: 1px solid var(--hairline); padding-top: 5px; }
   #garden-inspection h2 { font: 500 19px/1.2 var(--serif); margin: 0 0 3px; }
   #garden-inspection p { font-size: 13px; line-height: 1.3; margin: 0; color: var(--ink-soft); }
   #inspection-close { font-size: 25px; align-self: start; }
-  #plant-picker { grid-column: 1 / -1; width: 100%; min-height: 44px; border: 1px solid var(--hairline); border-radius: 9px; padding: 5px 10px; background: var(--chip); color: var(--ink); font: 14px var(--font); }
   #title .t-status { font-size: 13px; margin: 4px 0 10px; }
   .garden-actions { display: flex; gap: 10px; align-items: stretch; }
   .garden-button { min-height: 48px; padding: 8px 13px; border: 1px solid var(--stitch); border-radius: 12px; background: var(--chip); color: var(--ink); font: 500 14px var(--font); cursor: pointer; touch-action: manipulation; }
@@ -501,8 +500,9 @@
   @media (prefers-reduced-motion: reduce) { #title .logo { transition: none; } }
 
   /* Arrangement uses the same dock; no sheet covers the garden or Play. */
-  .garden-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  #title #play { grid-column: 1 / -1; }
+  /* Arrange sits beside Play; wild plants aren't edited, so there's nothing else here. */
+  .garden-actions { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 2fr); gap: 8px; }
+  #title #play { grid-column: auto; }
   #arrangement-targets { position: absolute; inset: 0; pointer-events: none; }
   .anchor-target { position: absolute; width: 56px; height: 48px; transform: translate(-50%,-50%); border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--moss); font: 500 20px var(--font); pointer-events: auto; touch-action: manipulation; cursor: pointer; }
   .anchor-target.available { border: 1.5px dashed var(--moss); background: rgba(255,253,245,.3); }
@@ -510,7 +510,7 @@
   .anchor-target.preview { outline: 2px dotted var(--bud-deep); outline-offset: 4px; }
   #edit-selected { grid-column: 1 / -1; min-height: 44px; text-align: left; }
   #title.arranging #garden-detail-space { height: 170px; }
-  #title.arranging #garden-invitation, #title.arranging #garden-inspection, #title.arranging .t-status, #title.arranging .t-note, #title.arranging #explore { display: none; }
+  #title.arranging #garden-invitation, #title.arranging #garden-inspection, #title.arranging .t-status, #title.arranging .t-note { display: none; }
   #title.arranging .garden-actions { grid-template-columns: 1fr 1fr; }
   #title.arranging #play { grid-column: auto; }
   #arrange-panel { text-align: left; border-top: 1px solid var(--hairline); padding-top: 6px; }
@@ -547,7 +547,7 @@
   @media (orientation: landscape) and (max-height: 500px) {
     #title .t-top { min-height: 30px; }
     #title .logo, #title.settled .logo { font-size: 26px; }
-    .garden-actions { grid-template-columns: auto auto minmax(0,1fr); gap: 5px; }
+    .garden-actions { grid-template-columns: auto minmax(0,1fr); gap: 5px; }
     .garden-actions .garden-button { padding: 6px 8px; font-size: 12px; }
     #title #play { grid-column: auto; font-size: 14px; }
     #title.arranging .t-top { display: none; }
@@ -608,16 +608,14 @@
     <div id="arrangement-targets"></div>
     <button id="erwu-touch" aria-label="Say hello to Erwu" title="Say hello to Erwu"></button>
     <button id="seed-tin" class="tin-button" aria-label="Seed tin" title="Seed tin" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="16" rx="3" fill="#C7A27A" stroke="#8A6444" stroke-width="1.4"/><rect x="5" y="7" width="22" height="5" rx="2" fill="#E3C79C" stroke="#8A6444" stroke-width="1.4"/><path d="M16 14.5c2.2 1.9 3.1 3.7 3.1 5.4a3.1 3.1 0 0 1-6.2 0c0-1.7.9-3.5 3.1-5.4Z" fill="#6E8A4A"/></svg><b id="tin-count"></b></button>
-    <p class="sr-only">Tap a plant to look closer, or use Look around to choose one by name.</p>
+    <p class="sr-only">Tap a flower bed, the cushion or the sunny stone. Wild plants grow on their own as you play.</p>
   </div>
   <div class="t-bottom">
     <div id="garden-detail-space">
-      <p id="garden-invitation">Say hello to Erwu, or look closer at a plant.</p>
+      <p id="garden-invitation">Say hello to Erwu, or tap a flower bed.</p>
       <section id="garden-inspection" hidden aria-labelledby="inspection-name">
         <div class="inspection-copy"><h2 id="inspection-name"></h2><p id="inspection-description"></p></div>
         <button id="inspection-close" class="icon-btn" aria-label="Close plant or Erwu details">×</button>
-        <label class="sr-only" for="plant-picker">Choose a garden plant</label>
-        <select id="plant-picker" aria-label="Choose a garden plant"></select>
         <div id="bed-actions" hidden>
           <div id="bed-choices" role="group" aria-label="Choose what to grow"></div>
           <div class="bed-buttons">
@@ -634,7 +632,7 @@
       </section>
     </div>
     <p class="t-status" id="t-status"></p>
-    <div class="garden-actions"><button id="explore" class="garden-button">Look around</button><button id="arrange" class="garden-button" aria-pressed="false">Arrange</button><button id="play" class="wood">Play</button></div>
+    <div class="garden-actions"><button id="arrange" class="garden-button" aria-pressed="false">Arrange</button><button id="play" class="wood">Play</button></div>
     <p class="t-note" id="t-note" role="status"></p>
   </div>
 </section>
@@ -671,9 +669,9 @@
     garden: $('#garden'), banner: $('#banner'),
     title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
     cardCat: $('#card-cat'), haptic: $('#haptic'), app: $('#app'),
-    visitGarden: $('#visit-garden'), scene: $('#garden-scene'), erwuTouch: $('#erwu-touch'), explore: $('#explore'),
+    visitGarden: $('#visit-garden'), scene: $('#garden-scene'), erwuTouch: $('#erwu-touch'),
     inspection: $('#garden-inspection'), inspectionName: $('#inspection-name'), inspectionDescription: $('#inspection-description'),
-    inspectionClose: $('#inspection-close'), plantPicker: $('#plant-picker'), invitation: $('#garden-invitation'),
+    inspectionClose: $('#inspection-close'), invitation: $('#garden-invitation'),
     arrange: $('#arrange'), arrangePanel: $('#arrange-panel'), arrangePicker: $('#arrange-picker'), arrangeMessage: $('#arrange-message'),
     arrangeConfirm: $('#arrange-confirm'), arrangeCancel: $('#arrange-cancel'), arrangeRemove: $('#arrange-remove'), arrangeUndo: $('#arrange-undo'),
     arrangementTargets: $('#arrangement-targets'), editSelected: $('#edit-selected'),
@@ -2209,10 +2207,9 @@
   let arenaReveal = 1, seatMix = 0, catnipGlow = 0, catnipTimer = 3, clockTimer = 60;
   const nestSize = () => presentation === 'garden' && gardenScene ? gardenScene.nest : coreR;
   const catnipGrown = () => garden.patches.some((p) => p.anchor && p.flower === 'catnip' && p.growth >= 0.55);
-  let titleT = 0, settleTimer = 0, overTimer = 0, selectedPlant = null, inspectedErwu = false;
+  let titleT = 0, settleTimer = 0, overTimer = 0, inspectedErwu = false;
   let scenePress = null;
   let arranging = false, arrangementSelection = null, arrangementDraft = null, arrangementUndo = null, inspectedObject = null;
-  const plantNames = { grass: 'Grass', clover: 'Clover', fern: 'Fern', mushroom: 'Mushroom', daisy: 'Daisy', cosmos: 'Cosmos', lavender: 'Lavender', forget: 'Forget-me-not', buttercup: 'Buttercup' };
   const bloomingCount = () => garden.plants.filter((p) => p.g >= 0.68 && !['grass', 'clover', 'fern', 'mushroom'].includes(p.k)).length;
   function measureGarden() {
     if (el.title.hidden) return;
@@ -2231,12 +2228,12 @@
     scenePress = null;
   }
   function closeInspection(focus = false) {
-    selectedPlant = null; inspectedErwu = false; inspectedObject = null;
+    inspectedErwu = false; inspectedObject = null;
     resetPlanting(); tinOpen = false; tinSeed = null;
     el.title.classList.remove('bedding'); el.bedActions.hidden = true; refreshArrangementTargets();
     el.editSelected.hidden = true;
     el.inspection.hidden = true; el.invitation.hidden = false;
-    if (focus && presentation === 'garden') el.explore.focus({ preventScroll: true });
+    if (focus && presentation === 'garden') el.arrange.focus({ preventScroll: true });
   }
   function refreshInspection() {
     if (el.inspection.hidden) return;
@@ -2251,33 +2248,16 @@
       if (!item) { closeInspection(); return; }
       el.inspectionName.textContent = BloomGardenLayout.label(garden,item);
       el.inspectionDescription.textContent = BloomGardenLayout.kinds[item.kind].description;
-      el.plantPicker.hidden = true;
     } else if (inspectedErwu) {
       el.inspectionName.textContent = 'Erwu';
       el.inspectionDescription.textContent = 'A quiet moment together.';
-      el.plantPicker.hidden = true;
-    } else {
-      const p = garden.plants.find((p) => p.id === selectedPlant);
-      if (!p) { closeInspection(); return; }
-      el.inspectionName.textContent = plantLabel(p);
-      el.inspectionDescription.textContent = garden.rest > 0.05 ? 'Resting gently. Its growth is yours to keep.'
-        : p.g < 0.4 ? 'A little sprout, growing with every turn.' : p.g < 0.68 ? 'Growing a little more with every turn.' : 'At home in your garden.';
-      el.plantPicker.hidden = false; el.plantPicker.value = p.id;
-    }
-  }
-  function inspectPlant(p, focus = false) {
-    if (presentation !== 'garden' || arranging || !p) return;
-    inspectedObject = null;
-    selectedPlant = p.id; inspectedErwu = false;
-    el.invitation.hidden = true; el.inspection.hidden = false;
-    refreshInspection();
-    if (focus) el.plantPicker.focus({ preventScroll: true });
+    } else closeInspection();
   }
   function greetErwu() {
     if (presentation !== 'garden' || arranging) return;
     inspectedObject = null;
     clearTimeout(settleTimer); el.title.classList.add('settled');
-    selectedPlant = null; inspectedErwu = true;
+    inspectedErwu = true;
     el.invitation.hidden = true; el.inspection.hidden = false;
     cat.mood = 'idle'; cat.blink = 0.5; cat.idle = 0;
     refreshInspection();
@@ -2310,7 +2290,7 @@
   function inspectObject(item) {
     if (!item) return;
     const seed = tinSeed;
-    selectedPlant = null; inspectedErwu = false; inspectedObject = item.id; tinOpen = false; tinSeed = null;
+    inspectedErwu = false; inspectedObject = item.id; tinOpen = false; tinSeed = null;
     resetPlanting();
     if (item.kind === 'flower-patch') {
       if (seed) choosePlanting(item, { seed });
@@ -2344,7 +2324,7 @@
     const flower = bed.flower, st = BloomBeds.stage(bed), focused = BloomBeds.focusBed(garden) === bed;
     const place = BloomGardenLayout.label(garden, bed);
     el.inspectionName.textContent = flower ? `${BloomBeds.NAMES[flower]} · ${place.toLowerCase()}` : place;
-    el.plantPicker.hidden = true; el.editSelected.hidden = true;
+    el.editSelected.hidden = true;
     const choosing = !flower || replanting || plantingDraft;
     el.bedChoices.replaceChildren();
     if (choosing) {
@@ -2378,7 +2358,7 @@
   }
   function refreshTin() {
     el.inspectionName.textContent = 'Seed tin';
-    el.plantPicker.hidden = true; el.editSelected.hidden = true;
+    el.editSelected.hidden = true;
     el.bedChoices.replaceChildren();
     for (const seed of garden.seeds) {
       el.bedChoices.append(chip(BloomBeds.NAMES[seed.kind], seedNote(seed), seed.kind, tinSeed === seed.id, () => {
@@ -2393,7 +2373,7 @@
   function openTin() {
     if (presentation !== 'garden' || arranging) return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
-    selectedPlant = null; inspectedErwu = false; inspectedObject = null; resetPlanting();
+    inspectedErwu = false; inspectedObject = null; resetPlanting();
     tinOpen = true; tinSeed = garden.seeds.length === 1 ? garden.seeds[0].id : null;
     el.invitation.hidden = true; el.inspection.hidden = false;
     refreshInspection(); refreshArrangementTargets();
@@ -2433,14 +2413,6 @@
         rot: 0, vr: 0, ph: Math.random() * TAU, life: 1.6 + Math.random(), decay: 0.45, size: 2 + Math.random() });
     }
   }
-  // Wild plants are named by where they grow, never by number.
-  function plantPlace(p) {
-    const x = Math.cos(p.a), y = Math.sin(p.a);
-    const v = y < -0.45 ? 'top' : y > 0.45 ? 'bottom' : '', h = x < -0.45 ? 'left' : x > 0.45 ? 'right' : '';
-    if (v === 'bottom' && !h) return 'by the path';
-    return v && h ? `on the ${v} ${h}` : v ? `at the ${v}` : `on the ${h}`;
-  }
-  const plantLabel = (p) => `${plantNames[p.k]} ${plantPlace(p)}`;
   function chooseArrangementAnchor(anchor) {
     const item = BloomGardenLayout.at(garden, anchor);
     if (!arranging) { inspectObject(item); return; }
@@ -2510,14 +2482,6 @@
     el.app.inert = true; el.app.setAttribute('aria-hidden', 'true');
     el.play.textContent = state === 'over' ? 'Play again' : readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
     el.tNote.textContent = gardenMessage();
-    el.plantPicker.replaceChildren();
-    const counts = {};
-    for (const p of garden.plants) {
-      const option = document.createElement('option'); option.value = p.id;
-      const name = plantLabel(p), number = counts[name] = (counts[name] || 0) + 1;
-      option.textContent = number > 1 ? `${name} (${number})` : name; el.plantPicker.append(option);
-    }
-    el.explore.disabled = garden.plants.length === 0;
     el.arrange.hidden = !arrangementAvailable;
     el.title.hidden = false; el.title.classList.remove('enter', 'leaving');
     el.over.hidden = true;
@@ -2531,7 +2495,7 @@
     el.tStatus.textContent = growingBed ? `Growing ${bedName(growingBed)} · ${BloomBeds.STAGE_NAMES[BloomBeds.stage(growingBed)].toLowerCase()}`
       : flowers ? `${flowers} ${flowers === 1 ? 'flower' : 'flowers'} growing here` : 'A garden growing with you';
     el.invitation.textContent = garden.patches.some((p) => p.anchor && !p.flower) && !garden.patches.some((p) => p.flower)
-      ? 'Tap a flower bed to plant something, or say hello to Erwu.' : 'Say hello to Erwu, or look closer at a plant or bed.';
+      ? 'Tap a flower bed to plant something, or say hello to Erwu.' : 'Say hello to Erwu, or tap a flower bed.';
     refreshTinButton(); updateSeedHud();
   }
   function leaveTitle() {
@@ -4152,11 +4116,6 @@
     }
     // On the landing page Erwu sleeps in a mossy clearing; the flower grows in around her when you play.
     const te = titleT * titleT * (3 - 2 * titleT);
-    if (presentation === 'garden' && selectedPlant) {
-      const p = garden.plants.find((p) => p.id === selectedPlant);
-      if (p) { const q = plantXY(p); ctx.strokeStyle = rgb(hexRgb(C.moss), 0.7); ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.ellipse(q.x, q.y - R * 0.04, 22, 24, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-    }
     // the whole flower swells a touch at the moment of full bloom
     const zoom = raysFx > 0 ? 1 + 0.035 * Math.sin(Math.min(1, (1 - raysFx) / 0.35) * Math.PI) : 1;
     if (te < 1) {
@@ -4426,9 +4385,7 @@
     const bed = garden.patches.find((p) => p.id === inspectedObject);
     if (bed && BloomBeds.setFocus(garden, bed.id)) { saveGarden(); refreshInspection(); showStatus(); }
   });
-  el.explore.addEventListener('click', () => inspectPlant(garden.plants[0], true));
   el.inspectionClose.addEventListener('click', () => closeInspection(true));
-  el.plantPicker.addEventListener('change', () => inspectPlant(garden.plants.find((p) => p.id === el.plantPicker.value)));
   el.scene.addEventListener('pointerdown', (e) => {
     if (presentation !== 'garden' || e.target.closest('button') || scenePress || e.button !== 0) return;
     scenePress = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
@@ -4443,8 +4400,8 @@
     clearAim();
     if (!tapped || presentation !== 'garden' || !gardenScene || arranging) return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
-    const p = BloomGardenView.nearest(garden.plants, gardenScene, e.clientX - gardenScene.cx, e.clientY - gardenScene.cy, R * 0.065, BloomGardenLayout.projectPlant);
-    if (p) inspectPlant(p); else closeInspection();
+    // Wild plants grow on their own; tapping the lawn just closes whatever is open.
+    closeInspection();
   });
   el.scene.addEventListener('pointercancel', () => clearAim());
   el.scene.addEventListener('lostpointercapture', () => { scenePress = null; });

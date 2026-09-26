@@ -83,3 +83,7 @@ Physical iPhone Safari touch feel, real safe-area behavior, audio, and haptics a
 - Bed and seed choices are rounded chips with a colour swatch, not `<select>` menus. The plant picker remains as the keyboard and screen-reader route.
 - Erwu now curls up asleep and sits up when greeted (ticket 05 phase A), which fills the centre of the scene better.
 - The tagline is unchanged, pending the owner's confirmation.
+
+### Owner decision — 2026-09-26: only beds and furnishings are interactive
+
+Wild plants are no longer tappable. They grow and change with play and rest, and naming or inspecting each one ("Clover on the bottom right") was clutter. In the garden view, only the three flower beds, the cushion and the sunny stone open a sheet; Erwu still sits up when tapped, and the seed tin still opens. The **Look around** button, the named plant picker and the selection ring are gone; Arrange now sits beside Play. Tapping the lawn simply closes whatever is open. Keyboard access is via the bed and furnishing buttons (tab, then Enter), with Escape returning focus to Arrange. The browser suite checks that tapping a wild plant opens nothing.

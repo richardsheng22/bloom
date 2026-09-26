@@ -29,10 +29,10 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   async function shot(p){const box=await p.locator('#stage').boundingBox();const x=box.x+box.width/2,y=box.y+box.height*.7;
    await p.mouse.move(x,y);await p.mouse.down();await p.mouse.move(x+65,y,{steps:6});await p.waitForTimeout(80);await p.mouse.up();}
   async function assertBounds(p){
-   const boxes=await p.evaluate(()=>['#play','#explore','#erwu-touch','#garden-scene','#garden-inspection'].map(sel=>{
+   const boxes=await p.evaluate(()=>['#play','#arrange','#erwu-touch','#garden-scene','#garden-inspection'].map(sel=>{
     const e=document.querySelector(sel),r=e.getBoundingClientRect();return {sel,hidden:e.hidden,x:r.x,y:r.y,w:r.width,h:r.height};}));
    const size=p.viewportSize();for(const b of boxes.filter(b=>!b.hidden)){assert.ok(b.x>=-1&&b.y>=-1&&b.x+b.w<=size.width+1&&b.y+b.h<=size.height+1,JSON.stringify(b));}
-   for(const b of boxes.filter(b=>['#play','#explore','#erwu-touch'].includes(b.sel)))assert.ok(b.w>=44&&b.h>=44,JSON.stringify(b));
+   for(const b of boxes.filter(b=>['#play','#arrange','#erwu-touch'].includes(b.sel)))assert.ok(b.w>=44&&b.h>=44,JSON.stringify(b));
    const scene=boxes.find(b=>b.sel==='#garden-scene'),sheet=boxes.find(b=>b.sel==='#garden-inspection');
    if(!sheet.hidden)assert.ok(scene.y+scene.h<=sheet.y+1||scene.x+scene.w<=sheet.x+1,'inspection must not cover scene');
   }
@@ -40,11 +40,14 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
    const p=await setup(width,height);const before=await snapshot(p),owned=await plants(p);
    await assertBounds(p);await p.screenshot({path:path.join(out,`garden-${width}x${height}.png`)});
    await p.locator('#erwu-touch').tap();assert.equal(await p.locator('#inspection-name').innerText(),'Erwu');assert.deepEqual(await snapshot(p),before);
-   await p.locator('#explore').click();await assertBounds(p);assert.ok(await p.locator('#plant-picker').isVisible());
+   // Only beds, the cushion and the stone open; a bed opens from the keyboard too.
+   // Escape closes it and returns focus without touching the run.
+   await p.locator('.anchor-target').first().focus();await p.keyboard.press('Enter');await assertBounds(p);
+   assert.ok(await p.locator('#bed-actions').isVisible());assert.ok(await p.locator('.bed-chip').first().isVisible());
    await p.screenshot({path:path.join(out,`inspection-${width}x${height}.png`)});
-   // Keyboard selection and Escape return focus without touching the run.
-   await p.locator('#plant-picker').press('ArrowDown');await p.keyboard.press('Escape');
-   assert.ok(await p.locator('#garden-inspection').isHidden());assert.equal(await p.evaluate(()=>document.activeElement.id),'explore');
+   await p.keyboard.press('Escape');
+   assert.ok(await p.locator('#garden-inspection').isHidden());assert.equal(await p.evaluate(()=>document.activeElement.id),'arrange');
+   assert.equal(await p.locator('#explore, #plant-picker').count(),0);
    // A drag in garden space is not a slingshot or an inspection tap.
    const scene=await p.locator('#garden-scene').boundingBox();await p.mouse.move(scene.x+12,scene.y+25);await p.mouse.down();await p.mouse.move(scene.x+65,scene.y+85,{steps:5});await p.mouse.up();
    assert.deepEqual(await snapshot(p),before);
@@ -61,10 +64,12 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   const owned=await plants(p);await p.addStyleTag({content:'#title{padding-top:44px;padding-bottom:34px;}'});await p.waitForTimeout(150);await assertBounds(p);
   await p.setViewportSize({width:568,height:320});await p.waitForTimeout(150);await assertBounds(p);assert.deepEqual(await plants(p),owned);
   await p.setViewportSize({width:390,height:844});await p.waitForTimeout(150);
-  // Tap a specific visible plant using the same public semantic projection as the renderer.
+  // Wild plants grow on their own: tapping one opens nothing. Tapping a bed does; the lawn closes it.
   const target=await p.evaluate(()=>{const r=document.querySelector('#garden-scene').getBoundingClientRect(),scene=BloomGardenView.layout(r),g=JSON.parse(localStorage.getItem('bloom.garden2'));
-   const item=g.plants[0],at=BloomGardenView.project(item,scene);return {x:scene.cx+at.x,y:scene.cy+at.y-12};});
-  await p.touchscreen.tap(target.x,target.y);assert.ok(await p.locator('#garden-inspection').isVisible());
+   const item=g.plants[0],at=BloomGardenLayout.projectPlant(item,scene);return {x:scene.cx+at.x,y:scene.cy+at.y-8};});
+  await p.touchscreen.tap(target.x,target.y);assert.ok(await p.locator('#garden-inspection').isHidden());
+  await p.locator('.anchor-target').nth(3).tap();assert.ok(await p.locator('#garden-inspection').isVisible());
+  assert.equal(await p.locator('#inspection-name').innerText(),'Cushion');
   const rect=await p.locator('#garden-scene').boundingBox();await p.mouse.click(rect.x+2,rect.y+2);assert.ok(await p.locator('#garden-inspection').isHidden());
   await p.locator('#erwu-touch').tap();await play(p);assert.ok(await p.locator('#title').isHidden());
   // Cancel a pointer before leaving the run; its late release cannot launch in the garden.
@@ -82,7 +87,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   await garden(p);const completed=await snapshot(p);assert.equal(completed.turn,9);
   await play(p);assert.deepEqual(await snapshot(p),completed);await p.waitForTimeout(900);assert.equal(await p.evaluate(()=>document.body.dataset.view),'run');
   await p.reload();await garden(p);assert.deepEqual(await snapshot(p),completed);
-  console.log('PASS safe-area reservations, resize, plant tap, dismissal, immediate play, pointer cancellation, queued return/cancel');await p.close();
+  console.log('PASS safe-area reservations, resize, wild plants stay untouchable, bed and cushion taps, dismissal, immediate play, pointer cancellation, queued return/cancel');await p.close();
   // A queued return also handles loss without silently creating a new run or a delayed dialog.
   const losing={...run,petalNext:false,items:[{kind:'shape',sector:0,ring:1,hp:999,maxHp:999,sp:0,ci:0}]};
   const lost=await setup(390,844,{run:losing});await play(lost);await shot(lost);await lost.locator('#visit-garden').click();await garden(lost);
