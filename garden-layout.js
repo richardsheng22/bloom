@@ -125,7 +125,8 @@
     return {
       roses: { x: 0, y: n * 0.35, rx, ry },
       fountain: { x: -Math.min(x * 0.82, scene.width / 2 - fh * 0.42), y: -h * 0.19, width: fh * 0.72, height: fh },
-      deadwood: { x: Math.min(x * 0.8, scene.width / 2 - fh * 0.5), y: -h * 0.2, width: fh * 0.6, height: fh * 0.62 },
+      // a fallen log, lying a little lower and further in than the fountain opposite
+      deadwood: { x: Math.min(scene.width / 2 - fh * 0.55 - 6, Math.max(x * 0.76, rx * 0.74 + fh * 0.55)), y: Math.min(-h * 0.05, n * 0.35 - ry * 0.75), width: fh * 1.1, height: fh * 0.42 },
       // the stepping-stone path from the front of the lawn up to the rose bed
       path: { top: n * 0.35 + ry + 6, width: 24 },
     };

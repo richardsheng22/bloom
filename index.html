@@ -289,6 +289,27 @@
   }
   .card .newbest { color: var(--bud-deep); font-weight: 600; }
   .card .note { margin-top: 10px; font-size: 13.5px; text-wrap: balance; }
+  /* the run's garden news: a small stitched list, one row per bed or seed */
+  .over-garden-title { margin: 2px 0 6px; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-soft); }
+  .over-garden { list-style: none; margin: 0 auto; padding: 4px 0; max-width: 260px; text-align: left; border-block: 1px dashed var(--stitch); }
+  .over-garden li { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 8px; padding: 5px 2px; }
+  .over-garden li + li { border-top: 1px solid var(--hairline); }
+  .over-garden i { width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6), 0 0 0 1px var(--hairline); }
+  .over-garden i.rare { background: radial-gradient(circle at 35% 30%, #fff 0 14%, var(--c) 15%); }
+  .over-garden b { display: block; font: 500 14px/1.15 var(--serif); color: var(--ink); }
+  .over-garden small { display: block; font-size: 11.5px; color: var(--ink-soft); }
+  #over { overflow-y: auto; }
+  @media (max-height: 680px) {
+    #over { padding: 12px; }
+    .card { padding: 14px 20px 16px; }
+    .card canvas { width: 76px; height: 76px; }
+    .card .big { font-size: 60px; }
+    #over-title { font-size: 15px; }
+    .card .note { margin-top: 6px; }
+    .over-garden li { padding: 3px 2px; }
+    .over-garden-title { margin-bottom: 3px; }
+  }
+  .over-garden span { font-size: 12px; font-weight: 600; color: var(--moss); }
   .card .wood { margin-top: 20px; width: 100%; }
   .wood {
     height: 52px;
@@ -624,7 +645,7 @@
     <p id="over-title">Erwu's curled up for a nap</p>
     <div class="big" id="over-turn">0</div>
     <p id="over-best">turns</p>
-    <p class="note" id="over-note">The garden keeps everything you grew.</p>
+    <div class="note" id="over-note">The garden keeps everything you grew.</div>
     <button id="again" class="wood">Play again</button>
     <button id="to-garden" class="linkish">Back to the garden</button>
   </div>
@@ -1437,11 +1458,20 @@
       if (planting) g.globalAlpha = 1;
       drawBed(g, item, !!planting, planting);
     } else if (item.kind === 'cushion') {
-      g.fillStyle = C.lavender; g.beginPath(); g.roundRect(-27,-17,54,34,11); g.fill(); g.stroke();
-      g.fillStyle = C['petal-bloom']; g.beginPath(); g.roundRect(-24,-14,24,28,7); g.fill();
-      g.setLineDash([2,3]); g.strokeStyle = '#FFF9EC'; g.beginPath(); g.roundRect(-22,-12,44,24,8); g.stroke(); g.setLineDash([]);
-      g.strokeStyle = rgb(hexRgb(C.walnut),0.3); g.beginPath(); g.moveTo(0,-14); g.lineTo(0,14); g.stroke();
-      g.fillStyle = C.butter; g.beginPath(); g.arc(0,0,2.6,0,TAU); g.fill();
+      // a plump round floor cushion: a deep side, a domed top tufted to a button, piping, a tassel
+      g.fillStyle = 'rgba(79,70,55,0.16)'; g.beginPath(); g.ellipse(1, 9, 28, 9, 0, 0, TAU); g.fill();
+      g.fillStyle = '#C98896'; g.beginPath(); g.ellipse(0, 3, 26, 12, 0, 0, Math.PI); g.lineTo(-26, -3); g.ellipse(0, -3, 26, 12, 0, Math.PI, 0, true); g.closePath(); g.fill();
+      const dome = g.createRadialGradient(-7, -9, 2, 0, -4, 28);
+      dome.addColorStop(0, '#F6D3D9'); dome.addColorStop(0.6, '#E7AEB9'); dome.addColorStop(1, '#D6939F');
+      g.fillStyle = dome; g.beginPath(); g.ellipse(0, -4, 26, 13, 0, 0, TAU); g.fill();
+      g.strokeStyle = '#FFF1E8'; g.lineWidth = 1.8; g.beginPath(); g.ellipse(0, -2.5, 26, 12.5, 0, 0.05, Math.PI - 0.05); g.stroke();
+      g.strokeStyle = 'rgba(160,90,105,0.5)'; g.lineWidth = 1.1;
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + 0.3; g.beginPath(); g.moveTo(Math.cos(a) * 3, -4 + Math.sin(a) * 1.6); g.quadraticCurveTo(Math.cos(a + 0.35) * 13, -4 + Math.sin(a + 0.35) * 6.5, Math.cos(a) * 22, -4 + Math.sin(a) * 10.5); g.stroke(); }
+      g.fillStyle = 'rgba(160,90,105,0.16)'; g.beginPath(); g.ellipse(0, -4, 7, 3.2, 0, 0, TAU); g.fill();
+      g.fillStyle = C.butter; g.strokeStyle = 'rgba(138,100,68,0.7)'; g.lineWidth = 0.8; g.beginPath(); g.arc(0, -4, 2.8, 0, TAU); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.8)'; g.beginPath(); g.arc(-0.8, -4.9, 0.8, 0, TAU); g.fill();
+      g.strokeStyle = '#E7B84C'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(24, 4); g.quadraticCurveTo(27, 7, 27, 12); g.moveTo(25, 4); g.quadraticCurveTo(29, 7, 30, 11); g.stroke();
+      g.fillStyle = '#E7B84C'; g.beginPath(); g.arc(24.5, 3.5, 1.6, 0, TAU); g.fill();
     } else if (item.kind === 'stone') {
       g.fillStyle = '#C5BEAD'; g.beginPath(); g.ellipse(0,0,28,16,-.12,0,TAU); g.fill(); g.stroke();
       g.fillStyle = '#E9DDBF'; g.beginPath(); g.ellipse(-3,-4,22,9,-.12,0,TAU); g.fill();
@@ -1579,34 +1609,49 @@
     g.strokeStyle = 'rgba(90,50,30,0.45)'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(-s, 0); g.lineTo(s * 0.9, 0); g.stroke();
     g.restore();
   }
+  // The fallen log: weathered bark, a cut end showing its rings, a broken-off branch,
+  // and a patch of moss. Ferns and a fairy ring join it as the garden grows.
   function drawDeadwood(g, d, k, tier = 0) {
-    // weathered driftwood: silver-grey spikes curling up out of the gravel, and a log beside it
-    const base = d.y, hgt = d.height;
-    g.fillStyle = 'rgba(79,70,55,0.16)'; g.beginPath(); g.ellipse(d.x, base + 2, d.width * 0.7, 5, 0, 0, TAU); g.fill();
-    const spikes = [[-0.32, 0.72, -0.35], [-0.08, 1, -0.12], [0.12, 0.88, 0.18], [0.34, 0.6, 0.45], [-0.5, 0.45, -0.7]];
-    for (const [ox, hk, lean] of spikes) {
-      const x0 = d.x + ox * d.width, h = hgt * hk, tipx = x0 + lean * h * 0.55, w = d.width * 0.13;
-      g.fillStyle = '#C9BEAC'; g.strokeStyle = '#8E8170'; g.lineWidth = 0.9;
-      g.beginPath(); g.moveTo(x0 - w, base); g.quadraticCurveTo(x0 - w * 0.6 + lean * h * 0.2, base - h * 0.6, tipx, base - h);
-      g.quadraticCurveTo(x0 + w * 0.5 + lean * h * 0.3, base - h * 0.5, x0 + w, base); g.closePath(); g.fill(); g.stroke();
-      g.strokeStyle = 'rgba(120,108,92,0.5)'; g.lineWidth = 0.6;
-      for (const t of [-0.35, 0.15]) { g.beginPath(); g.moveTo(x0 + t * w, base - 2); g.quadraticCurveTo(x0 + t * w + lean * h * 0.15, base - h * 0.5, tipx + t * 2, base - h * 0.88); g.stroke(); }
+    const L = d.width, T = d.height * 0.72, x0 = d.x - L / 2, base = d.y, tilt = -0.12;
+    g.save(); g.translate(d.x, base); g.rotate(tilt); g.translate(-d.x, -base);
+    g.fillStyle = 'rgba(79,70,55,0.18)'; g.beginPath(); g.ellipse(d.x + 2, base + 2, L * 0.55, T * 0.35, 0, 0, TAU); g.fill();
+    // the trunk, with a lighter top where the light catches it
+    g.fillStyle = '#9C8468'; g.strokeStyle = '#6E5A45'; g.lineWidth = 1;
+    g.beginPath(); g.roundRect(x0, base - T, L, T, T * 0.45); g.fill(); g.stroke();
+    g.fillStyle = 'rgba(255,240,215,0.22)'; g.beginPath(); g.roundRect(x0 + T * 0.4, base - T + 1.5, L - T * 0.9, T * 0.28, T * 0.14); g.fill();
+    g.strokeStyle = 'rgba(80,62,45,0.55)'; g.lineWidth = 0.8;
+    const rnd = seeded(887);
+    for (let i = 0; i < 7; i++) {
+      const bx = x0 + T * 0.5 + rnd() * (L - T * 1.3), len = L * (0.12 + rnd() * 0.18), by = base - T * (0.25 + rnd() * 0.5);
+      g.beginPath(); g.moveTo(bx, by); g.quadraticCurveTo(bx + len * 0.5, by + (rnd() - 0.5) * 2, bx + len, by + (rnd() - 0.5) * 2); g.stroke();
     }
-    g.fillStyle = '#B9A98F'; g.strokeStyle = '#8E8170'; g.lineWidth = 0.9;
-    g.beginPath(); g.roundRect(d.x - d.width * 0.2, base - 1 * k, d.width * 1.1, 5 * k, 2.5 * k); g.fill(); g.stroke();
+    // a knot and a broken-off branch
+    g.beginPath(); g.ellipse(x0 + L * 0.38, base - T * 0.55, T * 0.12, T * 0.08, 0, 0, TAU); g.stroke();
+    g.fillStyle = '#9C8468'; g.strokeStyle = '#6E5A45';
+    g.beginPath(); g.moveTo(x0 + L * 0.58, base - T + 1); g.lineTo(x0 + L * 0.62, base - T - T * 0.7); g.lineTo(x0 + L * 0.68, base - T - T * 0.55); g.lineTo(x0 + L * 0.66, base - T + 1); g.closePath(); g.fill(); g.stroke();
+    // the cut end, with its rings
+    const ex = x0 + L - T * 0.3, ey = base - T / 2;
+    g.fillStyle = '#E3CFA8'; g.strokeStyle = '#8E7152'; g.lineWidth = 1;
+    g.beginPath(); g.ellipse(ex, ey, T * 0.32, T * 0.5, 0, 0, TAU); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(142,113,82,0.6)'; g.lineWidth = 0.6;
+    for (const r of [0.35, 0.62]) { g.beginPath(); g.ellipse(ex, ey, T * 0.32 * r, T * 0.5 * r, 0, 0, TAU); g.stroke(); }
+    // moss along the top
+    g.fillStyle = 'rgba(110,138,74,0.7)';
+    for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(x0 + L * (0.15 + i * 0.09), base - T + 1, 3 * k, 1.8 * k, 0, 0, TAU); g.fill(); }
+    g.restore();
     // ferns unfurl around it once the garden is growing; later, a little fairy ring
-    if (tier >= 1) for (const [ox, dir] of [[-0.62, -1], [0.55, 1], [-0.2, -1]].slice(0, 1 + Math.min(2, tier - 1))) {
-      const fx = d.x + ox * d.width, len = 12 * k;
+    if (tier >= 1) for (const [ox, dir] of [[-0.5, -1], [0.1, 1], [-0.2, -1]].slice(0, 1 + Math.min(2, tier - 1))) {
+      const fx = d.x + ox * L, len = 12 * k, fb = base - T * 0.2;
       g.strokeStyle = rgb(hexRgb(C.moss), 0.9); g.lineWidth = 1;
-      const tx = fx + dir * len * 0.8, ty = base - len;
-      g.beginPath(); g.moveTo(fx, base + 1); g.quadraticCurveTo(fx, ty, tx, ty); g.stroke();
+      const tx = fx + dir * len * 0.8, ty = fb - len;
+      g.beginPath(); g.moveTo(fx, fb); g.quadraticCurveTo(fx, ty, tx, ty); g.stroke();
       for (let i = 1; i <= 5; i++) {
-        const t = i / 6, mx = fx + (tx - fx) * t * t, my = base + 1 + (ty - base - 1) * (2 * t - t * t), l = 4 * k * (1 - t * 0.5);
+        const t = i / 6, mx = fx + (tx - fx) * t * t, my = fb + (ty - fb) * (2 * t - t * t), l = 4 * k * (1 - t * 0.5);
         leafAt(g, mx, my, -Math.PI / 2 - 0.9, l, l * 0.35, rgb(hexRgb(C.moss), 0.85)); leafAt(g, mx, my, -Math.PI / 2 + 0.9, l, l * 0.35, rgb(hexRgb(C.moss), 0.85));
       }
     }
     if (tier >= 4) for (let i = 0; i < 7; i++) {
-      const a = i / 7 * TAU, mx = d.x - d.width * 0.1 + Math.cos(a) * 13 * k, my = base + 12 * k + Math.sin(a) * 5 * k, ms = 2.2 * k;
+      const a = i / 7 * TAU, mx = d.x - L * 0.1 + Math.cos(a) * 13 * k, my = base + 12 * k + Math.sin(a) * 5 * k, ms = 2.2 * k;
       g.fillStyle = '#F7EEDC'; g.fillRect(mx - 0.5, my - ms, 1, ms);
       g.fillStyle = i % 2 ? '#D9665F' : '#C9A56E'; g.beginPath(); g.ellipse(mx, my - ms, ms, ms * 0.7, 0, Math.PI, TAU); g.fill();
     }
@@ -2515,28 +2560,40 @@
     };
     requestAnimationFrame(step);
   }
-  // What this run changed in the garden, in a sentence or two; the total is always kept.
+  // What this run changed in the garden: one short row per bed that reached a new
+  // stage, and per rare seed found; or a single quiet line when nothing changed.
   function runSummary() {
-    const out = [];
+    const rows = [];
     const before = runLog ? runLog.beds : {};
     for (const bed of garden.patches) {
       if (!bed.flower || bed.anchor === null) continue;
-      const now = bed.flower + ':' + BloomBeds.stage(bed);
-      if (before[bed.id] === now) continue;
-      const name = bedName(bed).replace(/^the /, 'The ');
       const st = BloomBeds.stage(bed);
-      out.push(st === 'planted' ? `${name} has taken root.` : `${name} ${stageWords[st]} now.`);
+      if (before[bed.id] === bed.flower + ':' + st) continue;
+      rows.push({ kind: bed.flower, name: BloomBeds.NAMES[bed.flower], where: BloomGardenLayout.placeName(bed.anchor).replace(/^the /, ''), what: BloomBeds.STAGE_NAMES[st] });
     }
-    for (const kind of runLog ? runLog.seeds : []) out.push(`You found a ${BloomBeds.NAMES[kind].toLowerCase()} seed.`);
-    if (!out.length) {
-      const bed = BloomBeds.focusBed(garden);
-      // no new stage this run: say how close the bed you're growing is to the next one
-      const next = bed && [[0.2, 'growing well'], [0.55, 'flowering'], [1, 'fully established']].find(([t]) => bed.growth < t);
-      const name = bed && bedName(bed).replace(/^the /, 'The ');
-      out.push(!bed ? 'The garden keeps everything you grew.'
-        : next[0] - bed.growth < 0.1 ? `${name} is nearly ${next[1]}.` : `${name} grew a little. The garden keeps everything you grew.`);
+    for (const kind of runLog ? runLog.seeds : []) rows.push({ kind, name: `${BloomBeds.NAMES[kind]} seed`, where: 'in your seed tin', what: 'Found', rare: true });
+    if (rows.length) return { title: 'In the garden this run', rows: rows.slice(0, 4) };
+    const bed = BloomBeds.focusBed(garden);
+    const next = bed && [[0.2, 'growing well'], [0.55, 'flowering'], [1, 'fully established']].find(([t]) => bed.growth < t);
+    return { title: '', text: !bed ? 'The garden keeps everything you grew.'
+      : next[0] - bed.growth < 0.1 ? `${bedName(bed).replace(/^the /, 'The ')} is nearly ${next[1]}.` : `${bedName(bed).replace(/^the /, 'The ')} grew a little.` };
+  }
+  function showSummary() {
+    const sum = runSummary();
+    el.overNote.replaceChildren();
+    if (!sum.rows) { el.overNote.textContent = sum.text; return; }
+    const h = document.createElement('p'); h.className = 'over-garden-title'; h.textContent = sum.title;
+    const ul = document.createElement('ul'); ul.className = 'over-garden';
+    for (const r of sum.rows) {
+      const li = document.createElement('li');
+      const sw = document.createElement('i'); sw.style.setProperty('--c', CHIP_COLOURS[r.kind]); if (r.rare) sw.className = 'rare';
+      const name = document.createElement('b'); name.textContent = r.name;
+      const where = document.createElement('small'); where.textContent = r.where;
+      const what = document.createElement('span'); what.textContent = r.what;
+      const label = document.createElement('div'); label.append(name, where);
+      li.append(sw, label, what); ul.append(li);
     }
-    return out.slice(0, 3).join(' ');
+    el.overNote.append(h, ul);
   }
   function gameOver() {
     state = 'over'; readySnapshot = null;
@@ -2554,7 +2611,7 @@
       el.overTitle.textContent = `${CAT_NAME}'s curled up for a nap`;
       countUp(el.overTurn, turn);
       el.overBest.textContent = isBest ? 'turns, a new best' : `turns, best is ${best}`;
-      el.overNote.textContent = runSummary();
+      showSummary();
       el.overBest.classList.toggle('newbest', isBest);
       drawCardCat();
       el.over.hidden = false;

@@ -91,6 +91,12 @@ test('the scenery, beds and furnishings keep clear of each other at every phone 
       assert.ok(Math.abs(a.x) - a.width / 2 > m.path.width / 2 || a.y < m.path.top, `${a.id} off the path at ${w}x${h}`);
       assert.ok(Math.abs(a.x) + a.width / 2 <= w / 2 + 4, `${a.id} on screen at ${w}x${h}`);
     }
+    // the log and fountain stay off the rose bed, and the log isn't level with the fountain
+    for (const f of [m.fountain, m.deadwood]) {
+      const nearest = { x: Math.max(f.x - f.width / 2, Math.min(m.roses.x, f.x + f.width / 2)), y: Math.max(f.y - f.height, Math.min(m.roses.y, f.y)) };
+      assert.ok(((nearest.x - m.roses.x) / m.roses.rx) ** 2 + ((nearest.y - m.roses.y) / m.roses.ry) ** 2 > 1, `scenery off the rose bed at ${w}x${h}`);
+    }
+    assert.ok(Math.abs(m.deadwood.y - m.fountain.y) > h * 0.08, `log sits off the fountain's line at ${w}x${h}`);
     // wild plants always land somewhere on the lawn, never on scenery
     for (let i = 0; i < 60; i++) {
       const q = L.projectPlant({ a: i * 0.7, d: 1.05 + (i % 7) * 0.22 }, scene);

@@ -102,3 +102,8 @@ The owner shared photos of their garden. The garden view now follows it (photos 
 | 5 | the meadow and lawn at their fullest; every rose open |
 
 - A unit test checks at five phone sizes that beds, furnishings, the fountain, the deadwood, the rose bed and the path keep clear of one another, and that wild plants always land on screen.
+
+### Owner feedback — 2026-09-26 (second pass)
+
+- **Log:** the spiky deadwood is now a fallen log, with weathered bark, a cut end showing its rings, a knot, a broken-off branch and moss. It lies at a slight angle, lower and further in than the fountain opposite, so the two no longer line up. The ferns and fairy ring now grow beside the log. The test also checks that the log stays off the rose bed and out of line with the fountain.
+- **Cushion:** redrawn as a plump round floor pouf, with a deep side, a domed top tufted to a button, cream piping and a little gold tassel.

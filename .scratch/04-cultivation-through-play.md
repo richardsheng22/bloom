@@ -68,3 +68,7 @@ Observed 2026-09-26 with a bot playing ordinary runs in the browser. It aims at 
 - The first bed established in three runs in both gardens, at the top of the 1–3 run target. A person, whose runs last longer, should get there sooner, so the starting values are kept.
 - The run-end card said "The lavender in the morning bed is growing well now.", "…is flowering now." / "…is nearly flowering." and "…is fully established now." When a run crosses no stage, it now says how close the bed is ("nearly flowering") rather than just "grew a little".
 - Still to confirm with the owner's real play on the phone.
+
+### Run-end card — 2026-09-26
+
+On owner feedback, the end-of-run text is no longer run-on sentences. Under "In the garden this run" it shows a short stitched list, with one row per bed that reached a new stage and one per rare seed found (colour swatch, plant, place, and the new stage or "Found"), at most four rows. With nothing new, it shows one quiet line ("The lavender in the morning bed is nearly flowering."). On short screens the card compacts so that Play again and Back to the garden always fit (checked at 320 × 568). Ticket 08 still covers the game-over pose and the return ritual. Evidence: `v08-evidence/run-summary-card.png`.

@@ -24,3 +24,7 @@ Captured from the working branch in headless Chromium with generated garden data
 - [Dandelion clocks, ripe wild strawberries and a sunflower](rare-b-390x844.png).
 - [A seed bud during play](run-seed-bud-390x844.png) (the acorn pod beside the bud, top right of Erwu), with the planted beds above the flower.
 - [Collecting it](run-seed-found-390x844.png): the banner as the seed flies to the tin beside Best.
+
+## End of a run (ticket 04)
+
+- [The run-end card](run-summary-card.png): what changed in the garden this run, as a short list.
