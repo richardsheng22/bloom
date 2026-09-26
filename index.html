@@ -1088,7 +1088,12 @@
     else nurture(a, 0.012);
   }
   function flowerFromBloom(a, from) {
-    bedGrew(BloomBeds.grow(garden, BloomBeds.GROW.bloom, 'bloom'));
+    const room = BloomBeds.GROW.bloomPerShot - (shot ? shot.bedGrowth || 0 : 0);
+    if (room > 0) {
+      const amount = Math.min(BloomBeds.GROW.bloom, room);
+      if (shot) shot.bedGrowth = (shot.bedGrowth || 0) + amount;
+      bedGrew(BloomBeds.grow(garden, amount, 'bloom'));
+    }
     if (shot && Math.random() < 0.3 && seedToBed(from)) return;
     if (shot && shot.flowers < 8 && plant(pick(FLOWER_KINDS), a, 0.3, 1.06, 2.6, from)) shot.flowers++;
     else nurture(a, 0.06);

@@ -16,7 +16,9 @@
   });
   // Tunable pacing (ticket 04/11). A rare planting establishes a little more slowly.
   // Observed with random-aim bot runs of 9–18 turns: a first bed establishes in three runs (ticket 04).
-  const GROW = Object.freeze({ turn: 0.012, bloom: 0.011, miss: 0.002, fullBloom: 0.08, rare: 0.75, idle: 0.25 });
+  // Blooms from a single shot add at most `bloomPerShot`, so a long, busy late-game run can't
+  // finish every bed at once (owner feedback: three beds in one 37-turn run was too fast).
+  const GROW = Object.freeze({ turn: 0.012, bloom: 0.011, bloomPerShot: 0.03, miss: 0.002, fullBloom: 0.06, rare: 0.75, idle: 0.25 });
   const LUCK = Object.freeze({ firstChance: 0.5, base: 0.3, perDryRun: 0.2, earliest: 3, latest: 8 });
   const STAGES = Object.freeze([[0.2, 'planted'], [0.55, 'growing'], [1, 'flowering']]);
   const STAGE_NAMES = Object.freeze({ empty: 'Ready for planting', planted: 'Just planted', growing: 'Growing', flowering: 'Flowering', established: 'Established' });

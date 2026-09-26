@@ -72,3 +72,7 @@ Observed 2026-09-26 with a bot playing ordinary runs in the browser. It aims at 
 ### Run-end card — 2026-09-26
 
 On owner feedback, the end-of-run text is no longer run-on sentences. Under "In the garden this run" it shows a short stitched list, with one row per bed that reached a new stage and one per rare seed found (colour swatch, plant, place, and the new stage or "Found"), at most four rows. With nothing new, it shows one quiet line ("The lavender in the morning bed is nearly flowering."). On short screens the card compacts so that Play again and Back to the garden always fit (checked at 320 × 568). Ticket 08 still covers the game-over pose and the return ritual. Evidence: `v08-evidence/run-summary-card.png`.
+
+### Pace tuning after owner play — 2026-09-26
+
+The owner's first real run (37 turns, a new best) established all three cosmos beds at once: too fast. The early pace was right; late-game turns bloom dozens of buds, and each paid in full. Now the blooms from one shot add at most 0.03 to a bed, and full bloom gives 0.06 (was 0.08). A busy 37-turn run now adds at most about 1.8 beds' worth instead of every bed several times over. A short 10-turn run is almost unchanged (about 0.42 of a bed, was 0.45), so the first bed still arrives within the 1–3 run target.
