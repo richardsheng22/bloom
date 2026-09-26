@@ -1,6 +1,6 @@
 # 05 — Build a recognizable full-body Erwu
 
-Status: phase A implemented as provisional art, awaiting owner review; phase B planned for v0.9. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
+Status: phase A released in v0.8; phase B implemented for v0.9 as provisional motion, awaiting owner review. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
 
 ## Outcome
 
@@ -82,3 +82,22 @@ Changes made from it:
 - The face itself (and its half-lidded, faintly unimpressed look) is unchanged, keeping the earlier correction that it should not look too chubby.
 
 Still to confirm from references: her sleeping pose, tail length and carriage, and the chest colour. Photos of her asleep and from the side would settle the curled pose.
+
+## Phase B record — 2026-09-26
+
+- **The motion set:** `drawCatSide` in `index.html` draws Erwu from the side:
+  - `walk`: diagonal leg pairs swinging, a slight bob, the tail up and swaying
+  - `sniff`: head low and forward
+  - `crouch`: body low, tail low with a twitching tip, eyes wide
+  - `pounce`: leaping, legs stretched fore and aft
+  - `stretch`: play-bow with front legs reaching and a yawn
+  - `sit`: profile, tail curled round the feet
+  - `loaf`: legs tucked, tail wrapped
+- **Existing poses:** the front-facing `front` (sitting up, looking at you), `yawn` and `curl` from phase A are unchanged.
+- **Identity:** her face is always the same drawing, turned toward us, and the body shares the plush build, colours and faint stripes from her photo.
+- **No foot sliding:** the walk cycle is driven by distance travelled, not time. A unit test checks the cycle against distance.
+- **Separation:** body pose, facing, position (with a gentle depth scale up the lawn), gaze (toward what she's watching, or up at a fleeing butterfly) and timing are all independent.
+- **Blending:** turning between facing us and profile cross-fades over 0.3 s. Pressing Play puts her straight back in the run's nest.
+- **Reduced motion:** no stalking or pouncing, legs don't swing, and there are no blends. She still moves between places and sits, sniffs and naps.
+- **Still provisional:** the walk, pounce and stretch are invented from general cat movement, not from clips of Erwu. The owner should compare them with how she really moves. A short clip of her walking and of her stretching would be the most useful references.
+- **Evidence:** `v09-evidence/pose-*.png`.

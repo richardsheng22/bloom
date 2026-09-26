@@ -34,3 +34,14 @@ node tests/garden-view-browser.cjs
 This suite covers 320 × 568, 375 × 667, 390 × 844, 430 × 932, 568 × 320, and 1024 × 768. It checks touch inspection, keyboard selection/dismissal, minimum target sizes, separate scene/detail areas, simulated safe-area padding, rotation without ownership changes, exact stable-run preservation, reload, cancelled pointers, queued return/cancellation, ordinary and queued game over, and return during Full bloom. It also captures garden, inspection, run, and queued-return screenshots. These are browser-emulated gestures and insets, not physical-device acceptance.
 
 The browser suites serve `index.html` and any root-level `.js` module, so a new module needs no change to the test servers.
+
+## Erwu in the garden
+
+The behaviour module has its own unit tests (included in `node --test tests/*.test.cjs`). The browser suite runs a real visit and checks her day, a hello mid-walk, arranging, backgrounding, Play mid-walk, the welcome after time away, the first bloom (recorded once), and reduced motion on a small phone:
+
+```sh
+export BLOOM_EVIDENCE=/tmp/bloom-erwu
+node tests/erwu-browser.cjs
+```
+
+It opens the game with `?erwu=7`, which shows the development overlay and fixes her random choices. Butterflies still add some variety, so the checks allow for it.

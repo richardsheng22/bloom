@@ -1,6 +1,6 @@
 # 07 — Connect cultivation, visitors, and Erwu in one complete scene
 
-Status: planned. Release: v0.9. Priority: first playable milestone. Dependencies: 04, 06.
+Status: implemented for v0.9; awaiting a recording review with the owner. Priority: first playable milestone. Dependencies: 04, 06.
 
 ## Outcome
 
@@ -38,3 +38,20 @@ Review one short recording for personality and pacing. For a signature pounce or
 ## Out of scope
 
 A catalog of creatures, elaborate ecology, mandatory collectible hunts, and changing combat rewards for encounters.
+
+## Implementation record — 2026-09-26
+
+- **Trigger:** the first time you visit the garden after a bed reaches flowering with a planting she hasn't "seen", the scene plays once. A `bed-visit` record in `discoveries` (bed and plant) prevents repeats, including after a reload. Replanting the bed with something new makes it new again.
+- **The sequence:**
+  1. She wakes from a short doze and looks toward the bed.
+  2. A butterfly flutters in and settles on its flowers.
+  3. She walks over and sniffs the flowers, then sits and watches.
+  4. She creeps up, crouches with her tail twitching, and pounces. The butterfly flutters up and away (a little chime with sound on).
+  5. She watches it go, loses interest, and settles on the nearer of the cushion or sunny stone. If both are put away, she naps.
+- **Interruptions:**
+  - Pressing Play at any point is immediate; the record is already written, so it isn't replayed.
+  - If the butterfly leaves first, she gives up quietly.
+  - With reduced motion there's no butterfly or pounce; she walks over and sniffs.
+- **Ordinary encounters:** butterflies now prefer flowering beds, and when one rests on the lawn within reach she may stalk it (a weighted choice, like everything else).
+- **For ticket 09:** `bed-visit` joins the existing `seed-found` and `first-flower` records.
+- **Evidence:** `v09-evidence/first-bloom.png` (mid-pounce, with the diagnostics overlay).

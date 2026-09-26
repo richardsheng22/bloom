@@ -20,6 +20,14 @@ The leaf button brings you back to the garden without resetting your run. During
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
 
+## Erwu
+
+- In the garden, Erwu has her own day. She naps in her basket, on the cushion or on the sunny stone; sniffs the beds; sits by the fountain; investigates the log; stretches; and now and then stalks a butterfly that has settled nearby, crouching with her tail twitching before she pounces (she never catches one).
+- Tap her to say hello. She stops whatever she's doing, turns to look at you with a slow blink, then carries on; if she was asleep she sits up. With sound on, she purrs.
+- After time away, she wakes up, stretches, and comes to the front of the rose bed to greet you.
+- The first time one of your beds flowers, a butterfly finds it and so does Erwu. After a run that changed a bed, she goes to have a look.
+- During play she stays in her nest in the middle of the flower. If you take a while, she yawns before dozing off; she watches butterflies that pass close by, and looks pleased after a strong turn.
+
 ## Flower beds
 
 - The garden has three flower beds (the morning bed, the high bed and the evening bed), plus a cushion and a sunny stone for Erwu.

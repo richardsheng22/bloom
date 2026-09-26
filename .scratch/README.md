@@ -1,6 +1,6 @@
 # Bloom: an owned garden and a life for Erwu
 
-Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 tickets (05 phase B, 06–08) and 09 remain planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
+Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 (05 phase B, 06–08) is implemented on the working branch, awaiting owner review and on-phone play; 09 remains planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
 Planning date: 2026-09-25. Roadmap revised 2026-09-26 (release split, Erwu phasing, review notes, ticket 11).
 Source baseline: `3df8d53` (Bloom v0.7). Working branch: `develop`.
 
@@ -96,3 +96,11 @@ Things only you can judge, best on your phone:
 3. **Pacing:** in the bot runs a first bed was established in three short runs, and a first rare seed turned up by run three. Does that feel right in real play?
 4. **The plant list:** swap any of the six rare plants, or the three common ones, for flowers that mean something to you both.
 5. **The tagline:** keep "A little time with Erwu", or go back to "Helping Erwu make her garden bloom"?
+
+## Owner review for v0.9
+
+1. **Does she move like Erwu?** The walk, the stalk-and-pounce and the stretch are invented from general cat movement. A short clip of her walking and one of her stretching would let these be tuned to her.
+2. **Pace of her day:** does she do too much or too little? How long she naps, and how often she stalks butterflies, are easy to change.
+3. **The welcome back** after time away: is it the right length, and the right gesture?
+4. **Butterfly encounters:** charming or too frequent?
+5. **During play:** are the yawn after waiting, the glance at butterflies and the pleased look after a strong turn noticeable but not distracting?

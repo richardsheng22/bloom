@@ -655,6 +655,7 @@
 <script src="garden-beds.js"></script>
 <script src="garden-state.js"></script>
 <script src="garden-view.js"></script>
+<script src="erwu-behavior.js"></script>
 <script>
 (() => {
   'use strict';
@@ -801,6 +802,18 @@
     voice(freq, gain, dur * 1.3, type);
     voice(freq * 3.01, gain * 0.16, dur * 0.35, 'sine');
   }
+  // A soft synthesised purr for a hello (only with sound on; it's not a recording of her).
+  let lastPurr = -99;
+  function purr() {
+    if (!audio || !soundOn || audio.currentTime - lastPurr < 6) return;
+    const t = audio.currentTime; lastPurr = t;
+    const o = audio.createOscillator(), f = audio.createBiquadFilter(), g = audio.createGain(), lfo = audio.createOscillator(), depth = audio.createGain();
+    o.type = 'sawtooth'; o.frequency.value = 46; f.type = 'lowpass'; f.frequency.value = 240;
+    lfo.frequency.value = 23; depth.gain.value = 0.018;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.022, t + 0.25); g.gain.setValueAtTime(0.022, t + 1.1); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+    lfo.connect(depth).connect(g.gain); o.connect(f).connect(g).connect(bus);
+    o.start(t); lfo.start(t); o.stop(t + 1.75); lfo.stop(t + 1.75);
+  }
   function hitNote(n) {
     const now = performance.now();
     if (now - lastNote < 38) return;
@@ -834,7 +847,7 @@
   let presentation = 'run', gardenRequested = false;
   let shot = null, aim = null, keyAim = -Math.PI / 2, lastAim = -Math.PI / 2, timeScale = 1;
   let bloomFx = 0, swatFx = 0, stamenFx = 0;
-  const freshCat = () => ({ bounce: 0, mood: 'idle', idle: 0, blink: 0, nextBlink: 3, bat: 0, batA: 0, happy: 0 });
+  const freshCat = () => ({ bounce: 0, mood: 'idle', idle: 0, blink: 0, nextBlink: 3, bat: 0, batA: 0, happy: 0, yawn: 0, yawned: false, twitch: 0, near: null });
   let cat = freshCat();
   let nextId = 1;
 
@@ -987,9 +1000,12 @@
   const plantXY = (p) => presentation === 'garden' && gardenScene ? BloomGardenLayout.projectPlant(p, gardenScene) : plantWorld(p);
   const sceneOrigin = () => presentation === 'garden' && gardenScene ? { x: gardenScene.cx, y: gardenScene.cy } : { x: CX, y: CY };
 
+  let greetPending = false, runChangedBeds = [];
   function welcomeBack() {
     const away = Math.max(0, Date.now() - garden.lastSeen);
     BloomGarden.arrive(garden);
+    // after real time away, Erwu comes to say hello when you next see the garden
+    if (garden.rest > 0.2 || away > 3 * 3.6e6) greetPending = true;
     gardenDirty = true;
     gardenNote = garden.rest > 0.05 ? 'The garden is resting. Settle in with Erwu.'
       : away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '';
@@ -1946,7 +1962,13 @@
   // Butterflies visit a garden that's being looked after: one per garden bud
   // past the first, up to four, plus a couple set free by each full bloom.
   const FLY_COLS = [['#F4C3C9', '#E68A9E'], ['#F2D478', '#D9A13E'], ['#B7A2D6', '#8A5D8F'], ['#A8C8DF', '#6E9CBF'], ['#FFFDF5', '#C7A27A']];
+  let flyId = 1;
   function flySpot() {
+    // in the garden, butterflies like the flowering beds best
+    if (presentation === 'garden' && gardenScene && Math.random() < 0.45) {
+      const beds = BloomGardenLayout.geometry(gardenScene).filter((q) => { const b = BloomGardenLayout.at(garden, q.id); return b && b.flower && b.growth >= 0.55; });
+      if (beds.length) { const q = pick(beds); return { x: q.x + (Math.random() - 0.5) * 30, y: q.y - 10 - Math.random() * 10 }; }
+    }
     const pl = garden.plants.filter((p) => p.live == null && p.g > 0.4);
     if (pl.length && Math.random() < 0.8) {
       const p = pick(pl), q = plantXY(p);
@@ -1958,7 +1980,16 @@
   }
   function addFly(x, y, temp) {
     const cols = pick(FLY_COLS), t = flySpot();
-    flies.push({ x, y, tx: t.x, ty: t.y, vx: 0, vy: 0, rest: 0, ph: Math.random() * TAU, cols, temp, life: temp ? 7 + Math.random() * 3 : Infinity, size: R * (0.035 + Math.random() * 0.015) });
+    const f = { id: 'fly-' + flyId++, x, y, tx: t.x, ty: t.y, vx: 0, vy: 0, rest: 0, ph: Math.random() * TAU, cols, temp, life: temp ? 7 + Math.random() * 3 : Infinity, size: R * (0.035 + Math.random() * 0.015) };
+    flies.push(f);
+    return f;
+  }
+  // Erwu pounced: the butterfly flutters up and away, then carries on elsewhere.
+  function scareFly(id) {
+    const f = flies.find((x) => x.id === id);
+    if (!f) return;
+    f.rest = 0; f.hold = 0; f.tx = f.x + (f.x < erwu.at.x ? -1 : 1) * R * 0.9; f.ty = f.y - R * 1.1;
+    tone(noteFreq(12), 0.015, 'sine', 0.2);
   }
   function updateFlies(dt) {
     if (reduced) return;
@@ -1979,7 +2010,7 @@
       f.vx += (dx / d * sp - f.vx) * dt * 2.5 + Math.cos(f.ph * 0.13) * R * 0.6 * dt;
       f.vy += (dy / d * sp - f.vy) * dt * 2.5 + Math.sin(f.ph * 0.17) * R * 0.6 * dt;
       f.x += f.vx * dt; f.y += f.vy * dt;
-      if (d < R * 0.03) { f.rest = (1.5 + Math.random() * 3.5) * (1 + garden.rest); f.vx = f.vy = 0; }
+      if (d < R * 0.03) { f.rest = f.hold || (1.5 + Math.random() * 3.5) * (1 + garden.rest); f.hold = 0; f.vx = f.vy = 0; }
     }
     // temporary visitors flutter off the edge of the screen when their time is up
     for (const f of flies) if (f.life <= 0 && f.rest <= 0) { f.tx = (f.x < 0 ? -1 : 1) * W; f.ty = -H * 0.6; }
@@ -2127,7 +2158,7 @@
     tendGarden();
     shot = null; timeScale = 1; cat.mood = 'idle';
     const word = hits >= 120 ? 'Magnificent' : hits >= 60 ? 'Gorgeous' : hits >= 25 ? 'Lovely' : null;
-    if (word) { banner(word, `${hits} hits`); hearts(hits >= 60 ? 3 : 1); }
+    if (word) { banner(word, `${hits} hits`); hearts(hits >= 60 ? 3 : 1); cat.happy = hits >= 60 ? 2.2 : 1.6; cat.bounce = 1; }
     updateHud();
     if (charges.every((c) => c >= 1)) fullBloom(advance);
     else advance();
@@ -2204,8 +2235,21 @@
   }
 
   // ---------- Garden presentation and inspection ----------
-  let arenaReveal = 1, seatMix = 0, catnipGlow = 0, catnipTimer = 3, clockTimer = 60;
+  let arenaReveal = 1, catnipGlow = 0, catnipTimer = 3, clockTimer = 60;
+  // Erwu's life in the garden (tickets 05B–08): see erwu-behavior.js.
+  // ?erwu shows what she's doing and why (development only); ?erwu=<n> also fixes her choices.
+  const debugErwu = /[?&]erwu\b/.test(location.search), erwuSeed = Number((location.search.match(/[?&]erwu=(\d+)/) || [])[1]);
+  const erwu = BloomErwu.create(erwuSeed || (Date.now() % 100000) + 1);
+  let erwuPlaces = null, erwuYawn = 0;
   const nestSize = () => presentation === 'garden' && gardenScene ? gardenScene.nest : coreR;
+  // Erwu is a touch smaller further up the lawn, as if further away.
+  const depthAt = (y) => !gardenScene ? 1 : 0.84 + 0.2 * Math.max(0, Math.min(1, (y + gardenScene.height / 2) / gardenScene.height));
+  function erwuWorld() {
+    if (!erwuPlaces && gardenScene) erwuPlaces = BloomErwu.places(gardenScene, BloomGardenLayout.geometry(gardenScene), BloomGardenLayout.landmarks(gardenScene));
+    return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, stride: gardenScene ? gardenScene.nest * 0.5 : 26,
+      beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
+      objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 })) };
+  }
   const catnipGrown = () => garden.patches.some((p) => p.anchor && p.flower === 'catnip' && p.growth >= 0.55);
   let titleT = 0, settleTimer = 0, overTimer = 0, inspectedErwu = false;
   let scenePress = null;
@@ -2215,7 +2259,7 @@
     if (el.title.hidden) return;
     const rect = el.scene.getBoundingClientRect();
     gardenScene = BloomGardenView.layout(rect);
-    el.erwuTouch.style.width = el.erwuTouch.style.height = Math.max(44, gardenScene.nest * 2) + 'px';
+    erwuPlaces = null;
     gardenDirty = true;
     refreshArrangementTargets();
   }
@@ -2259,7 +2303,7 @@
     clearTimeout(settleTimer); el.title.classList.add('settled');
     inspectedErwu = true;
     el.invitation.hidden = true; el.inspection.hidden = false;
-    cat.mood = 'idle'; cat.blink = 0.5; cat.idle = 0;
+    BloomErwu.tap(erwu);
     refreshInspection();
   }
   function refreshArrangementTargets() {
@@ -2286,6 +2330,7 @@
         : item ? `${BloomGardenLayout.label(garden,item)} at ${q.name}` : q.name);
     }
     el.erwuTouch.disabled = arranging;
+    erwu.paused = arranging;
   }
   function inspectObject(item) {
     if (!item) return;
@@ -2464,6 +2509,7 @@
       refreshArrange('Saving could not be confirmed. Please try again.'); return;
     }
     arrangementUndo = undo ? null : BloomGardenLayout.reverse(plan);
+    for (const c of plan.changes) { if (c.from) BloomErwu.invalidate(erwu, c.from); if (c.to) BloomErwu.invalidate(erwu, c.to); }
     arrangementDraft = null;
     refreshArrange(undo ? 'Your previous arrangement is back.' : 'Placed in your garden. You can undo this move.');
   }
@@ -2487,6 +2533,7 @@
     el.over.hidden = true;
     showStatus();
     measureGarden(); gardenDirty = true; saveGarden(); updateHud();
+    erwuEnter();
     settleTimer = setTimeout(() => el.title.classList.add('settled'), reduced ? 0 : 1600);
     requestAnimationFrame(() => { if (presentation === 'garden') el.play.focus({ preventScroll: true }); });
   }
@@ -2553,6 +2600,7 @@
     if (!sum.rows) { el.overNote.textContent = sum.text; return; }
     const h = document.createElement('p'); h.className = 'over-garden-title'; h.textContent = sum.title;
     const ul = document.createElement('ul'); ul.className = 'over-garden';
+    runChangedBeds = garden.patches.filter((b) => sum.rows.some((r) => !r.rare && r.kind === b.flower && r.where === BloomGardenLayout.placeName(b.anchor).replace(/^the /, ''))).map((b) => b.id);
     for (const r of sum.rows) {
       const li = document.createElement('li');
       const sw = document.createElement('i'); sw.style.setProperty('--c', CHIP_COLOURS[r.kind]); if (r.rare) sw.className = 'rare';
@@ -2998,16 +3046,24 @@
       if (d.x > W + 30) d.x = -30; if (d.x < -30) d.x = W + 30;
     }
 
-    // In the garden she sits up when greeted and curls back up when left to doze.
-    const sitting = presentation === 'garden' && cat.mood !== 'sleepy';
-    seatMix = reduced ? (sitting ? 1 : 0) : Math.max(0, Math.min(1, seatMix + (sitting ? dt : -dt) / 0.45));
+    // In the garden Erwu lives her own life: see erwu-behavior.js.
+    if (presentation === 'garden' && gardenScene) {
+      BloomErwu.update(erwu, dt, erwuWorld());
+      for (const ev of erwu.events.splice(0)) {
+        if (ev.type === 'scare') scareFly(ev.visitor);
+        if (ev.type === 'purr') purr();
+      }
+      erwuYawn = erwu.pose === 'yawn' ? Math.min(1, erwu.poseAge / 1.3) : 0;
+      placeErwuTouch();
+    }
     catnipGlow = Math.max(0, catnipGlow - dt * 0.6);
     if (presentation === 'garden' && catnipGrown()) {
       catnipTimer -= dt;
       if (catnipTimer <= 0) {
         catnipTimer = 6 + Math.random() * 5;
-        catnipGlow = 1.6; if (sitting) cat.happy = 1.4;
-        if (!reduced) particles.push({ type: 'heart', x: nestSize() * 0.4, y: -nestSize() * 0.9, vx: 0, vy: -R * 0.16, rot: 0.2, vr: 0, ph: 0, life: 1, decay: 0.45, size: nestSize() * 0.12 });
+        catnipGlow = 1.6;
+        const head = erwuHead();
+        if (!reduced) particles.push({ type: 'heart', x: head.x + 8, y: head.y - 10, vx: 0, vy: -R * 0.16, rot: 0.2, vr: 0, ph: 0, life: 1, decay: 0.45, size: nestSize() * 0.12 });
       }
     }
     // Sunflowers and moonflowers keep time with the real day.
@@ -3019,8 +3075,17 @@
     if ((state === 'ready' || presentation === 'garden') && !aim) {
       cat.idle += dt;
       if (cat.idle > 1.6 && cat.mood === 'watch') cat.mood = 'idle';
+      // waiting on you: one slow yawn, then she dozes off
+      if (presentation === 'run' && cat.idle > 8 && !cat.yawned) { cat.yawned = true; cat.yawn = 0.001; }
       if (cat.idle > 12) cat.mood = 'sleepy';
-    } else cat.idle = 0;
+    } else { cat.idle = 0; cat.yawned = false; cat.yawn = 0; }
+    if (cat.yawn > 0) { cat.yawn += dt / 1.6; if (cat.yawn >= 1) cat.yawn = 0; }
+    cat.twitch = Math.max(0, cat.twitch - dt * 3);
+    if (presentation === 'run') {
+      const near = flies.find((f) => Math.hypot(f.x, f.y) < coreR * 3.2);
+      if (near && cat.near !== near.id) cat.twitch = 1;
+      cat.near = near ? near.id : null;
+    }
     cat.nextBlink -= dt;
     if (cat.nextBlink <= 0) { cat.blink = 0.14; cat.nextBlink = 2.5 + Math.random() * 4; }
   }
@@ -3869,7 +3934,7 @@
     }
 
     const watching = o.look != null || o.mood === 'watch';
-    let lid = o.mood === 'sleepy' ? 1 : watching ? 0.08 : 0.46;
+    let lid = o.mood === 'sleepy' || o.yawn > 0.3 ? 1 : watching ? 0.08 : 0.46;
     if (o.blink > 0 && o.mood !== 'sleepy') lid = 1;
     const er = 0.135 * s;
     for (const side of [-1, 1]) {
@@ -3919,7 +3984,13 @@
     g.fill();
     g.strokeStyle = C.nose; g.lineWidth = Math.max(1, s * 0.03); g.lineCap = 'round';
     g.beginPath();
-    if (o.mood === 'startled') g.ellipse(0, 0.34 * s, 0.035 * s, 0.045 * s, 0, 0, TAU);
+    if (o.yawn > 0) {
+      // a big, slow yawn: a soft pink open mouth under the nose
+      const y = Math.sin(Math.min(1, o.yawn) * Math.PI);
+      g.stroke(); g.fillStyle = '#B86B7A'; g.beginPath(); g.ellipse(0, 0.33 * s, 0.075 * s, 0.03 * s + y * 0.07 * s, 0, 0, TAU); g.fill();
+      g.fillStyle = '#E79AA8'; g.beginPath(); g.ellipse(0, 0.36 * s + y * 0.03 * s, 0.045 * s, 0.02 * s + y * 0.025 * s, 0, 0, TAU); g.fill();
+      g.beginPath();
+    } else if (o.mood === 'startled') g.ellipse(0, 0.34 * s, 0.035 * s, 0.045 * s, 0, 0, TAU);
     else {
       g.moveTo(0, 0.255 * s); g.lineTo(0, 0.29 * s);
       g.arc(-0.05 * s, 0.29 * s, 0.05 * s, 0, 0.8 * Math.PI);
@@ -4031,15 +4102,185 @@
     drawCat(g, s * 0.86, now, { ...o, noPaws: true });
     g.restore();
   }
+  // ----- The motion set (ticket 05, phase B): Erwu seen from the side, walking,
+  // sniffing, crouching, pouncing, stretching, sitting and lying loaf-style. Her face
+  // is always the same drawing, turned toward us, so she stays recognisably herself.
+  // Provisional until checked against clips of her moving. -----
+  function drawCatSide(g, s, P, now) {
+    const pose = P.pose, ph = P.phase || 0, walk = pose === 'walk';
+    const fur = C.fur, farFur = rgb(mixA(hexRgb(C.fur), [40, 36, 52], 0.22)), line = catLine();
+    g.save(); g.scale(P.facing || 1, 1);
+    // soft shadow on the grass
+    g.fillStyle = 'rgba(60,55,50,0.16)'; g.beginPath(); g.ellipse(0, 0, s * 0.72, s * 0.12, 0, 0, TAU); g.fill();
+    g.translate(0, -(P.jump || 0) * s * 0.55);
+    const legW = s * 0.17;
+    const leg = (x0, y0, x1, y1, far) => {
+      g.strokeStyle = far ? farFur : fur; g.lineWidth = legW; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      g.fillStyle = far ? farFur : fur; g.beginPath(); g.ellipse(x1 + s * 0.03, y1 - s * 0.01, s * 0.1, s * 0.065, 0, 0, TAU); g.fill();
+    };
+    const tail = (pts, w) => {
+      g.strokeStyle = fur; g.lineWidth = w; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(pts[0], pts[1]); g.bezierCurveTo(pts[2], pts[3], pts[4], pts[5], pts[6], pts[7]); g.stroke();
+    };
+    const t = reduced ? 0 : now / 1000;
+    let head, headTilt = 0, hs = s * 0.6;
+    if (pose === 'sit') {
+      // sitting up in profile: a round haunch, straight front legs, tail curled round the feet
+      tail([-s * 0.34, -s * 0.06, -s * 0.2, s * 0.06, s * 0.2, s * 0.06, s * 0.42, -s * 0.02], s * 0.14);
+      leg(s * 0.2, -s * 0.4, s * 0.22, -s * 0.02, true);
+      g.fillStyle = fur;
+      g.beginPath(); g.ellipse(-s * 0.12, -s * 0.24, s * 0.34, s * 0.26, 0, 0, TAU); g.fill();
+      g.beginPath(); g.ellipse(s * 0.06, -s * 0.52, s * 0.3, s * 0.4, -0.3, 0, TAU); g.fill();
+      leg(s * 0.26, -s * 0.42, s * 0.28, -s * 0.02, false);
+      head = { x: s * 0.16, y: -s * 0.98 };
+    } else {
+      const crouch = pose === 'crouch', loaf = pose === 'loaf', stretch = pose === 'stretch', sniff = pose === 'sniff', pounce = pose === 'pounce';
+      const bodyH = crouch ? 0.3 : loaf ? 0.26 : 0.5, bob = walk ? Math.abs(Math.sin(ph)) * 0.025 : 0;
+      const by = -(bodyH + bob) * s, tilt = stretch ? 0.26 : crouch ? 0.05 : 0;
+      // the tail: up and swaying on the move, low with a twitching tip when she's stalking
+      const sway = Math.sin(t * 1.6) * 0.08;
+      if (loaf) tail([-s * 0.55, by + s * 0.05, -s * 0.5, s * 0.02, s * 0.1, s * 0.04, s * 0.42, -s * 0.03], s * 0.13);
+      else if (crouch) tail([-s * 0.56, by, -s * 0.8, by + s * 0.05, -s * 0.95, -s * 0.12, -s * 1.02, -s * 0.16 - Math.sin(t * 9) * s * 0.05], s * 0.13);
+      else tail([-s * 0.56, by - s * 0.06, -s * 0.85, by - s * 0.2, -s * (0.78 + sway), by - s * 0.62, -s * (0.62 + sway), by - s * 0.7], s * 0.13);
+      // legs: diagonal pairs swing together while walking; the far side is a shade darker
+      const hip = (x) => by + s * 0.14 + (stretch ? (x > 0 ? 1 : -1) * s * 0.12 : 0);
+      const foot = (x, off) => {
+        if (walk) return [x + Math.sin(ph + off) * s * 0.16, -Math.max(0, Math.cos(ph + off)) * s * 0.07];
+        if (pounce) return [x + (x > 0 ? s * 0.3 : -s * 0.3), -s * 0.05];
+        if (stretch && x > 0) return [x + s * 0.34, 0];
+        if (crouch) return [x + (x > 0 ? s * 0.08 : -s * 0.02), 0];
+        return [x, 0];
+      };
+      if (!loaf) {
+        for (const [x, off] of [[-s * 0.34, Math.PI], [s * 0.34, 0]]) { const [fx, fy] = foot(x, off); leg(x, hip(x), fx, fy, true); }
+      }
+      g.save(); g.translate(-s * 0.3, by); g.rotate(tilt); g.translate(s * 0.3, -by);
+      g.fillStyle = fur;
+      g.beginPath(); g.ellipse(0, by, s * 0.6, s * (loaf ? 0.3 : 0.34), 0, 0, TAU); g.fill();
+      g.beginPath(); g.ellipse(-s * 0.32, by + s * 0.03, s * 0.3, s * 0.31, 0, 0, TAU); g.fill();
+      g.beginPath(); g.ellipse(s * 0.3, by + s * 0.02, s * 0.3, s * 0.3, 0, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.06)'; g.beginPath(); g.ellipse(-s * 0.05, by - s * 0.2, s * 0.45, s * 0.1, 0, 0, TAU); g.fill();
+      g.strokeStyle = line; g.lineWidth = Math.max(0.8, s * 0.02);
+      for (const x of [-0.3, -0.12, 0.06]) { g.beginPath(); g.moveTo(x * s, by - s * 0.3); g.quadraticCurveTo(x * s + s * 0.04, by - s * 0.18, x * s, by - s * 0.08); g.stroke(); }
+      g.restore();
+      if (!loaf) {
+        for (const [x, off] of [[-s * 0.3, 0], [s * 0.38, Math.PI]]) { const [fx, fy] = foot(x, off); leg(x, hip(x), fx, fy, false); }
+      } else { frontPaw(g, s * 0.5, -s * 0.03, s, 0.9); }
+      head = sniff ? { x: s * 0.66, y: by + s * 0.06 } : crouch ? { x: s * 0.6, y: by - s * 0.1 } : stretch ? { x: s * 0.74, y: by + s * 0.2 }
+        : loaf ? { x: s * 0.46, y: by - s * 0.3 } : pounce ? { x: s * 0.62, y: by - s * 0.18 } : { x: s * 0.52, y: by - s * 0.32 };
+      if (sniff) headTilt = 0.25; if (stretch) headTilt = 0.15;
+      if (walk) head.y += Math.sin(ph * 2) * s * 0.012;
+    }
+    // full cheeks joining head to shoulders, then her face
+    g.fillStyle = fur; g.beginPath(); g.ellipse(head.x - s * 0.06, head.y + hs * 0.36, hs * 0.5, hs * 0.3, 0, 0, TAU); g.fill();
+    g.save(); g.translate(head.x, head.y); g.rotate(headTilt); g.scale(P.facing || 1, 1);
+    drawCat(g, hs, now, { mood: P.mood || 'idle', look: P.look, blink: P.blink || 0, happy: P.happy || 0, bounce: 0, bat: 0, batA: 0, earsBack: P.earsBack || 0, noPaws: true, yawn: P.yawn || 0 });
+    g.restore();
+    g.restore();
+  }
+  const poseKind = (p) => p === 'curl' ? 'curl' : p === 'front' || p === 'yawn' ? 'front' : 'side';
+  const inBasket = () => Math.hypot(erwu.at.x, erwu.at.y) < 6;
+  function erwuSize(nestR) { return inBasket() ? nestR : nestR * 0.78 * depthAt(erwu.at.y); }
+  function erwuHead() {
+    const n = gardenScene ? gardenScene.nest : coreR, s = erwuSize(n);
+    return poseKind(erwu.pose) === 'side' ? { x: erwu.at.x + erwu.facing * s * 0.5, y: erwu.at.y - s * 0.95 } : { x: erwu.at.x, y: erwu.at.y - s * (inBasket() ? 0.45 : 1.2) };
+  }
+  function drawErwuAs(pose, now, nestR, alpha) {
+    const at = erwu.at, nest = inBasket(), d = depthAt(at.y), blink = Math.max(erwu.blink, cat.blink), happy = catnipGlow > 0.5 ? catnipGlow : 0;
+    ctx.save(); ctx.globalAlpha *= alpha;
+    if (pose === 'curl') {
+      if (nest) drawCatCurled(ctx, nestR, now, { happy });
+      else { const s = nestR * 0.62 * d; ctx.translate(at.x, at.y - s * 0.62); drawCatCurled(ctx, s, now, { happy }); }
+    } else if (poseKind(pose) === 'front') {
+      const o = { mood: 'idle', look: null, blink, happy, bounce: 0, bat: 0, batA: 0, earsBack: 0, yawn: pose === 'yawn' ? erwuYawn : 0 };
+      if (nest) drawCatSeated(ctx, nestR, now, o);
+      else { const s = nestR * 0.7 * d; ctx.translate(at.x, at.y - s * 1.0); drawCatSeated(ctx, s, now, o); }
+    } else {
+      const s = nest ? nestR * 0.85 : nestR * 0.78 * d, head = erwuHead(), lk = erwu.look;
+      const look = !lk ? null : lk.up ? -Math.PI / 2 - erwu.facing * 0.4 : Math.atan2(lk.y - head.y, lk.x - head.x);
+      ctx.translate(at.x, at.y + (nest ? nestR * 0.55 : 0));
+      drawCatSide(ctx, s, { pose, phase: reduced ? 0 : erwu.phase, facing: erwu.facing, jump: erwu.jump || 0, look, blink, happy,
+        mood: pose === 'crouch' ? 'watch' : 'idle', earsBack: pose === 'crouch' ? 0.25 : 0,
+        yawn: pose === 'stretch' ? Math.sin(Math.min(1, erwu.poseAge / 1.8) * Math.PI) * 0.9 : 0 }, now);
+    }
+    ctx.restore();
+  }
+  function drawErwuGarden(now, nestR) {
+    // a short blend when she turns between facing us and being seen from the side
+    const k = reduced ? 1 : Math.min(1, erwu.poseAge / 0.3);
+    if (k < 1 && poseKind(erwu.prevPose) !== poseKind(erwu.pose)) drawErwuAs(erwu.prevPose, now, nestR, 1 - k);
+    drawErwuAs(erwu.pose, now, nestR, k < 1 && poseKind(erwu.prevPose) !== poseKind(erwu.pose) ? k : 1);
+    if (erwu.pose === 'curl' && !reduced) {
+      const n = inBasket(), s = erwuSize(nestR), zx = n ? nestR * 0.7 : erwu.at.x + s * 0.4, zy = n ? -nestR * 0.75 : erwu.at.y - s * 1.1;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i = 0; i < 3; i++) {
+        const t = ((now / 1700) + i / 3) % 1;
+        ctx.font = `600 ${Math.round(s * (0.22 + t * 0.2))}px ${SERIF}`;
+        ctx.fillStyle = rgb(hexRgb(C['bud-deep']), Math.sin(t * Math.PI) * 0.65);
+        ctx.fillText('z', zx + s * (t * 0.5 + Math.sin(t * 6 + i) * 0.08), zy - s * t * 0.9);
+      }
+    }
+    if (debugErwu) {
+      const i = BloomErwu.info(erwu);
+      ctx.save(); ctx.font = `11px ${FONT}`; ctx.fillStyle = 'rgba(63,51,38,0.85)'; ctx.textAlign = 'left';
+      [`${i.action} · ${i.step} · ${i.pose}`, i.reason, `at ${i.at}`, i.cooldowns.join(' ')].forEach((l, n) => ctx.fillText(l, -gardenScene.width / 2 + 4, -gardenScene.height / 2 + 14 + n * 13));
+      ctx.restore();
+    }
+  }
+  // Entering the garden: she's asleep in her basket, unless there's a reason to get up.
+  function erwuEnter() {
+    let w = erwuWorld();
+    if (!w.places) return;
+    const newBloom = garden.patches.some((p) => p.anchor && p.flower && p.growth >= 0.55 &&
+      !garden.discoveries.some((d) => d.type === 'bed-visit' && d.bed === p.id && d.kind === p.flower));
+    // something to see (or someone back to greet) means only a short doze first
+    BloomErwu.reset(erwu, greetPending ? 'back after time away' : newBloom ? 'something new in the garden' : 'asleep');
+    touchAt = '';
+    if (greetPending) { greetPending = false; BloomErwu.queue(erwu, 'greet', w, null, 'welcoming you back'); }
+    // after a run, she goes to see a bed that changed
+    for (const id of runChangedBeds.splice(0)) if (BloomErwu.queue(erwu, 'sniff-bed', w, id, 'curious about the bed that changed')) break;
+    // ticket 07: the first time a bed flowers, a butterfly finds it, and so does Erwu
+    const bed = garden.patches.find((p) => p.anchor && p.flower && p.growth >= 0.55 &&
+      !garden.discoveries.some((d) => d.type === 'bed-visit' && d.bed === p.id && d.kind === p.flower));
+    if (!bed) return;
+    garden.discoveries.push({ id: BloomGarden.allocateId(garden, 'discovery'), type: 'bed-visit', bed: bed.id, kind: bed.flower, at: Date.now() });
+    saveGarden();
+    BloomErwu.queue(erwu, 'visit-bloom', w, bed.id, 'her new flowers are out');
+    if (reduced) return;
+    const q = BloomGardenLayout.geometry(gardenScene).find((a) => a.id === bed.anchor);
+    const f = addFly((q.x < 0 ? -1 : 1) * (gardenScene.width / 2 + 20), q.y - 70, true);
+    Object.assign(f, { tx: q.x + 6, ty: q.y - 14, hold: 16, life: 45 });
+    w = erwuWorld();
+    BloomErwu.queue(erwu, 'stalk', w, f.id, 'a butterfly on the new flowers');
+    // then she settles somewhere comfortable nearby
+    const rests = garden.objects.filter((o) => o.anchor).map((o) => ({ o, g: BloomGardenLayout.geometry(gardenScene).find((a) => a.id === o.anchor) }))
+      .sort((a, b) => Math.hypot(a.g.x - q.x, a.g.y - q.y) - Math.hypot(b.g.x - q.x, b.g.y - q.y));
+    if (!rests.length || !BloomErwu.queue(erwu, rests[0].o.kind === 'cushion' ? 'cushion' : 'sun-stone', w, null, 'settling after the excitement')) BloomErwu.queue(erwu, 'nap', w);
+  }
+  if (debugErwu) window.__erwu = { trigger: (name, arg) => BloomErwu.request(erwu, name, erwuWorld(), arg, 'debug'), info: () => BloomErwu.info(erwu), state: erwu, fly: (x, y) => { const f = addFly(x, y - 40, true); Object.assign(f, { tx: x, ty: y, hold: 20, life: 40 }); return f.id; } };
+  // The hello button follows her around the garden.
+  let touchAt = '';
+  function placeErwuTouch() {
+    const n = gardenScene.nest, s = erwuSize(n), size = Math.max(44, inBasket() ? n * 2 : s * 1.6), head = erwuHead();
+    const cx = gardenScene.width / 2 + (inBasket() ? 0 : (erwu.at.x + head.x) / 2), cy = gardenScene.height / 2 + (inBasket() ? 0 : erwu.at.y - s * 0.55);
+    const key = `${Math.round(cx)},${Math.round(cy)},${Math.round(size)}`;
+    if (key === touchAt) return;
+    touchAt = key;
+    Object.assign(el.erwuTouch.style, { left: cx + 'px', top: cy + 'px', width: size + 'px', height: size + 'px' });
+  }
   function catPose() {
     let look = null;
     if (aim && aim.angle != null) look = aim.angle;
     else if (state === 'flying' && balls.length) { const b = balls[balls.length - 1]; look = Math.atan2(b.y, b.x); }
     const danger = presentation === 'run' && state === 'ready' && items.some((i) => i.kind === 'shape' && !i.dead && i.ring === 1);
+    // with nothing else to watch, her eyes follow a butterfly passing close by
+    if (look == null && cat.near && cat.mood !== 'sleepy') { const f = flies.find((x) => x.id === cat.near); if (f) look = Math.atan2(f.y, f.x); }
     return {
       mood: cat.mood, look, blink: cat.blink, happy: cat.happy, bounce: cat.bounce,
       bat: cat.bat, batA: cat.batA, big: swatFx > 0,
-      earsBack: cat.mood === 'startled' ? 1 : danger ? 0.7 : 0,
+      earsBack: cat.mood === 'startled' ? 1 : danger ? 0.7 : Math.sin(cat.twitch * Math.PI) * 0.35,
+      yawn: cat.yawn > 0 && !danger ? cat.yawn : 0,
     };
   }
 
@@ -4254,12 +4495,9 @@
       ctx.strokeStyle = rgb(honey, swatFx * 0.8); ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, 0, coreR + (1 - swatFx) * R * 0.35, 0, TAU); ctx.stroke();
     }
-    if (presentation === 'garden') {
-      const seat = seatMix;
-      if (seat < 1) { ctx.save(); ctx.globalAlpha = 1 - seat; drawCatCurled(ctx, nestR, now, { happy: catnipGlow }); ctx.restore(); }
-      if (seat > 0) { ctx.save(); ctx.globalAlpha = seat; drawCatSeated(ctx, nestR, now, catPose()); ctx.restore(); }
-    } else drawCat(ctx, nestR, now, catPose());
-    if (te > 0.2 && cat.mood === 'sleepy' && !reduced) {
+    if (presentation === 'garden') drawErwuGarden(now, nestR);
+    else drawCat(ctx, nestR, now, catPose());
+    if (presentation === 'run' && te > 0.2 && cat.mood === 'sleepy' && !reduced) {
       // z's drifting up from a sleeping Erwu
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (let i = 0; i < 3; i++) {
@@ -4454,7 +4692,7 @@
     }
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { clearAim(); garden.lastSeen = Date.now(); saveGarden(); }
-      else { welcomeBack(); saveGarden(); updateHud(); }
+      else { welcomeBack(); saveGarden(); updateHud(); if (presentation === 'garden' && greetPending) erwuEnter(); }
     });
     window.addEventListener('pagehide', saveGarden);
     const run = (data && data.run) || store.get('run3', null);

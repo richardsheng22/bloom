@@ -1,6 +1,6 @@
 # 06 — Give Erwu contextual intentions and gentle interaction
 
-Status: planned. Release: v0.9. Priority: core. Dependencies: 02, 03, 05.
+Status: implemented for v0.9; awaiting owner review of pacing and personality. Priority: core. Dependencies: 02, 03, 05.
 
 ## Outcome
 
@@ -35,3 +35,36 @@ Use the ticket 05 reference pack; do not request it again. Optional written obse
 ## Out of scope
 
 A pet-needs simulation, conversational AI, obedience training, or random behavior that influences aiming difficulty.
+
+## Implementation record — 2026-09-26
+
+- **`erwu-behavior.js`** is pure state, time in real seconds and a seeded random source. Its lifecycle: choose an action, then walk, then act, then settle, with cooldowns.
+- **Navigation:** a small authored network. She leaves the basket by the gate at the front, goes round the rose bed's sides (never behind the roses), and takes spurs to each bed, the cushion, the stone, the fountain and the log. Routes use the shortest path. Every place is reachable at five phone sizes (unit-tested).
+- **Actions:**
+  - `nap` in the basket or on the cushion or stone (much likelier while the garden rests, and unlikely in the first 45 s of an awake visit)
+  - `sniff-bed` at a planted bed
+  - `cushion` and `sun-stone` (loafing on them, wherever they've been arranged)
+  - `fountain` (sitting and looking up at it)
+  - `log`
+  - `wander`
+  - `stretch`
+  - `sit-quietly`
+  - `stalk` a resting butterfly
+- **Variety:** weights, cooldowns and a short memory prevent repetition. A five-minute simulated visit has at least five kinds of action, none over 45% of choices, no action four times running, and more still time than walking.
+- **Touch:**
+  - The hello button follows her around the garden.
+  - A tap mid-activity: she stops, turns to face you with a slow blink, then carries on, re-routing if she was walking.
+  - A tap while she sleeps: she wakes, sits up facing you, then gets on with her day.
+  - Taps within 1.2 s don't stack.
+  - With sound on, a hello gives a soft synthesised purr (at most every 6 s; it is not a recording of her).
+- **Priority:**
+  - Play is immediate.
+  - Arranging pauses her in place.
+  - Moving or putting away a furnishing she was heading for makes her choose again.
+  - A hidden page does nothing and replays nothing on return; each update is capped at 0.1 s.
+  - Her timing ignores Breeze and frame rate: the same choices at 30 and 60 fps, within a frame's walk per step.
+- **Diagnostics (development only):** `?erwu` in the address shows her current action, step, pose, reason and cooldowns in the garden view, and exposes `window.__erwu.trigger(name)`. `?erwu=<n>` also fixes her random choices, for tests. Nothing is shown in normal play.
+- **Tests:**
+  - `tests/erwu-behavior.test.cjs` (13): routing, variety, no foot sliding, frame-rate independence, taps (including going back to what she was doing), invalidation and pausing, empty and resting gardens, stalking, a butterfly leaving first, the welcome, and queued sequences.
+  - `tests/erwu-browser.cjs` (8 checks): a real visit, a hello mid-walk, arrange pause and re-plan, background and resume, Play mid-walk, the welcome, the first bloom, and reduced motion at 320 × 568.
+- **Known limit:** she is always drawn in front of garden art. Her routes keep her in front of the things she visits, so this rarely shows, but she can appear over tall border plants.

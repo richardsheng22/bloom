@@ -1,6 +1,6 @@
 # 08 — Bring Erwu's personality into play and make returns welcoming
 
-Status: planned. Release: v0.9. Priority: complete the core experience. Dependencies: 01, 02, 05, 06, 07.
+Status: implemented for v0.9; awaiting owner review. Priority: complete the core experience. Dependencies: 01, 02, 05, 06, 07.
 
 ## Outcome
 
@@ -35,3 +35,16 @@ Use existing references from ticket 05. Optional: describe her distinctive yawn,
 ## Out of scope
 
 Attention prompts during shots, stronger combat abilities, timed return bonuses, and streaks.
+
+## Implementation record — 2026-09-26
+
+- **During play**, all small and all cancelled by aiming:
+  - After about 8 s of waiting she gives one slow yawn, then dozes off as before (at 12 s).
+  - A butterfly drifting close to the nest gets an ear flick, and her eyes follow it when there's nothing else to watch.
+  - After a strong turn ("Lovely" or better) she has a pleased, eyes-closed look and a little bounce.
+  - Danger ears and the aiming gaze take priority. Nothing here covers targets or delays input, and Breeze doesn't speed any of it up.
+- **The return ritual:** after real time away (the garden resting, or over three hours), the next garden visit opens with her curled in the basket. She yawns, stretches, walks to the gate and sits facing you with a slow blink, then goes about her day. Play and Continue are available immediately throughout. There's no loss dialog and nothing to clean up.
+- **Garden aftermath:** after a run that moved a bed to a new stage, **Back to the garden** finds her going to sniff that bed. The run-end card already lists what changed (ticket 04).
+- **Game over** keeps the curled sleeping pose on the card (phase A).
+- **Purr:** a hello, with sound on, gives a soft synthesised purr.
+- **Checked:** these are covered by the browser suite and by captures (`v09-evidence/welcome.png`, `run-yawn.png`).
