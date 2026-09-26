@@ -1,6 +1,6 @@
 # 01 — Preserve the garden; let it rest while unattended
 
-Status: implemented; automated checks passed. Visual tuning outstanding: resting is currently too subtle (see review notes). Priority: foundation. Dependencies: none.
+Status: implemented; resting visuals strengthened for owner review (see the v0.8 record below). Priority: foundation. Dependencies: none.
 
 ## Outcome
 
@@ -65,3 +65,13 @@ Physical iPhone Safari, haptics, and audio were not tested in this ticket; those
 ## Review notes — 2026-09-26
 
 - In `01-evidence`, the awake and seven-day resting captures are nearly identical apart from the sleeping “z”s and the status line. The ownership model is right; the look is too faint for a return to feel like one. Before acceptance, make rest readable at a glance on a phone: flowers visibly closed or cupped, a softer, cooler light over the clearing, fewer drifting petals, and the edge tufts a little more present. It should still read as serene, not neglected. Capture the before/after at 390 × 844 again for owner review.
+
+## v0.8 record — resting visuals, 2026-09-26
+
+Implemented on the working branch with tickets 03, 04, 05 phase A and 11. Ownership behaviour is unchanged; only the look moved.
+
+- A resting garden view now sits in soft, cool evening light (a gentle blue-lavender wash over the scene, strongest at the top). Erwu is drawn above it and stays warm.
+- Flowers fold further and tilt (open flowers up to about a third narrower and 60% shorter), stems droop a little more, and flower colours soften towards the paper colour by up to a quarter. Bed plantings fold and soften the same way.
+- Drifting petals and motes thin out by up to 75%.
+- Edge tufts now appear in the garden view too (previously they were suppressed once beds existed), at most twelve, kept clear of beds, furnishings and the path.
+- Captured side by side at 390 × 844 (awake vs. fully rested): the difference is readable at a glance while staying serene. Owner review of the degree is still welcome.

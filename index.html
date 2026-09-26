@@ -2204,7 +2204,11 @@
     for (const kind of runLog ? runLog.seeds : []) out.push(`You found a ${BloomBeds.NAMES[kind].toLowerCase()} seed.`);
     if (!out.length) {
       const bed = BloomBeds.focusBed(garden);
-      out.push(bed ? `${bedName(bed).replace(/^the /, 'The ')} grew a little. The garden keeps everything you grew.` : 'The garden keeps everything you grew.');
+      // no new stage this run: say how close the bed you're growing is to the next one
+      const next = bed && [[0.2, 'growing well'], [0.55, 'flowering'], [1, 'fully established']].find(([t]) => bed.growth < t);
+      const name = bed && bedName(bed).replace(/^the /, 'The ');
+      out.push(!bed ? 'The garden keeps everything you grew.'
+        : next[0] - bed.growth < 0.1 ? `${name} is nearly ${next[1]}.` : `${name} grew a little. The garden keeps everything you grew.`);
     }
     return out.slice(0, 3).join(' ');
   }

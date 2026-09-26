@@ -1,6 +1,6 @@
 # 11 — Find rare seeds in play and grow unique plants
 
-Status: planned. Release: v0.8. Priority: core for v0.8. Dependencies: 03 (beds), 04 (patch progress model).
+Status: implemented; pacing observed (see the v0.8 record). Release: v0.8. Priority: core for v0.8. Dependencies: 03 (beds), 04 (patch progress model).
 
 ## Outcome
 
@@ -68,3 +68,23 @@ None to start. Optional, with defaults:
 ## Out of scope
 
 Seed trading, crossbreeding, seasons, rarity tiers, shops, daily drops, and any gameplay bonus from unique plants.
+
+## v0.8 record — 2026-09-26
+
+- **Seed buds:** when a run's planned turn arrives, one of that ring's new buds carries a seed. It is drawn with an acorn-shaped pod (cap and body) and a twinkle beside the bud, so it differs in shape as well as colour. First appearance gets a short introduction ("A seed bud: open it to find a rare seed for your garden"). Seed buds are saved in the run snapshot.
+- **Collecting:** blooming it (including by full bloom or Erwu's swat) records the seed in the garden and saves at once. A "A rare seed" banner, a three-note chime and a haptic play, and the seed flies to the seed tin beside **Best**. The run's seed key prevents a second collection after a reload.
+- **Pacing (`BloomBeds.planRun`):** decided once per run. First seed: 50% on the first run, certain on the second. After that 30% +20% per run without one, capped at 100%. The seed bud appears on turn 3–8. No repeats until all six are found.
+- **Seed tin:** a tin in the garden's top corner with a count. Opening it lists seeds (and potted keepsakes); choose one and the beds are highlighted; tap one to preview and plant. It says "There may be others out there." until all six are found, without counts or silhouettes.
+- **Plants and traits:** catnip (Erwu pleased: hearts every 6–11 s and a happy face when sitting), sunflower (head follows the device clock from morning to evening), moonflower (open 19:00–06:00, furled by day), dandelion (flowers, then clocks; tap the bed to blow them, re-forming over 3 turns), bleeding heart, and wild strawberry (white flowers ripen to red berries). Rare plantings establish at 75% of the common rate.
+- **Save:** garden format v3 adds `seeds`, `luck` (`dry`, `last`), `focus`, bed `flower`/`growth`/`puffed`, and seed IDs. v2 saves upgrade in place; the v2 save is kept as the backup on the first v3 write.
+- **Events for ticket 09:** `seed-found` (first of each kind) and `first-flower` (first time each rare kind flowers).
+- **Tests:** `tests/garden-beds.test.cjs` covers pacing, the first-seed guarantee, no-duplicates, dedup on reload, first-flower records, dandelion puffs, time-of-day traits, the v2→v3 upgrade and newer-save protection.
+
+### Pacing
+
+Same two bot gardens as ticket 04:
+
+- Garden A: no seed bud on run 1 (the 50% roll missed); on run 2 a seed bud appeared and was opened, giving catnip; run 3 had none.
+- Garden B: none on run 1; on run 2 the seed bud appeared but was not opened before the run ended (no message, nothing lost); on run 3 another appeared and gave a bleeding heart seed.
+- Both first seeds arrived within the first three runs, and a missed seed bud was followed by one on the very next run, as designed. Six runs is too few to confirm the long-run rate of one every two to three runs; the unit tests pin the probabilities (30/50/70/90/100% after 0–4 dry runs).
+- No page errors in either garden.

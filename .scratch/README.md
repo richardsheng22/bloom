@@ -1,6 +1,6 @@
 # Bloom: an owned garden and a life for Erwu
 
-Status: tickets 01–02 implemented and locally verified; ticket 03 in progress (arrangement code exists, record and tests outstanding); tickets 04–11 planned. See each ticket for evidence and remaining review.
+Status: **v0.8 implemented** on the working branch (01–04, 05 phase A, 11), awaiting owner review and on-phone checks (ticket 10) before release. v0.9 tickets (05 phase B, 06–08) and 09 remain planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
 Planning date: 2026-09-25. Roadmap revised 2026-09-26 (release split, Erwu phasing, review notes, ticket 11).
 Source baseline: `3df8d53` (Bloom v0.7). Working branch: `develop`.
 
@@ -82,3 +82,17 @@ Findings from a review of tickets 01–03 as committed in `26eac78`. Each is als
 - **The interface looks like a form (02, 03).** Native `<select>` pickers and labels such as “Daisy 1” and “Flower patch 2” read as database rows, not the storybook style. Make tapping in the scene the main path. Keep the pickers as the keyboard and screen-reader route, and name things by place or character (“the daisy by the path”, “the sunny bed”).
 - **The landing tagline changed** from “Helping Erwu make her garden bloom” to “A little time with Erwu”. Confirm this is intended.
 - **Public repository.** The Erwu reference pack for ticket 05 must be kept out of this repository; describe observations in text here instead.
+
+### Follow-up in v0.8 (2026-09-26)
+
+Every point above except the tagline has been addressed; see tickets 01, 02 and 03. The tagline still reads "A little time with Erwu" pending the owner's call.
+
+## Owner review for v0.8
+
+Things only you can judge, best on your phone:
+
+1. **Erwu's two new poses** (curled asleep, seated) are provisional. Do the proportions and tail feel like her? Does she really care about catnip?
+2. **Resting:** is the evening-light look right, too strong, or too faint?
+3. **Pacing:** in the bot runs a first bed was established in three short runs, and a first rare seed turned up by run three. Does that feel right in real play?
+4. **The plant list:** swap any of the six rare plants, or the three common ones, for flowers that mean something to you both.
+5. **The tagline:** keep "A little time with Erwu", or go back to "Helping Erwu make her garden bloom"?

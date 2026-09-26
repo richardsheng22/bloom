@@ -1,6 +1,6 @@
 # 04 — Let ordinary play grow a chosen patch
 
-Status: planned, next after 03. Release: v0.8. Priority: core. Dependencies: 01, 03. Ticket 11 builds on the same patch progress model.
+Status: implemented; pacing observed (see the v0.8 record). Release: v0.8. Priority: core. Dependencies: 01, 03. Ticket 11 builds on the same patch progress model.
 
 ## Outcome
 
@@ -43,3 +43,28 @@ Skill trees, breeding, resource conversion, watering chores, and power advantage
 ## Coordination with ticket 11
 
 Design the progress model so a bed can hold either a chosen common flower or a unique plant from a rare seed, with the same planted → growing → flowering → established stages. Rare-seed plants may take a little longer to establish but use the same reward routing; do not build a second growth system.
+
+## v0.8 record — 2026-09-26
+
+- `garden-beds.js` holds the model: planted (<0.2) → growing (<0.55) → flowering (<1) → established (1). Starting set: lavender, daisies and cosmos.
+- Choosing: tap a bed in the garden view, pick a chip, see the planting previewed in flower, then Plant or Cancel. Planting makes that bed the focus; **Grow this bed** switches focus without losing anything. With no valid focus, the first planted, unfinished bed grows. No choice is ever required before a run.
+- Rewards: +0.012 per turn, +0.011 per bloomed bud, +0.002 per rim bounce, +0.08 at full bloom. Other planted beds get a quarter of the turn growth. About a third of blooms send their seed flight to the focused bed when it's visible above the flower.
+- Replanting is non-destructive: the previous planting goes to the seed tin with its growth (a common planting under 5% growth has nothing to keep).
+- Stage changes during play show a small "Flowering" / "Established" note over the bed and are announced to screen readers. The run-end card now says what changed ("The lavender in the morning bed is flowering now.", "You found a moonflower seed."). The garden status line says which bed is growing and its stage.
+- Progress is saved at the same stable points as plants (end of each turn and on hiding the page). A turn replayed after a reload can earn its growth again, exactly as with plants; a seed cannot be collected twice (ticket 11).
+- No change to damage, spawns, swat or score.
+
+### Pacing
+
+Observed 2026-09-26 with a bot playing ordinary runs in the browser. It aims at random, so it is weaker than a person and its runs are short. Two separate new gardens, lavender planted in the morning bed before the first run:
+
+| Run | Garden A: turns, bed growth | Garden B: turns, bed growth |
+|---|---|---|
+| 1 | 9 turns → 0.23 (growing) | 9 turns → 0.23 (growing) |
+| 2 | 10 turns → 0.70 (flowering; included a full bloom) | 10 turns → 0.54 (nearly flowering) |
+| 3 | 18 turns → 1.00 (established) | 13 turns → 1.00 (established) |
+
+- The first visible change (seedlings to leafy plants) arrives in the first short run.
+- The first bed established in three runs in both gardens, at the top of the 1–3 run target. A person, whose runs last longer, should get there sooner, so the starting values are kept.
+- The run-end card said "The lavender in the morning bed is growing well now.", "…is flowering now." / "…is nearly flowering." and "…is fully established now." When a run crosses no stage, it now says how close the bed is ("nearly flowering") rather than just "grew a little".
+- Still to confirm with the owner's real play on the phone.

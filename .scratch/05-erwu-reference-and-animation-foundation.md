@@ -1,6 +1,6 @@
 # 05 — Build a recognizable full-body Erwu
 
-Status: planned in two phases. Phase A: release v0.8. Phase B: release v0.9. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
+Status: phase A implemented as provisional art, awaiting owner review; phase B planned for v0.9. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
 
 ## Outcome
 
@@ -55,3 +55,11 @@ The full motion set is the largest and least certain piece of the series, so it 
 **Phase A (v0.8): still poses close to the current drawing.** A curled sleeping pose (used for the resting garden, the landing, and game over) and a seated pose (used when she is awake in the garden). Both extend the existing head and paws rather than redrawing her, and blend to the run nest immediately on Play. May ship as clearly labelled provisional art if the reference pack is not ready; the owner reviews both at actual phone size. Reduced motion uses the same poses without transitions.
 
 **Phase B (v0.9): the motion set.** Stand, walk, sniff, turn, stretch/yawn, settle, and crouch/pounce, plus the character sheet, from the reference pack. This is the foundation for 06–08.
+
+## Phase A record — 2026-09-26
+
+- **Curled sleep:** a round loaf with a haunch, faint tabby stripes on the back, the tail wrapped around the front, and her existing face (eyes closed) resting on her front paws. It breathes slowly. Used in the garden view while she sleeps and on the game-over card.
+- **Seated:** her existing face above a sitting body, front legs and paws, and the tail curled round her feet. Shown when she's greeted; after about 12 seconds left alone she curls back up. The two poses blend over 0.45 s; with reduced motion they swap instantly.
+- The run nest keeps the compact face and paws, so aiming, ball-tracking, danger ears and the swat are untouched. Play switches immediately.
+- Both reuse `drawCat` with a new `noPaws` option, so the face stays identical across all three presentations.
+- **Provisional:** proportions, tail length and the lack of chest markings are guesses. Please compare them with the real Erwu; the reference pack will settle them in phase B.

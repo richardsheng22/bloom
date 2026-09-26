@@ -76,3 +76,10 @@ Physical iPhone Safari touch feel, real safe-area behavior, audio, and haptics a
 - **Style:** the plant picker and the “Look around / Arrange” button row read as a form. Keep tapping in the scene as the main path and the `<select>` as the keyboard and screen-reader equivalent, styled or visually secondary. Replace numbered names (“Daisy 1”) with place-based or characterful names (“the daisy by the path”), generated from saved position so they stay stable.
 - **Composition:** Erwu is small in a wide, mostly empty clearing. Once 04 and 05 phase A land, review whether the garden-view scale should bring Erwu and the beds closer together.
 - **Copy:** the landing tagline changed from “Helping Erwu make her garden bloom” to “A little time with Erwu”. Owner to confirm.
+
+### Follow-up — 2026-09-26
+
+- Wild plants are named by where they grow ("Daisy on the top left", "Clover by the path"), with "(2)" only for true duplicates. Beds and furnishings are named by place ("The morning bed", "the sunny nook").
+- Bed and seed choices are rounded chips with a colour swatch, not `<select>` menus. The plant picker remains as the keyboard and screen-reader route.
+- Erwu now curls up asleep and sits up when greeted (ticket 05 phase A), which fills the centre of the scene better.
+- The tagline is unchanged, pending the owner's confirmation.

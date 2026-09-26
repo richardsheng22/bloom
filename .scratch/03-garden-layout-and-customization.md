@@ -1,6 +1,6 @@
 # 03 — Give the player a small, personally arranged garden
 
-Status: in progress — arrangement code committed in `26eac78` without an implementation record or tests. Priority: core. Dependencies: 01, 02.
+Status: implemented; see the v0.8 record. Priority: core. Dependencies: 01, 02.
 
 ## Outcome
 
@@ -56,3 +56,17 @@ Outstanding before this ticket can be marked complete:
 5. `preview()` applies each change twice (inside `copy` and again in `rows`); simplify when adding tests.
 6. Replace numbered labels (“Flower patch 2”) with place names, consistent with ticket 02's review notes.
 7. Write the implementation record and evidence as for 01 and 02.
+
+## v0.8 record — 2026-09-26
+
+All seven outstanding items above are done.
+
+1. `tests/garden-layout.test.cjs` covers the new garden, v1→v2 layout upgrade, invalid layouts, place/swap/put away/undo round trips, stale plans and previews, and beds moving with their plantings. The existing browser suites exercise Arrange at every viewport.
+2. Layout version 2 puts the cushion on the shady nook and the sunny stone on the sunny nook in a new garden. Upgrading a version 1 layout places a never-placed furnishing on its home nook only if that nook is free.
+3. An empty bed has a stone rim, raked furrows, three seedlings and a blank plant marker. Planted beds show their planting instead.
+4. During play, only planted beds come along: smaller (at most 0.78×), just above the flower, and only where there's room. Wild plants no longer grow into those spots.
+5. `preview()` builds each row once.
+6. Beds, nooks and wild plants are named by place; arrangement messages are full sentences ("The cushion moves to the sunny nook.").
+7. This record. Evidence: `v08-evidence/`.
+
+Beds carry their plantings (`flower`, `growth`, optional `puffed`) from ticket 04, so moving or putting away a bed never loses what grows in it.

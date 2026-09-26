@@ -15,6 +15,7 @@
     'bleeding-heart': 'Arching stems of little heart-shaped flowers.', strawberry: 'White flowers that ripen into berries.',
   });
   // Tunable pacing (ticket 04/11). A rare planting establishes a little more slowly.
+  // Observed with random-aim bot runs of 9–18 turns: a first bed establishes in three runs (ticket 04).
   const GROW = Object.freeze({ turn: 0.012, bloom: 0.011, miss: 0.002, fullBloom: 0.08, rare: 0.75, idle: 0.25 });
   const LUCK = Object.freeze({ firstChance: 0.5, base: 0.3, perDryRun: 0.2, earliest: 3, latest: 8 });
   const STAGES = Object.freeze([[0.2, 'planted'], [0.55, 'growing'], [1, 'flowering']]);
