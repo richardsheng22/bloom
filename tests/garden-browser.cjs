@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+// Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
+const SERVED = /^(index\.html|manifest\.webmanifest|icons\/[\w-]+\.png|[\w-]+\.js)$/;
 const fixture = require('./fixtures/garden-v1.json');
 const G = require('../garden-state.js');
 const root = path.resolve(__dirname, '..');
@@ -17,7 +19,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
   const server = http.createServer((req, res) => {
     const rel = req.url.split('?')[0];
     const file = rel === '/' ? 'index.html' : rel.slice(1);
-    if (!['index.html', 'garden-layout.js', 'garden-state.js', 'garden-view.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'].includes(file)) { res.statusCode=404; res.end(); return; }
+    if (!SERVED.test(file)) { res.statusCode=404; res.end(); return; }
     res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : file.endsWith('.html') ? 'text/html' : file.endsWith('.png') ? 'image/png' : 'application/json');
     res.end(fs.readFileSync(path.join(root,file)));
   }).listen(0,'127.0.0.1');
@@ -55,7 +57,9 @@ const clone = x => JSON.parse(JSON.stringify(x));
       assert.equal(g.rest,Math.min(1,Math.max(0,hours-12)/72));
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden1'))),fixture);
       assert.equal(await page.locator('#play').innerText(),'Continue · turn 8');
-      assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3'))),run);
+      // The run's own fields are unchanged; v0.8 adds a garden log alongside them.
+      const {log,...saved}=await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3')));
+      assert.deepEqual(saved,run); assert.deepEqual(log.seeds,[]);
       assert.doesNotMatch(await page.locator('#t-note').innerText(),/missed|kept what|lost/i);
       if (hours===0||hours===168) await page.screenshot({path:path.join(output,hours===0?'awake.png':'resting.png')});
       if (hours===168) {

@@ -5,45 +5,68 @@
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
   const anchors = Object.freeze([
-    { id: 'bed-left', name: 'Left flower bed', type: 'patch' },
-    { id: 'bed-top', name: 'Top flower bed', type: 'patch' },
-    { id: 'bed-right', name: 'Right flower bed', type: 'patch' },
-    { id: 'nook-left', name: 'Left nook', type: 'object' },
-    { id: 'nook-right', name: 'Sunny nook', type: 'object' },
+    { id: 'bed-left', name: 'the morning bed', type: 'patch' },
+    { id: 'bed-top', name: 'the high bed', type: 'patch' },
+    { id: 'bed-right', name: 'the evening bed', type: 'patch' },
+    { id: 'nook-left', name: 'the shady nook', type: 'object' },
+    { id: 'nook-right', name: 'the sunny nook', type: 'object' },
   ]);
   const kinds = { 'flower-patch': { name: 'Flower patch', type: 'patch', description: 'A little bed with room for flowers.' },
     cushion: { name: 'Cushion', type: 'object', description: 'A soft place for Erwu to settle.' },
     stone: { name: 'Sunny stone', type: 'object', description: 'A warm place for Erwu to nap.' } };
+  const VERSION = 2;
+  // Where each starter furnishing goes in a new garden.
+  const homes = { cushion: 'nook-left', stone: 'nook-right' };
   const records = g => [...g.patches, ...g.objects];
   const find = (g, id) => records(g).find(r => r.id === id);
   const at = (g, anchor) => records(g).find(r => r.anchor === anchor);
   function valid(g) {
     if (g.layoutVersion === undefined) return true; // Before the arrangement system existed.
-    if (g.layoutVersion !== 1) return false;
+    if (g.layoutVersion !== VERSION) return false;
     const occupied = new Set();
     return [['patches', 'patch'], ['objects', 'object']].every(([field, type]) => Array.isArray(g[field]) && g[field].every(r => {
-      if (!r || kinds[r.kind]?.type !== type || (type === 'patch' && (!Number.isFinite(r.growth) || r.growth < 0 || r.growth > 1))) return false;
+      if (!r || kinds[r.kind]?.type !== type) return false;
+      if (type === 'patch' && (!Number.isFinite(r.growth) || r.growth < 0 || r.growth > 1 || (r.flower !== null && typeof r.flower !== 'string'))) return false;
       if (r.anchor === null) return true;
       if (!anchors.some(a => a.id === r.anchor && a.type === type) || occupied.has(r.anchor)) return false;
       occupied.add(r.anchor); return true;
     }));
   }
+  // Put furnishings that have never been placed on their default nooks, if free.
+  function settleHomes(g) {
+    for (const o of g.objects) {
+      const home = homes[o.kind];
+      if (o.anchor === null && home && !at(g, home)) o.anchor = home;
+    }
+  }
   function initialize(g, allocate) {
+    if (g.layoutVersion === 1) return upgrade(g);
     if (g.layoutVersion !== undefined) return valid(g);
     // Do not reinterpret unknown reserved records from another client.
     if (g.patches.length || g.objects.length) return false;
-    g.patches = anchors.filter(a => a.type === 'patch').map(a => ({ id: allocate(g, 'patch'), kind: 'flower-patch', anchor: a.id, growth: 0 }));
+    g.patches = anchors.filter(a => a.type === 'patch').map(a => ({ id: allocate(g, 'patch'), kind: 'flower-patch', anchor: a.id, flower: null, growth: 0 }));
     g.objects = ['cushion', 'stone'].map(kind => ({ id: allocate(g, 'object'), kind, anchor: null }));
-    g.layoutVersion = 1;
+    settleHomes(g);
+    g.layoutVersion = VERSION;
     return true;
   }
-  function label(g, record) {
-    const name = kinds[record.kind]?.name || 'Garden item';
-    return record.kind === 'flower-patch' ? `${name} ${g.patches.findIndex(p => p.id === record.id) + 1}` : name;
+  // Version 1 beds were always empty and its furnishings started put away.
+  function upgrade(g) {
+    const draft = { ...g, layoutVersion: VERSION, patches: g.patches.map(p => ({ ...p, flower: null, growth: 0 })), objects: g.objects.map(o => ({ ...o })) };
+    settleHomes(draft);
+    if (!valid(draft)) return false;
+    Object.assign(g, { layoutVersion: VERSION, patches: draft.patches, objects: draft.objects });
+    return true;
   }
-  const placeName = id => anchors.find(a => a.id === id)?.name || 'collection';
+  const placeName = id => anchors.find(a => a.id === id)?.name || 'your collection';
+  const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
+  // Things are named by where they are, not by number.
+  function label(g, record) {
+    if (record.kind === 'flower-patch') return record.anchor ? capital(placeName(record.anchor)) : 'A spare flower bed';
+    return kinds[record.kind]?.name || 'Garden item';
+  }
   function plan(g, id, destination) {
-    if (!valid(g) || g.layoutVersion !== 1) return null;
+    if (!valid(g) || g.layoutVersion !== VERSION) return null;
     const item = find(g, id);
     if (!item || item.anchor === destination) return null;
     if (destination !== null && !anchors.some(a => a.id === destination && a.type === kinds[item.kind].type)) return null;
@@ -64,18 +87,19 @@
     return true;
   }
   function preview(g, plan) {
-    const copy = rows => rows.map(r => ({...r, anchor: plan?.changes.find(c => c.id === r.id)?.to ?? r.anchor}));
-    // null means explicitly put away, rather than an absent preview.
-    const rows = list => copy(list).map((r,i) => {
-      const change = plan?.changes.find(c => c.id === list[i].id);
-      if (change) r.anchor = change.to;
-      return r;
+    // A change to null means explicitly put away, so test for the change, not its value.
+    const rows = list => list.map(r => {
+      const change = plan?.changes.find(c => c.id === r.id);
+      return change ? {...r, anchor: change.to} : {...r};
     });
     return {...g, patches:rows(g.patches), objects:rows(g.objects)};
   }
   function describe(g, plan) {
     if (!plan) return '';
-    return plan.changes.map(c => `${label(g,find(g,c.id))} → ${placeName(c.to)}`).join('. ');
+    return plan.changes.map(c => {
+      const item = find(g,c.id), name = item.kind === 'flower-patch' ? (c.from ? `The bed in ${placeName(c.from)}` : 'The spare bed') : `The ${kinds[item.kind].name.toLowerCase()}`;
+      return c.to === null ? `${name} goes back to your collection.` : `${name} moves to ${placeName(c.to)}.`;
+    }).join(' ');
   }
   function geometry(scene) {
     const x = Math.max(62, scene.width / 2 - 40), h = scene.height;
@@ -106,5 +130,5 @@
     }
     return {x:Math.cos(plant.a)<0?-rx:rx,y:-ry};
   }
-  return {anchors,kinds,records,find,at,valid,initialize,label,placeName,plan,reverse,apply,preview,describe,geometry,projectPlant};
+  return {VERSION,anchors,kinds,homes,records,find,at,valid,initialize,upgrade,label,placeName,plan,reverse,apply,preview,describe,geometry,projectPlant};
 });
