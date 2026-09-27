@@ -16,7 +16,7 @@ const ERWU = {
     'sit-front': [56, 48, 224, 256], 'sit-drowsy': [324, 52, 224, 252], 'sit-content': [592, 48, 228, 256], curl: [836, 132, 256, 172],
     sniff: [12, 392, 276, 156], stalk: [296, 344, 284, 208], pounce: [584, 344, 252, 208], stretch: [864, 328, 244, 240],
     loaf: [36, 644, 228, 188], 'sit-side': [304, 576, 180, 264], 'belly-up': [500, 624, 346, 216], yawn: [849, 624, 247, 216],
-    peek: [36, 912, 220, 128], 'peek-left': [304, 900, 220, 140], 'peek-right': [580, 900, 228, 140], 'peek-sleepy': [848, 916, 240, 124],
+    peek: [36, 912, 220, 128], 'peek-glance': [304, 900, 220, 140], 'peek-turn': [580, 900, 228, 140], 'peek-sleepy': [848, 916, 240, 124],
     'look-up': [636, 1072, 184, 256], 'sit-grumpy': [872, 1084, 232, 244], 'lie-side': [16, 1132, 346, 188], 'loaf-side': [369, 1132, 231, 188],
   },
   // two rows of four; each frame is anchored on its nose so the body holds still
@@ -31,7 +31,7 @@ const GARDEN = {
   },
 };
 // The basket inside the rose bed, in garden-pieces.png pixels: its opening and outer rim.
-const BASKET = { cx: 246, cy: 230, rx: 84, ry: 35, outerRx: 97, bottom: 322 };
+const BASKET = { cx: 246, cy: 230, rx: 84, ry: 35, outerRx: 97, outerRy: 47, bottom: 322 };
 
 (async () => {
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BLOOM_CHROMIUM, args: ['--no-sandbox'] });
@@ -39,7 +39,7 @@ const BASKET = { cx: 246, cy: 230, rx: 84, ry: 35, outerRx: 97, bottom: 322 };
   const sheets = (group) => Object.entries(group).map(([file, regions]) => ({
     src: 'data:image/png;base64,' + fs.readFileSync(path.join(root, 'assets', file)).toString('base64'), regions,
   }));
-  const pack = (group, split) => page.evaluate(async ({ sheets, split }) => {
+  const pack = (group, split, basket = null) => page.evaluate(async ({ sheets, split, basket }) => {
     const pieces = [];
     for (const sheet of sheets) {
       const img = new Image(); img.src = sheet.src; await img.decode();
@@ -102,6 +102,26 @@ const BASKET = { cx: 246, cy: 230, rx: 84, ry: 35, outerRx: 97, bottom: 322 };
           pieces.push({ name: n, ...c, ax: walk ? c.w - 200 : c.w / 2, ay: c.h });
         }
       }
+      // Erwu's basket on its own, lifted out of the rose bed for the run and the end card:
+      // the wicker's outline (a rim ellipse over a gently tapering body), without the leaves.
+      // Its anchor is the centre of its opening.
+      if (basket && sheet.regions['rose-bed']) {
+        const { cx, cy, outerRx: orx, outerRy: ory, bottom } = basket, x0 = cx - orx - 2, y0 = cy - ory - 2;
+        const w = orx * 2 + 4, h = bottom - y0 + 2, brx = orx * 0.93, by = bottom - ory * 0.5, bry = ory * 0.5;
+        const pc = document.createElement('canvas'); pc.width = w; pc.height = h;
+        const pg = pc.getContext('2d'), id = pg.createImageData(w, h);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const X = x0 + x, Y = y0 + y, dx = X - cx;
+          const inside = Y <= cy ? (dx / orx) ** 2 + ((Y - cy) / ory) ** 2 <= 1
+            : Y <= by ? Math.abs(dx) <= orx - (orx - brx) * (Y - cy) / (by - cy)
+            : (dx / brx) ** 2 + ((Y - by) / bry) ** 2 <= 1;
+          const si = (Y * W + X) * 4;
+          if (!inside || (px[si + 1] > px[si] + 2 && px[si + 1] > px[si + 2] + 8)) continue;
+          for (let q = 0; q < 4; q++) id.data[(y * w + x) * 4 + q] = px[si + q];
+        }
+        pg.putImageData(id, 0, 0);
+        pieces.push({ name: 'basket', canvas: pc, sx: x0, sy: y0, w, h, ax: cx - x0, ay: cy - y0 });
+      }
     }
     // shelf packing, tallest first, with a transparent gutter against bleeding
     const PAD = 3, MAXW = 2048;
@@ -116,10 +136,10 @@ const BASKET = { cx: 246, cy: 230, rx: 84, ry: 35, outerRx: 97, bottom: 322 };
     for (const p of pieces) o.drawImage(p.canvas, p.x, p.y);
     const frames = Object.fromEntries(pieces.map((p) => [p.name, [p.x, p.y, p.w, p.h, Math.round(p.ax), p.ay, p.sx, p.sy]]));
     return { url: out.toDataURL('image/webp', 0.9), frames, size: [out.width, out.height] };
-  }, { sheets: sheets(group), split });
+  }, { sheets: sheets(group), split, basket });
 
   const erwu = await pack(ERWU, []);
-  const garden = await pack(GARDEN, ['steps']);
+  const garden = await pack(GARDEN, ['steps'], BASKET);
   const write = (file, url) => { const buf = Buffer.from(url.split(',')[1], 'base64'); fs.writeFileSync(path.join(root, 'assets', file), buf); return buf.length; };
   const sizes = { erwu: write('erwu.webp', erwu.url), garden: write('garden.webp', garden.url) };
   const manifest = {

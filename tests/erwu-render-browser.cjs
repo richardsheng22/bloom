@@ -4,7 +4,7 @@ const { chromium } = require(process.env.BLOOM_PLAYWRIGHT || 'playwright');
 const fs = require('node:fs'), http = require('node:http'), cp = require('node:child_process');
 const path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu-render';
-const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,world:erwuWorld,paintPiece,atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
+const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
 const marker = '  window.claude?.hot?.snapshot?';
 const fixture = require('./fixtures/garden-v1.json');
 
@@ -106,6 +106,11 @@ const fixture = require('./fixtures/garden-v1.json');
       await p.locator('#garden-scene').screenshot({ path: path.join(out, `scene-${width}.png`) });
       await p.close();
     }
+    // the end card: asleep in her basket, painted like the garden
+    const card=await open({width:390,height:844});
+    await card.waitForFunction(()=>__art.atlasReady());
+    const cardPng=await card.evaluate(()=>{const c=__art.cardCat();__art.drawCardCat(1000);return c.toDataURL();});
+    fs.writeFileSync(path.join(out,'card-cat.png'),Buffer.from(cardPng.split(',')[1],'base64'));await card.close();
     const moving=await open({width:390,height:844});
     await moving.waitForFunction(()=>__art.atlasReady());
     const video=await moving.evaluate(async()=>{

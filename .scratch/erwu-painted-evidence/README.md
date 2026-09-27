@@ -15,3 +15,9 @@ Checks run:
 - `node --test tests/*.test.cjs`: 52 pass.
 - The browser suites `garden-browser`, `garden-view-browser`, `erwu-browser` and `erwu-render-browser` all pass with no page errors.
 - `fountain-grounded.webp`: the fountain relit into the lawn's light, darker at its foot, with grass around the plinth (owner review: it looked like a placed image).
+
+## The run shares the garden's world (step 1)
+
+- `run-390.webp` and `run-320.webp`: the flower sits in the painted lawn under a paper wash. The plants around it are painted, and the pieces you play with stay drawn.
+- `run-aiming-390.webp` and `run-basket-watching.webp`: Erwu peeks from her basket and turns to watch your aim.
+- `end-card-cat.webp`: the end card, with her asleep inside the basket.

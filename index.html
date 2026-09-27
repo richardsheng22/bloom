@@ -1150,7 +1150,7 @@
   const ART = typeof BloomArt === 'object' ? BloomArt : null, artImages = {};
   if (ART) for (const key of ['erwu', 'garden', 'lawn']) {
     const rec = artImages[key] = { img: new Image(), ready: false };
-    rec.img.onload = () => { rec.ready = true; gardenDirty = true; lawnCache = null; };
+    rec.img.onload = () => { rec.ready = true; gardenDirty = true; lawnCache = null; bgCache = null; };
     rec.img.src = ART[key].src;
   }
   const artImage = (key) => artImages[key] && artImages[key].ready ? artImages[key].img : null;
@@ -1217,23 +1217,62 @@
   // The rose bed carries Erwu's basket; the bed is placed so the basket sits on her nest.
   function roseBedPlacement(r) {
     const f = ART.garden.frames['rose-bed'], b = ART.garden.basket, width = 2 * r.rx + 22, k = width / f[2];
-    return { f, b, k, width, x: -(b.cx - f[6]) * k, y: -(b.cy - f[7]) * k };
+    return { f, b, k, x: -(b.cx - f[6]) * k, y: -(b.cy - f[7]) * k };
   }
+  // The same basket on its own, `r` its outer radius, for the run and the end card.
+  function basketPlacement(r) {
+    const f = ART.garden.frames['rose-bed'], b = ART.garden.basket, k = r / b.outerRx;
+    return { f, b, k, x: -(b.cx - f[6]) * k, y: -(b.cy - f[7]) * k, alone: true };
+  }
+  const drawRoseBedImage = (g, p) => g.drawImage(artImage('garden'), p.f[0], p.f[1], p.f[2], p.f[3], p.x, p.y, p.f[2] * p.k, p.f[3] * p.k);
   function drawPaintedRoseBed(g, r) {
-    const p = roseBedPlacement(r), img = artImage('garden');
-    groundShadow(g, p.x + p.width / 2, p.y + p.f[3] * p.k, p.width, 0.14);
-    g.drawImage(img, p.f[0], p.f[1], p.f[2], p.f[3], p.x, p.y, p.width, p.f[3] * p.k);
+    const p = roseBedPlacement(r), w = p.f[2] * p.k;
+    groundShadow(g, p.x + w / 2, p.y + p.f[3] * p.k, w, 0.14);
+    drawRoseBedImage(g, p);
   }
-  // The front of the basket, drawn again over Erwu so she sits inside it.
-  function drawBasketFront(g) {
-    if (!paintedGarden()) return;
-    const p = roseBedPlacement(BloomGardenLayout.landmarks(gardenScene).roses), b = p.b, k = p.k, img = artImage('garden');
-    const rx = b.rx * k, ry = b.ry * k, ox = b.outerRx * k + 2, bottom = (b.bottom - b.cy) * k + 2;
-    g.save(); g.beginPath();
-    g.moveTo(-ox, 0); g.lineTo(-rx, 0); g.ellipse(0, 0, rx, ry, 0, Math.PI, 0, true); g.lineTo(ox, 0); g.lineTo(ox, bottom); g.lineTo(-ox, bottom); g.closePath();
+  // The basket's front wall (its opening is at the origin), drawn again over Erwu so she sits inside it.
+  function clipBasket(g, p) {
+    const { b, k } = p, rx = b.rx * k, ry = b.ry * k, ox = b.outerRx * k + 2, oy = b.outerRy * k, by = (b.bottom - b.cy) * k;
+    g.beginPath(); g.moveTo(-ox, 0); g.lineTo(-rx, 0); g.ellipse(0, 0, rx, ry, 0, Math.PI, 0, true); g.lineTo(ox, 0);
+    g.lineTo(ox * 0.95, by - oy * 0.55); g.ellipse(0, by - oy * 0.55, ox * 0.95, oy * 0.5, 0, 0, Math.PI); g.closePath();
     g.clip();
-    g.drawImage(img, p.f[0], p.f[1], p.f[2], p.f[3], p.x, p.y, p.width, p.f[3] * p.k);
+  }
+  const drawBasketAlone = (g, p) => paintPiece(g, 'garden', 'basket', 0, 0, ART.garden.frames.basket[2] * p.k);
+  function drawBasket(g, p) {
+    groundShadow(g, 0, (p.b.bottom - p.b.cy) * p.k, p.b.outerRx * p.k * 2.3, 0.2);
+    drawBasketAlone(g, p);
+  }
+  function drawBasketFront(g, p) {
+    if (!p) { if (!paintedGarden()) return; p = roseBedPlacement(BloomGardenLayout.landmarks(gardenScene).roses); }
+    g.save(); clipBasket(g, p); if (p.alone) drawBasketAlone(g, p); else drawRoseBedImage(g, p); g.restore();
+  }
+  // Erwu in her basket during a run and on the end card: the painted poses that fit her moods.
+  // Her lower half is always inside the basket, so the chest-high poses work here.
+  const IN_BASKET = { peek: 0.42, 'peek-glance': 0.42, 'peek-turn': 0.42, 'peek-sleepy': 0.42, yawn: 0.5, curl: 0.34, 'sit-content': 0.8, 'sit-grumpy': 0.8 };
+  function basketPose(o) {
+    if (o.yawn > 0.25) return ['yawn', false];
+    if (o.mood === 'sleepy') return ['curl', false];
+    if (o.mood === 'startled' || o.earsBack > 0.6) return ['sit-grumpy', false];
+    if (o.happy > 0.5 || o.big) return ['sit-content', false];
+    // she watches the aim, the pollen, a passing butterfly: a glance, or a turn of the head
+    const look = o.bat > 0.2 ? o.batA : o.look;
+    if (look != null && Math.abs(Math.cos(look)) > 0.3) return [o.bat > 0.2 || Math.abs(Math.cos(look)) > 0.75 ? 'peek-turn' : 'peek-glance', Math.cos(look) < 0];
+    if (o.blink > 0.5) return ['peek-sleepy', false];
+    return ['peek', false];
+  }
+  function drawBasketCat(g, p, o, now) {
+    if (!artImage('erwu')) return false;
+    const [name, flip] = basketPose(o), f = ART.erwu.frames[name], k = p.k;
+    const unit = p.b.rx * k * 2 * 0.82 / ART.erwu.frames.peek[2];
+    const swat = o.bat > 0.2 ? o.bat : 0, bounce = 1 + (o.bounce || 0) * 0.05;
+    const breathe = o.mood === 'sleepy' && !reduced ? 1 + Math.sin(now / 1100) * 0.012 : 1;
+    g.save();
+    g.translate(swat ? swat * Math.cos(o.batA) * p.b.rx * k * 0.12 : 0, (p.b.bottom - p.b.cy) * k * IN_BASKET[name] - swat * p.b.ry * k * 0.25);
+    g.scale(bounce, bounce * breathe);
+    paintPiece(g, 'erwu', name, 0, 0, f[2] * unit, flip);
     g.restore();
+    drawBasketFront(g, p);
+    return true;
   }
   function drawPlant(g, p) {
     const { x, y } = plantXY(p), rnd = seeded(p.s);
@@ -1243,7 +1282,7 @@
     const leaf = rgb(mix(C.sage, C.moss, 0.25 + rnd() * 0.55)), dark = rgb(hexRgb(C['leaf-dark']), 0.5);
     const line = rgb(hexRgb(C.walnut), 0.32);
     // In the painted garden, what play grows comes up as painted clumps; mushrooms stay drawn.
-    if (p.k !== 'mushroom' && paintedGarden()) {
+    if (p.k !== 'mushroom' && artImage('garden')) {
       paintPiece(g, 'garden', ['grass', 'clover', 'fern'].includes(p.k) ? 'grass' : 'meadow', x, y + u * 0.15, h * (1.5 + rnd() * 0.3), rnd() < 0.5);
       return;
     }
@@ -2651,7 +2690,7 @@
     clearTimeout(overTimer); clearTimeout(introTimer); clearTimeout(settleTimer); clearTimeout(bannerTimer);
     clearTimeout(restartTimer); restartArmed = false; el.restart.classList.remove('armed');
     clearAim(); endArrange(); closeInspection(); gardenRequested = false;
-    presentation = 'garden'; titleT = 1; gardenCache = null;
+    presentation = 'garden'; titleT = 1; gardenCache = null; bgCache = null;
     document.body.dataset.view = presentation;
     cat = freshCat(); cat.mood = 'sleepy';
     // Settle already-owned seed flights; no extra rewards or mutations to the run.
@@ -2682,7 +2721,7 @@
   function leaveTitle() {
     if (presentation !== 'garden') return;
     clearTimeout(settleTimer); clearAim(); endArrange(); closeInspection();
-    presentation = 'run'; titleT = 0; gardenRequested = false; gardenCache = null;
+    presentation = 'run'; titleT = 0; gardenRequested = false; gardenCache = null; bgCache = null;
     arenaReveal = reduced ? 1 : 0;
     document.body.dataset.view = presentation;
     el.title.hidden = true; document.body.classList.remove('titling');
@@ -3242,6 +3281,13 @@
     const g = c.getContext('2d');
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
     g.fillStyle = C.ground; g.fillRect(0, 0, W, H);
+    // During a run the flower sits in the painted lawn, washed with paper so play stays legible.
+    const lawn = presentation === 'run' && artImage('lawn');
+    if (lawn) {
+      const k = Math.max(W / lawn.naturalWidth, H / lawn.naturalHeight) * 1.04;
+      g.drawImage(lawn, (W - lawn.naturalWidth * k) / 2, (H - lawn.naturalHeight * k) / 2, lawn.naturalWidth * k, lawn.naturalHeight * k);
+      g.fillStyle = rgb(hexRgb(C.ground), 0.34); g.fillRect(0, 0, W, H);
+    }
 
     // warm sunlight from the top corner, a cool sage wash from below
     let gr = g.createRadialGradient(W * 0.12, -H * 0.02, 0, W * 0.12, -H * 0.02, H * 0.6);
@@ -3259,7 +3305,7 @@
     // a few faint pencil ticks of grass on the paper
     const tick = hexRgb(C.moss), rnd = seeded(7);
     g.lineCap = 'round'; g.lineWidth = 1;
-    for (let i = 0; i < Math.round(W * H / 5200); i++) {
+    for (let i = 0; i < (lawn ? 0 : Math.round(W * H / 5200)); i++) {
       const x = rnd() * W, y = rnd() * H, l = 3 + rnd() * 4;
       if (Math.hypot(x - CX, y - CY) < R * 1.05) continue;
       g.strokeStyle = rgb(tick, 0.1 + rnd() * 0.08);
@@ -4453,8 +4499,10 @@
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, c.width, c.height);
     g.translate(c.width / 2, c.height / 2 + c.width * 0.04);
-    drawNest(g, c.width * 0.4);
-    drawCatCurled(g, c.width * 0.4, now);
+    if (artImage('garden') && artImage('erwu')) {
+      const p = basketPlacement(c.width * 0.36);
+      g.translate(0, -c.width * 0.1); drawBasket(g, p); drawBasketCat(g, p, { mood: 'sleepy' }, now); g.translate(0, c.width * 0.1);
+    } else { drawNest(g, c.width * 0.4); drawCatCurled(g, c.width * 0.4, now); }
     if (!reduced) {
       // z's drifting up and away
       g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -4650,7 +4698,10 @@
     }
     ctx.globalAlpha = 1;
     const nestR = presentation === 'garden' && gardenScene ? gardenScene.nest : coreR;
-    if (!paintedGarden()) drawNest(ctx, nestR);
+    // the painted garden holds her basket in the rose bed; a run and the end card use it alone
+    const runBasket = presentation === 'run' && artImage('garden') && artImage('erwu') ? basketPlacement(nestR * 1.5) : null;
+    if (runBasket) { ctx.save(); ctx.translate(0, -nestR * 0.38); drawBasket(ctx, runBasket); ctx.restore(); }
+    else if (!paintedGarden()) drawNest(ctx, nestR);
     if (launchFx > 0) {
       ctx.strokeStyle = rgb(hexRgb(C.butter), launchFx * 0.8); ctx.lineWidth = 2 + launchFx * 2;
       ctx.beginPath(); ctx.arc(0, 0, coreR * 1.1 + (1 - launchFx) * R * 0.22, 0, TAU); ctx.stroke();
@@ -4660,6 +4711,7 @@
       ctx.beginPath(); ctx.arc(0, 0, coreR + (1 - swatFx) * R * 0.35, 0, TAU); ctx.stroke();
     }
     if (presentation === 'garden') drawErwuGarden(now, nestR);
+    else if (runBasket) { ctx.save(); ctx.translate(0, -nestR * 0.38); drawBasketCat(ctx, runBasket, catPose(), now); ctx.restore(); }
     else drawCat(ctx, nestR, now, catPose());
     if (presentation === 'run' && te > 0.2 && cat.mood === 'sleepy' && !reduced) {
       // z's drifting up from a sleeping Erwu
