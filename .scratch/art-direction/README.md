@@ -42,3 +42,15 @@ Most of this can be built and tested with the current art first, and it looks th
 - round count badges and parchment and wooden-sign buttons, matching the mockup
 
 When the new sheets arrive, `tools/build-art.cjs` rebuilds the atlases. The clump sheet and the plate are new inputs; the layout's fountain and log positions are then taken from the plate.
+
+## Built before the sheets (2026-09-27)
+
+These work with the current art and carry over unchanged when the sheets arrive. Screenshots are in [`progress/`](progress/).
+
+- **Watercolour petals:** the petal and arena shapes are unchanged, so hit areas are the same. Each is laid over with a warm, fixed watercolour wash, pigment pooled at its edge (pinker once a petal has colour), and a soft warm-brown outline (`run-later-390.webp`).
+- **Count badges:** a flower's count sits on a small round badge above it; counts of 2 to 4 stay as gold dots below.
+- **One garden behind both screens:** the lawn (the garden backdrop, once it arrives) fills the whole screen on the landing page and in a run. It is washed with paper a little more in a run, with calm light zones where the title and buttons sit, and a rounded, deckled paper edge with pigment pooled just inside it (`garden-390.webp`).
+- **Wind:** painted clumps and bed flowers are no longer baked into the garden picture. They're drawn every frame in horizontal strips, bent more the higher they are, with a slow breeze and occasional gusts, calmer while the garden rests, and still under reduced motion. It holds 60 fps in headless Chromium (`wind-difference.webp` shows what moves between two moments).
+- **Buttons:** Play and Continue are a painted wooden sign with a grain, a serif label and a sprig at each end; the buttons beside them are parchment.
+
+Waiting on the sheets: the stronger storybook style, the garden backdrop's composition and borders, the variety of clumps (only two for now), and the painted play pieces.

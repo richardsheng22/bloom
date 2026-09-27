@@ -326,6 +326,24 @@
     touch-action: manipulation;
   }
   .wood:active { transform: scale(0.98); }
+  /* a painted wooden sign, like the garden's: grain in the board, a serif label, and a sprig at
+     each end (the sprigs sit just outside the board, so they never cover the label) */
+  .wood {
+    position: relative;
+    background:
+      repeating-linear-gradient(177deg, rgba(255,235,205,0.07) 0 2px, transparent 2px 9px),
+      repeating-linear-gradient(183deg, rgba(60,35,15,0.08) 0 1px, transparent 1px 13px),
+      linear-gradient(180deg, #A9825D, var(--walnut) 55%, #7A573A);
+    font-family: var(--serif, "Fraunces", Georgia, serif); font-weight: 500; letter-spacing: 0.01em;
+  }
+  .wood::before, .wood::after {
+    content: ""; position: absolute; top: 50%; width: 24px; height: 24px; margin-top: -12px; pointer-events: none;
+    background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'><g fill='%23F6C9D3' stroke='%23C98F9C' stroke-width='.7'><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(0 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(45 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(90 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(135 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(180 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(225 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(270 13 13)'/><ellipse cx='13' cy='6.5' rx='3.2' ry='5.2' transform='rotate(315 13 13)'/></g><circle cx='13' cy='13' r='3.4' fill='%23EDC25A' stroke='%23B8893A' stroke-width='.6'/></svg>") center / 18px no-repeat, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 16'><path d='M2 12 C8 2 20 1 28 5 C20 9 10 14 2 12Z' fill='%239DB57E' stroke='%236F8A55' stroke-width='.8'/></svg>") 0 16px / 16px 9px no-repeat;
+  }
+  .wood::before { left: -9px; }
+  .wood::after { right: -9px; transform: scaleX(-1); }
+  /* parchment buttons beside it */
+  .garden-button { background: linear-gradient(180deg, #FFFBF1, #F5EAD4); box-shadow: 0 1.5px 0 rgba(110,78,51,0.18); }
   .linkish {
     margin-top: 10px;
     border: 0;
@@ -1150,7 +1168,7 @@
   const ART = typeof BloomArt === 'object' ? BloomArt : null, artImages = {};
   if (ART) for (const key of ['erwu', 'garden', 'lawn']) {
     const rec = artImages[key] = { img: new Image(), ready: false };
-    rec.img.onload = () => { rec.ready = true; gardenDirty = true; lawnCache = null; bgCache = null; };
+    rec.img.onload = () => { rec.ready = true; gardenDirty = true; bgCache = null; };
     rec.img.src = ART[key].src;
   }
   const artImage = (key) => artImages[key] && artImages[key].ready ? artImages[key].img : null;
@@ -1163,6 +1181,38 @@
     g.save(); g.translate(x, y); if (flip) g.scale(-1, 1); if (alpha < 1) g.globalAlpha *= alpha;
     g.drawImage(img, sx, sy, w, h, -ax * k, -ay * k, w * k, h * k);
     g.restore(); return true;
+  }
+  // ----- Wind. Painted plants are not baked into the garden picture: while it is repainted
+  // they are only noted, with the transform they would have been drawn with, and each frame
+  // they are drawn in horizontal strips shifted more the higher they are, so stems bend and
+  // roots stay put. Reduced motion draws them still, into the picture. -----
+  let swaying = null, swayList = [];
+  function swayPiece(g, name, x, y, width, flip = false, alpha = 1, amp = 0.035) {
+    if (!swaying || reduced) return paintPiece(g, 'garden', name, x, y, width, flip, alpha);
+    const t = g.getTransform();
+    swaying.push({ m: t, name, x, y, width, flip, alpha: alpha * g.globalAlpha, amp, ph: (x * 0.061 + y * 0.037) % TAU });
+    return true;
+  }
+  function drawSwaying(now) {
+    const img = artImage('garden');
+    if (!img || !swayList.length) return;
+    const t = now / 1000, calm = 1 - garden.rest * 0.6, STRIPS = 7;
+    // a slow breeze with the occasional gust rolling across the garden
+    const gust = Math.max(0, Math.sin(t * 0.23)) ** 3 * 0.8;
+    ctx.save();
+    for (const it of swayList) {
+      const f = ART.garden.frames[it.name];
+      if (!f) continue;
+      const [sx, sy, w, h, ax, ay] = f, k = it.width / w;
+      const bend = it.amp * it.width * calm * (Math.sin(t * 1.25 + it.ph) * 0.65 + Math.sin(t * 2.7 + it.ph * 1.7) * 0.2 + gust * Math.sin(t * 0.9 + it.x * 0.01));
+      ctx.setTransform(it.m); ctx.translate(it.x, it.y); if (it.flip) ctx.scale(-1, 1);
+      ctx.globalAlpha = it.alpha;
+      for (let i = 0; i < STRIPS; i++) {
+        const u = 1 - (i + 0.5) / STRIPS, dx = bend * u ** 1.8 * (it.flip ? -1 : 1), y0 = h * i / STRIPS, sh = h / STRIPS;
+        ctx.drawImage(img, sx, sy + y0, w, Math.min(sh + 1, h - y0), -ax * k + dx, (-ay + y0) * k, w * k, Math.min(sh + 1, h - y0) * k);
+      }
+    }
+    ctx.restore();
   }
   // a soft contact shadow where a painted piece meets the lawn
   // soft-edged: darkest under the piece, fading out into the grass
@@ -1195,24 +1245,6 @@
     const k = width / f[2];
     g.drawImage(c, x - f[4] * k, y - f[5] * k, width, f[3] * k);
     return true;
-  }
-  // The painted lawn, feathered at its edges into the paper, cached per scene size.
-  let lawnCache = null;
-  function paintedLawn(w, h) {
-    const img = artImage('lawn');
-    if (!img) return null;
-    const pw = Math.round(w * DPR), ph = Math.round(h * DPR);
-    if (lawnCache && lawnCache.width === pw && lawnCache.height === ph) return lawnCache;
-    const c = document.createElement('canvas'); c.width = pw; c.height = ph;
-    const g = c.getContext('2d');
-    g.drawImage(img, 0, 0, pw, ph);
-    g.globalCompositeOperation = 'destination-in';
-    for (const [x1, y1] of [[pw, 0], [0, ph]]) {
-      const gr = g.createLinearGradient(0, 0, x1, y1);
-      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.09, 'rgba(0,0,0,1)'); gr.addColorStop(0.91, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = gr; g.fillRect(0, 0, pw, ph);
-    }
-    return (lawnCache = c);
   }
   // The rose bed carries Erwu's basket; the bed is placed so the basket sits on her nest.
   function roseBedPlacement(r) {
@@ -1283,7 +1315,7 @@
     const line = rgb(hexRgb(C.walnut), 0.32);
     // In the painted garden, what play grows comes up as painted clumps; mushrooms stay drawn.
     if (p.k !== 'mushroom' && artImage('garden')) {
-      paintPiece(g, 'garden', ['grass', 'clover', 'fern'].includes(p.k) ? 'grass' : 'meadow', x, y + u * 0.15, h * (1.5 + rnd() * 0.3), rnd() < 0.5);
+      swayPiece(g, ['grass', 'clover', 'fern'].includes(p.k) ? 'grass' : 'meadow', x, y + u * 0.15, h * (1.5 + rnd() * 0.3), rnd() < 0.5);
       return;
     }
     g.lineCap = 'round'; g.lineJoin = 'round';
@@ -1384,7 +1416,9 @@
       const drawn = !!flower && (preview || (growth >= 0.55 && flower !== 'lavender' && flower !== 'daisy'));
       const piece = !flower ? 'bed-empty' : preview ? 'bed-empty' : drawn ? 'bed-young' : growth < 0.2 ? 'bed-seedlings' : growth < 0.55 ? 'bed-young' : 'bed-full';
       groundShadow(g, 0, 17, 80);
-      paintPiece(g, 'garden', piece, 0, 17, 80);
+      // painted flowers sway; a bed carrying drawn plants stays put under them
+      if (drawn || piece === 'bed-empty') paintPiece(g, 'garden', piece, 0, 17, 80);
+      else swayPiece(g, piece, 0, 17, 80, false, 1, piece === 'bed-seedlings' ? 0.012 : 0.02);
       if (!drawn) return;
       g.scale(1.3, 1.3);
     } else {
@@ -1691,9 +1725,9 @@
     const k = Math.max(0.6, Math.min(1.15, sc.height / 400));
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
     // the lawn, fading into nothing at every edge: painted, or drawn with faint mown stripes
-    const painted = artImage('garden'), lawnArt = paintedLawn(sc.width * 1.16, sc.height * 1.12);
-    if (lawnArt) g.drawImage(lawnArt, -sc.width * 0.58, -sc.height * 0.56, sc.width * 1.16, sc.height * 1.12);
-    else {
+    // (the painted lawn is the backdrop behind the whole screen; see paintBackground)
+    const painted = artImage('garden');
+    if (!artImage('lawn')) {
     g.save(); g.translate(0, m.roses.y * 0.5); g.scale(W2 / H2 * 1.08, 1);
     let gr = g.createRadialGradient(0, 0, 10, 0, 0, H2 * 1.02);
     gr.addColorStop(0, 'rgba(150,182,112,0.42)'); gr.addColorStop(0.62, 'rgba(160,186,124,0.3)'); gr.addColorStop(1, 'rgba(160,186,124,0)');
@@ -1711,7 +1745,7 @@
       if (!clear(x, y, painted ? 14 : 6)) continue;
       if (painted) {
         const w = (30 + rnd() * 14) * k, flip = rnd() < 0.5, flowers = tier >= 2 && rnd() < 0.6;
-        paintPiece(g, 'garden', flowers ? 'meadow' : 'grass', x, y, w, flip, 0.75 + 0.25 * (1 - (e - 0.86) / 0.12));
+        swayPiece(g, flowers ? 'meadow' : 'grass', x, y, w, flip, 0.75 + 0.25 * (1 - (e - 0.86) / 0.12));
         continue;
       }
       const fade = 0.45 + 0.4 * (1 - (e - 0.86) / 0.12);
@@ -2037,6 +2071,7 @@
     return out;
   }
   function paintGarden() {
+    swaying = [];
     const c = gardenCache || document.createElement('canvas');
     c.width = canvas.width; c.height = canvas.height;
     const g = c.getContext('2d');
@@ -2093,6 +2128,7 @@
     drawArrangedGarden(g);
     const sorted = settled.sort((a, b) => plantXY(a).y - plantXY(b).y);
     for (const p of sorted) drawPlant(g, p);
+    swayList = swaying; swaying = null;
     gardenCache = c;
     gardenPainted = performance.now();
     gardenDirty = false;
@@ -3275,18 +3311,58 @@
       drift.push({ x: Math.random() * W, y: Math.random() * H, vx: 4 + Math.random() * 6, vy: 7 + Math.random() * 8, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.6, size: 6 + Math.random() * 7, leaf: i % 3 === 0 });
     }
   }
+  // The painting's deckled paper edge: a rounded inset whose border wanders a little, with
+  // pigment pooled just inside it, as where a wash meets dry paper.
+  function paperEdge(g, W, H) {
+    const inset = Math.min(W, H) * 0.028, rad = Math.min(W, H) * 0.07, rnd = seeded(1313);
+    const pts = [], per = 2 * (W + H), step = 7;
+    const wob = [];
+    for (let i = 0; i < 6; i++) wob.push([rnd() * TAU, 0.6 + rnd() * 1.4, 2 + rnd() * 3]);
+    for (let d = 0; d < per; d += step) {
+      // walk the rounded rectangle, pushed in and out by a few slow waves and some grain
+      let x, y, nx, ny;
+      const w = W - inset * 2, h = H - inset * 2;
+      const t = d / per * (2 * (w + h));
+      if (t < w) { x = inset + t; y = inset; nx = 0; ny = 1; }
+      else if (t < w + h) { x = inset + w; y = inset + t - w; nx = -1; ny = 0; }
+      else if (t < 2 * w + h) { x = inset + w - (t - w - h); y = inset + h; nx = 0; ny = -1; }
+      else { x = inset; y = inset + h - (t - 2 * w - h); nx = 1; ny = 0; }
+      // round the corners
+      const cx = Math.max(inset + rad, Math.min(W - inset - rad, x)), cy = Math.max(inset + rad, Math.min(H - inset - rad, y));
+      if (cx !== x && cy !== y) { const a = Math.atan2(y - cy, x - cx); x = cx + Math.cos(a) * rad; y = cy + Math.sin(a) * rad; nx = -Math.cos(a); ny = -Math.sin(a); }
+      let off = (rnd() - 0.5) * 1.6;
+      for (const [ph, f, amp] of wob) off += Math.sin(ph + d / per * TAU * f * 6) * amp * 0.32;
+      pts.push([x + nx * off, y + ny * off]);
+    }
+    const trace = () => { g.beginPath(); g.moveTo(...pts[0]); for (const q of pts) g.lineTo(...q); g.closePath(); };
+    g.save();
+    trace(); g.rect(W, 0, -W, H);
+    g.fillStyle = C.ground; g.fill('evenodd');
+    trace(); g.clip();
+    g.strokeStyle = 'rgba(150,120,80,0.16)'; g.lineWidth = 5; trace(); g.stroke();
+    g.strokeStyle = 'rgba(150,120,80,0.1)'; g.lineWidth = 14; trace(); g.stroke();
+    g.restore();
+  }
   function paintBackground() {
     const c = document.createElement('canvas');
     c.width = canvas.width; c.height = canvas.height;
     const g = c.getContext('2d');
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
     g.fillStyle = C.ground; g.fillRect(0, 0, W, H);
-    // During a run the flower sits in the painted lawn, washed with paper so play stays legible.
-    const lawn = presentation === 'run' && artImage('lawn');
+    // One painted garden behind both screens, so a run is the same place leaned into. It is
+    // washed with paper a little more during a run so play stays legible, and calmer where the
+    // title and the buttons sit.
+    const lawn = artImage('lawn');
     if (lawn) {
       const k = Math.max(W / lawn.naturalWidth, H / lawn.naturalHeight) * 1.04;
       g.drawImage(lawn, (W - lawn.naturalWidth * k) / 2, (H - lawn.naturalHeight * k) / 2, lawn.naturalWidth * k, lawn.naturalHeight * k);
-      g.fillStyle = rgb(hexRgb(C.ground), 0.34); g.fillRect(0, 0, W, H);
+      g.fillStyle = rgb(hexRgb(C.ground), presentation === 'run' ? 0.3 : 0.14); g.fillRect(0, 0, W, H);
+      const paper = hexRgb(C.ground);
+      for (const [y0, y1] of [[0, H * 0.2], [H, H * 0.82]]) {
+        const zg = g.createLinearGradient(0, y0, 0, y1);
+        zg.addColorStop(0, rgb(paper, 0.72)); zg.addColorStop(1, rgb(paper, 0));
+        g.fillStyle = zg; g.fillRect(0, Math.min(y0, y1), W, Math.abs(y1 - y0));
+      }
     }
 
     // warm sunlight from the top corner, a cool sage wash from below
@@ -3320,6 +3396,7 @@
       img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 14;
     }
     ng.putImageData(img, 0, 0);
+    if (lawn) { g.setTransform(DPR, 0, 0, DPR, 0, 0); paperEdge(g, W, H); }
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.fillStyle = g.createPattern(n, 'repeat'); g.fillRect(0, 0, c.width, c.height);
     return c;
@@ -3465,6 +3542,39 @@
     }
   }
 
+  // A watercolour wash: soft pigment blooms and paper grain, laid over a shape with 'multiply'.
+  // Generated once; fixed in place so it never swims as petals breathe.
+  let washPattern = null;
+  function wash(g) {
+    if (!washPattern) {
+      const n = 256, c = document.createElement('canvas'); c.width = c.height = n;
+      const w = c.getContext('2d'), rnd = seeded(4242);
+      w.fillStyle = '#fff'; w.fillRect(0, 0, n, n);
+      for (let i = 0; i < 70; i++) {
+        const x = rnd() * n, y = rnd() * n, r = 12 + rnd() * 46, a = 0.03 + rnd() * 0.06;
+        for (const [dx, dy] of [[0, 0], [-n, 0], [n, 0], [0, -n], [0, n]]) {   // tile seamlessly
+          const gr = w.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+          gr.addColorStop(0, `rgba(214,168,120,${a})`); gr.addColorStop(0.7, `rgba(214,168,120,${a * 0.5})`); gr.addColorStop(1, 'rgba(214,168,120,0)');
+          w.fillStyle = gr; w.beginPath(); w.arc(x + dx, y + dy, r, 0, TAU); w.fill();
+        }
+      }
+      const img = w.getImageData(0, 0, n, n);
+      for (let i = 0; i < img.data.length; i += 4) { const v = (rnd() - 0.5) * 14; img.data[i] += v; img.data[i + 1] += v; img.data[i + 2] += v; }
+      w.putImageData(img, 0, 0);
+      washPattern = g.createPattern(c, 'repeat');
+    }
+    return washPattern;
+  }
+  // Pigment pooling at a shape's edge and a wash across it; call with the shape as the current path.
+  function watercolour(g, edge, strength = 1) {
+    g.save(); g.clip();
+    g.globalCompositeOperation = 'multiply'; g.globalAlpha = 0.75 * strength;
+    g.fillStyle = wash(g); g.fillRect(-R * 1.2, -R * 1.2, R * 2.4, R * 2.4);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = strength;
+    g.strokeStyle = edge; g.lineWidth = 7; g.stroke();
+    g.lineWidth = 2.5; g.stroke();
+    g.restore();
+  }
   function drawFlower(now) {
     const g = ctx;
     // arena disc
@@ -3472,6 +3582,7 @@
     gr.addColorStop(0, C.arena); gr.addColorStop(1, C['arena-edge']);
     g.fillStyle = gr;
     g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill();
+    watercolour(g, rgb(hexRgb(C.sage), 0.12), 0.8);
 
     const r0 = coreR * 1.05, r1 = R * 0.965, w = R * 0.215;
     const bloomCol = hexRgb(C['petal-bloom']), deep = hexRgb(C['bud-deep']), gold = hexRgb(C.honey);
@@ -3485,7 +3596,8 @@
       const P2 = PETALS.back[k], a = (k + 0.5) * STEP - Math.PI / 2 + P2.jit + breathe * Math.sin(now / 2900 + P2.ph) * 0.01;
       petalPath(g, a, r0, r0 + (r1 - r0) * P2.len, w * P2.wid, P2.bend, P2.asym, P2.notch);
       g.fillStyle = backCol; g.fill();
-      g.strokeStyle = rgb(hexRgb(C['petal-line']), 0.8); g.lineWidth = 0.8; g.stroke();
+      watercolour(g, rgb(hexRgb(C.walnut), 0.07), 0.7);
+      g.strokeStyle = rgb(hexRgb(C.walnut), 0.22); g.lineWidth = 0.9; g.stroke();
     }
     for (let k = 0; k < SECTORS; k++) {
       const P1 = PETALS.front[k];
@@ -3534,8 +3646,11 @@
         g.fillStyle = rgb(gold, 0.6 - i * 0.05);
         g.beginPath(); g.arc(x, y, Math.max(1, ballR * 0.26), 0, TAU); g.fill();
       }
+      // a watercolour wash with pigment pooled at the edge, pinker once the petal has colour
       path();
-      g.strokeStyle = C['petal-line']; g.lineWidth = 1; g.stroke();
+      watercolour(g, ch > 0.5 ? rgb(mixA(bloomCol, deep, 0.35), 0.22) : rgb(hexRgb(C.walnut), 0.08));
+      path();
+      g.strokeStyle = rgb(hexRgb(C.walnut), 0.3); g.lineWidth = 1.1; g.stroke();
       // veins follow the petal's lean, darker once the petal is full
       const full = charges[k] >= 1 || bloomFx > 0;
       const ca = Math.cos(a), sa = Math.sin(a), bx = -sa * P1.bend * pw, by = ca * P1.bend * pw;
@@ -3801,12 +3916,16 @@
       ctx.globalCompositeOperation = 'source-over';
     }
     if (it.hp > 4) {
-      const size = it.hp > 99 ? r * 0.5 : r * 0.62;
-      ctx.font = `700 ${size}px ${FONT}`;
+      // the count on a small round badge above the flower, like a pressed-flower label
+      const br = Math.max(8, r * (it.hp > 99 ? 0.5 : 0.42)), bx = 0, byy = -r * 0.98;
+      ctx.fillStyle = 'rgba(70,50,40,0.18)'; ctx.beginPath(); ctx.arc(bx + 0.8, byy + 1.4, br, 0, TAU); ctx.fill();
+      ctx.fillStyle = rgb(mixA(mixA(base, deep, 0.55), hexRgb(C.walnut), 0.35)); ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,248,232,0.9)'; ctx.lineWidth = Math.max(1.2, br * 0.14); ctx.beginPath(); ctx.arc(bx, byy, br * 0.86, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = rgb(hexRgb(C.walnut), 0.45); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.stroke();
+      const size = br * (it.hp > 99 ? 0.95 : 1.12);
+      ctx.font = `600 ${size}px ${SERIF}`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.lineWidth = Math.max(2, r * 0.14); ctx.strokeStyle = rgb(mixA(base, deep, 0.6), 0.85);
-      ctx.strokeText(it.hp, 0, cy + size * 0.06);
-      ctx.fillStyle = '#FFFDF6'; ctx.fillText(it.hp, 0, cy + size * 0.06);
+      ctx.fillStyle = '#FFFDF6'; ctx.fillText(it.hp, bx, byy + size * 0.06);
     } else if (it.hp > 1) {
       for (let i = 0; i < it.hp; i++) {
         const x = (i - (it.hp - 1) / 2) * r * 0.2;
@@ -4549,7 +4668,7 @@
     }
     // the garden, repainted at most a few times a second as it changes
     if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
-    if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+    if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); drawSwaying(now); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
     if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); }
     if (presentation === 'garden' && garden.rest > 0.02) {
       // a resting garden sits in soft, cool evening light
