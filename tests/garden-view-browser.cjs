@@ -1,7 +1,7 @@
 const {chromium}=require(process.env.BLOOM_PLAYWRIGHT||'playwright');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
-const SERVED=/^(index\.html|manifest\.webmanifest|icons\/[\w-]+\.png|[\w-]+\.js)$/;
+const SERVED=/^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.png|[\w-]+\.js)$/;
 const fixture=require('./fixtures/garden-v1.json');
 const root=path.resolve(__dirname,'..'),out=process.env.BLOOM_EVIDENCE||'/tmp/bloom-ticket02';
 const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,1,0,0,0,0,0,0],items:[

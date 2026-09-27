@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
-const SERVED = /^(index\.html|manifest\.webmanifest|icons\/[\w-]+\.png|[\w-]+\.js)$/;
+const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.png|[\w-]+\.js)$/;
 const G = require('../garden-state.js'), L = require('../garden-layout.js');
 const fixture = require('./fixtures/garden-v1.json');
 const root = path.resolve(__dirname, '..');

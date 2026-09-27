@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
-const SERVED = /^(index\.html|manifest\.webmanifest|icons\/[\w-]+\.png|[\w-]+\.js)$/;
+const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.png|[\w-]+\.js)$/;
 const fixture = require('./fixtures/garden-v1.json');
 const G = require('../garden-state.js');
 const root = path.resolve(__dirname, '..');

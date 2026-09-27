@@ -4161,8 +4161,6 @@
       g.beginPath(); g.ellipse(-s * 0.32, by + s * 0.03, s * 0.3, s * 0.31, 0, 0, TAU); g.fill();
       g.beginPath(); g.ellipse(s * 0.3, by + s * 0.02, s * 0.3, s * 0.3, 0, 0, TAU); g.fill();
       g.fillStyle = 'rgba(255,255,255,0.06)'; g.beginPath(); g.ellipse(-s * 0.05, by - s * 0.2, s * 0.45, s * 0.1, 0, 0, TAU); g.fill();
-      g.strokeStyle = line; g.lineWidth = Math.max(0.8, s * 0.02);
-      for (const x of [-0.3, -0.12, 0.06]) { g.beginPath(); g.moveTo(x * s, by - s * 0.3); g.quadraticCurveTo(x * s + s * 0.04, by - s * 0.18, x * s, by - s * 0.08); g.stroke(); }
       g.restore();
       if (!loaf) {
         for (const [x, off] of [[-s * 0.3, 0], [s * 0.38, Math.PI]]) { const [fx, fy] = foot(x, off); leg(x, hip(x), fx, fy, false); }
@@ -4186,7 +4184,66 @@
     const n = gardenScene ? gardenScene.nest : coreR, s = erwuSize(n);
     return poseKind(erwu.pose) === 'side' ? { x: erwu.at.x + erwu.facing * s * 0.5, y: erwu.at.y - s * 0.95 } : { x: erwu.at.x, y: erwu.at.y - s * (inBasket() ? 0.45 : 1.2) };
   }
+  // Painted garden poses. The procedural renderer below remains available while
+  // the local asset loads or if a browser cannot decode it. No save data depends on art.
+  const erwuAtlas = new Image();
+  let erwuFrames = null;
+  erwuAtlas.onload = () => {
+    try {
+      const sheet = document.createElement('canvas'); sheet.width = erwuAtlas.naturalWidth; sheet.height = erwuAtlas.naturalHeight;
+      const g = sheet.getContext('2d', {willReadFrequently:true}); g.drawImage(erwuAtlas,0,0);
+      const pixels = g.getImageData(0,0,sheet.width,sheet.height).data;
+      const unit=sheet.width/1254;
+      // Trim transparent margins once; use a shared pixel scale, never stretch a
+      // pose to fit its box. Bottom alignment keeps weight-bearing paws grounded.
+      erwuFrames=Array.from({length:16},(_,i)=>{
+        // Explicit source regions prevent neighbouring ears/tails leaking into
+        // a pose; the generated sheet is not a mechanically exact square grid.
+        const regions=[
+          [0,0,313,300],[313,0,314,300],[627,0,313,300],[940,0,314,300],
+          [0,313,313,285],[313,313,314,285],[627,313,313,285],[940,313,314,285],
+          [0,605,313,318],[313,700,314,211],[627,627,303,297],[932,735,322,181],
+          [0,925,365,329],[365,920,282,334],[647,940,294,314],[941,922,313,332]
+        ];
+        const box=regions[i];
+        const [ox,oy,cw,ch]=box.map(n=>Math.round(n*unit));
+        let left=cw,top=ch,right=0,bottom=0;
+        for(let y=0;y<ch&&oy+y<sheet.height;y++)for(let x=0;x<cw&&ox+x<sheet.width;x++)if(pixels[((oy+y)*sheet.width+ox+x)*4+3]>24){
+          left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+        }
+        return {sx:ox+left,sy:oy+top,w:right-left+1,h:bottom-top+1,left:left-(cw-313.5*unit)/2,top,bottom,cw:313.5*unit};
+      });
+    } catch { erwuFrames=null; }
+  };
+  erwuAtlas.src='assets/erwu-romantic-atlas.png';
+  function paintErwuFrame(g,frame,size,opacity=1) {
+    if(!erwuFrames)return;
+    const q=erwuFrames[frame],unit=size*2.5/q.cw;
+    g.save();g.globalAlpha*=opacity;
+    g.drawImage(erwuAtlas,q.sx,q.sy,q.w,q.h,(q.left-q.cw/2)*unit,-q.h*unit,q.w*unit,q.h*unit);
+    g.restore();
+  }
+  function drawPaintedErwu(pose,now,nestR,alpha) {
+    if(!erwuFrames)return false;
+    const nest=inBasket(),d=depthAt(erwu.at.y);
+    const size=nest?nestR:nestR*.78*d;
+    const still={front:8,yawn:8,curl:9,sniff:10,crouch:11,pounce:12,stretch:13,loaf:14,sit:15};
+    const phase=((erwu.phase/TAU)%1+1)%1*8;
+    const index=pose==='walk'?(reduced?0:Math.floor(phase)):still[pose];
+    if(index===undefined)return false;
+    const floor=nest?(pose==='curl'?nestR*.50:nestR*.70):erwu.at.y;
+    ctx.save();ctx.globalAlpha*=alpha;ctx.translate(erwu.at.x,floor);
+    ctx.scale(pose==='front'||pose==='yawn'||pose==='curl'?1:erwu.facing,1);
+    if(pose==='pounce')ctx.translate(0,-(erwu.jump||0)*size*.55);
+    if(pose==='curl'&&!reduced)ctx.scale(1,1+Math.sin(now/1300)*.009);
+    // A short dissolve uses complementary alpha, avoiding doubled opaque limbs.
+    const mix=pose==='walk'&&!reduced?Math.max(0,(phase%1-.75)/.25):0;
+    paintErwuFrame(ctx,index,size,1-mix);
+    if(mix)paintErwuFrame(ctx,(index+1)%8,size,mix);
+    ctx.restore();return true;
+  }
   function drawErwuAs(pose, now, nestR, alpha) {
+    if (drawPaintedErwu(pose,now,nestR,alpha)) return;
     const at = erwu.at, nest = inBasket(), d = depthAt(at.y), blink = Math.max(erwu.blink, cat.blink), happy = catnipGlow > 0.5 ? catnipGlow : 0;
     ctx.save(); ctx.globalAlpha *= alpha;
     if (pose === 'curl') {
