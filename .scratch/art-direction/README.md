@@ -30,24 +30,7 @@ The scene is built in layers, never baked into one picture, so that everything t
 
 ## Prompts
 
-The quickest way to keep what already works is to restyle the existing sheets with the same layout. The build tool's hand-set regions then still fit, and the code needs few changes. Attach the mockup as the style reference to every prompt.
-
-Shared style paragraph (add to every prompt):
-
-> Style: EXACTLY the storybook illustration style of the attached mockup: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, pastel palette (butter yellow, blush pink, lilac, cornflower blue, sage green, cream), warm afternoon light from the upper left, subtle paper grain. NOT photographic, NOT 3D, NOT glossy, no fine photographic fur or stone detail, no blocky or mosaic textures.
-
-1. **Erwu poses:** attach `assets/erwu-sprite.png` and the mockup.
-   > Redraw the attached sprite sheet in the style of the attached mockup. Keep EVERY pose, the same number of poses, each pose in the same position and at the same size on the sheet, and the same flat plain light grey background (#E6E6E6), with no ground and no shadows. The same round charcoal-grey cat with amber-gold eyes, drawn like the cat in the mockup. Highest resolution. [style paragraph]
-2. **Erwu walk:** attach `assets/erwu-walk.png` and the mockup. Use prompt 1's text with "sprite sheet" read as "8-frame walk cycle". Add:
-   > Keep each frame's feet on the same line and the body at the same height, so the frames still loop.
-3. **Garden pieces:** attach `assets/garden-pieces.png` and the mockup.
-   > Redraw the attached sheet of garden pieces in the style of the attached mockup. Keep every piece in the same position and at the same size, on the same flat light grey background (#E6E6E6), with nothing touching. Smooth painted stone (no mosaic pattern). [style paragraph]
-   - Optional: the mockup's bottom-right bed is a wooden planter. If you prefer that to the round stone beds, ask for the four bed stages as wooden planters instead.
-4. **Garden plate:** attach the mockup.
-   > A portrait 9:16 garden scene in the style and composition of the left half of the attached mockup, but EMPTY in the middle. No cat, no basket, no rose bed, no flower beds, no cushion, no stones or stepping stones, no text, no buttons. A three-tier stone fountain in the upper left, and a fallen mossy log in the upper right a little lower than the fountain. Dense flower borders only along the left, right and bottom edges. A wide, open, sunlit lawn clearing filling the middle 65% of the picture. Everything fades into cream deckled paper with rounded corners at every edge. Highest resolution. [style paragraph]
-5. **Border and growth clumps:** attach the mockup.
-   > A sheet of 16 separate flower clumps, 4 × 4, on a flat plain light grey background (#E6E6E6), with wide space between them and no ground or shadows. Each clump stands upright with its roots at the bottom, seen from the same gentle three-quarter view as the mockup: white daisies, forget-me-nots, pink cosmos, lavender, white clover, buttercups, foxgloves, bluebells, a small pink rose bush, a fern, a tuft of long grass, a trio of little mushrooms, a mixed wildflower tuft, pale pink sweet peas, cornflowers, and a low leafy tuft. [style paragraph]
-6. **Play pieces:** the sheet in `assets/README.md` ("Next sheet"), with the shared style paragraph in place of its first paragraph, and the mockup attached. Its petals should look like the run in the mockup: a white watercolour petal, and the same petal in pink.
+The complete prompts, ready to copy, are in [`PROMPTS.md`](PROMPTS.md). The existing sheets are restyled with the same layout, so the build tool's regions keep fitting; the backdrop, the flower clumps and the play pieces are new.
 
 ## What changes in code when the sheets arrive
 
