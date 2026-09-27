@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
-const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.png|[\w-]+\.js)$/;
+const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|[\w-]+\.js)$/;
 const G = require('../garden-state.js'), L = require('../garden-layout.js');
 const fixture = require('./fixtures/garden-v1.json');
 const root = path.resolve(__dirname, '..');
@@ -27,7 +27,7 @@ function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
   const server = http.createServer((req, res) => {
     const rel = req.url.split('?')[0], file = rel === '/' ? 'index.html' : rel.slice(1);
     if (!SERVED.test(file)) { res.statusCode = 404; res.end(); return; }
-    res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : 'text/html');
+    res.setHeader('Content-Type', { js: 'application/javascript', html: 'text/html', png: 'image/png', webp: 'image/webp' }[file.split('.').pop()] || 'application/json');
     res.end(fs.readFileSync(path.join(root, file)));
   }).listen(0, '127.0.0.1');
   await new Promise((r) => server.on('listening', r));

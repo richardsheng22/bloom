@@ -1,6 +1,6 @@
 # Bloom: an owned garden and a life for Erwu
 
-Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 (05 phase B, 06–08) is implemented on the working branch, awaiting owner review and on-phone play; 09 remains planned. See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
+Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 (05 phase B, 06–08) is implemented on the working branch, awaiting owner review and on-phone play; 09 remains planned. Painted art (painterly naturalism: Erwu, garden pieces, lawn) replaced the drawn garden and Erwu on 2026-09-27; see [`assets/README.md`](../assets/README.md) and [`erwu-painted-evidence/`](erwu-painted-evidence/README.md). See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
 Planning date: 2026-09-25. Roadmap revised 2026-09-26 (release split, Erwu phasing, review notes, ticket 11).
 Source baseline: `3df8d53` (Bloom v0.7). Working branch: `develop`.
 

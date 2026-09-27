@@ -656,6 +656,7 @@
 <script src="garden-state.js"></script>
 <script src="garden-view.js"></script>
 <script src="erwu-behavior.js"></script>
+<script src="art-manifest.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1143,6 +1144,69 @@
     }
     g.fillStyle = centre; g.beginPath(); g.arc(x, y, len * 0.34, 0, TAU); g.fill();
   }
+  // ----- Painted art, packed by tools/build-art.cjs (see assets/README.md). Until an image
+  // has loaded, or if it can't be decoded, the drawn garden and Erwu stand in. No save
+  // data depends on art. -----
+  const ART = typeof BloomArt === 'object' ? BloomArt : null, artImages = {};
+  if (ART) for (const key of ['erwu', 'garden', 'lawn']) {
+    const rec = artImages[key] = { img: new Image(), ready: false };
+    rec.img.onload = () => { rec.ready = true; gardenDirty = true; lawnCache = null; };
+    rec.img.src = ART[key].src;
+  }
+  const artImage = (key) => artImages[key] && artImages[key].ready ? artImages[key].img : null;
+  const paintedGarden = () => presentation === 'garden' && !!artImage('garden');
+  // Draws a painted piece `width` wide with its ground anchor at (x, y). Returns false if it can't.
+  function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1) {
+    const img = artImage(key), f = img && ART[key].frames[name];
+    if (!f) return false;
+    const [sx, sy, w, h, ax, ay] = f, k = width / w;
+    g.save(); g.translate(x, y); if (flip) g.scale(-1, 1); if (alpha < 1) g.globalAlpha *= alpha;
+    g.drawImage(img, sx, sy, w, h, -ax * k, -ay * k, w * k, h * k);
+    g.restore(); return true;
+  }
+  // a soft contact shadow where a painted piece meets the lawn
+  function groundShadow(g, x, y, w, alpha = 0.16) {
+    g.fillStyle = `rgba(62,74,40,${alpha})`; g.beginPath(); g.ellipse(x, y - w * 0.02, w * 0.46, w * 0.1, 0, 0, TAU); g.fill();
+  }
+  // The painted lawn, feathered at its edges into the paper, cached per scene size.
+  let lawnCache = null;
+  function paintedLawn(w, h) {
+    const img = artImage('lawn');
+    if (!img) return null;
+    const pw = Math.round(w * DPR), ph = Math.round(h * DPR);
+    if (lawnCache && lawnCache.width === pw && lawnCache.height === ph) return lawnCache;
+    const c = document.createElement('canvas'); c.width = pw; c.height = ph;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, pw, ph);
+    g.globalCompositeOperation = 'destination-in';
+    for (const [x1, y1] of [[pw, 0], [0, ph]]) {
+      const gr = g.createLinearGradient(0, 0, x1, y1);
+      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.09, 'rgba(0,0,0,1)'); gr.addColorStop(0.91, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, pw, ph);
+    }
+    return (lawnCache = c);
+  }
+  // The rose bed carries Erwu's basket; the bed is placed so the basket sits on her nest.
+  function roseBedPlacement(r) {
+    const f = ART.garden.frames['rose-bed'], b = ART.garden.basket, width = 2 * r.rx + 22, k = width / f[2];
+    return { f, b, k, width, x: -(b.cx - f[6]) * k, y: -(b.cy - f[7]) * k };
+  }
+  function drawPaintedRoseBed(g, r) {
+    const p = roseBedPlacement(r), img = artImage('garden');
+    groundShadow(g, p.x + p.width / 2, p.y + p.f[3] * p.k, p.width, 0.14);
+    g.drawImage(img, p.f[0], p.f[1], p.f[2], p.f[3], p.x, p.y, p.width, p.f[3] * p.k);
+  }
+  // The front of the basket, drawn again over Erwu so she sits inside it.
+  function drawBasketFront(g) {
+    if (!paintedGarden()) return;
+    const p = roseBedPlacement(BloomGardenLayout.landmarks(gardenScene).roses), b = p.b, k = p.k, img = artImage('garden');
+    const rx = b.rx * k, ry = b.ry * k, ox = b.outerRx * k + 2, bottom = (b.bottom - b.cy) * k + 2;
+    g.save(); g.beginPath();
+    g.moveTo(-ox, 0); g.lineTo(-rx, 0); g.ellipse(0, 0, rx, ry, 0, Math.PI, 0, true); g.lineTo(ox, 0); g.lineTo(ox, bottom); g.lineTo(-ox, bottom); g.closePath();
+    g.clip();
+    g.drawImage(img, p.f[0], p.f[1], p.f[2], p.f[3], p.x, p.y, p.width, p.f[3] * p.k);
+    g.restore();
+  }
   function drawPlant(g, p) {
     const { x, y } = plantXY(p), rnd = seeded(p.s);
     const rest = garden.rest;
@@ -1150,6 +1214,11 @@
     const h = u * (0.5 + 1.9 * gr);
     const leaf = rgb(mix(C.sage, C.moss, 0.25 + rnd() * 0.55)), dark = rgb(hexRgb(C['leaf-dark']), 0.5);
     const line = rgb(hexRgb(C.walnut), 0.32);
+    // In the painted garden, what play grows comes up as painted clumps; mushrooms stay drawn.
+    if (p.k !== 'mushroom' && paintedGarden()) {
+      paintPiece(g, 'garden', ['grass', 'clover', 'fern'].includes(p.k) ? 'grass' : 'meadow', x, y + u * 0.15, h * (1.5 + rnd() * 0.3), rnd() < 0.5);
+      return;
+    }
     g.lineCap = 'round'; g.lineJoin = 'round';
     if (p.k === 'grass') {
       const n = 3 + Math.floor(rnd() * 3);
@@ -1242,6 +1311,16 @@
     // A preview shows the planting as it will look once it flowers.
     const flower = planting ? planting.kind : bed.flower, growth = planting ? Math.max(0.8, planting.growth) : bed.growth;
     const line = rgb(hexRgb(C.walnut), 0.5), rnd = seeded(Number(bed.id.split('-')[1]) * 7919 + 13);
+    if (artImage('garden')) {
+      // Painted stages. Kinds without a painted flowering bed yet flower as drawn plants,
+      // a little larger, over the leafy bed; a planting preview shows them over bare soil.
+      const drawn = !!flower && (preview || (growth >= 0.55 && flower !== 'lavender' && flower !== 'daisy'));
+      const piece = !flower ? 'bed-empty' : preview ? 'bed-empty' : drawn ? 'bed-young' : growth < 0.2 ? 'bed-seedlings' : growth < 0.55 ? 'bed-young' : 'bed-full';
+      groundShadow(g, 0, 17, 80);
+      paintPiece(g, 'garden', piece, 0, 17, 80);
+      if (!drawn) return;
+      g.scale(1.3, 1.3);
+    } else {
     // soil, with a rim of little stones
     g.fillStyle = '#C9B08C'; g.strokeStyle = line; g.lineWidth = 1.2;
     g.beginPath(); g.ellipse(0, 0, 31, 14, -0.06, 0, TAU); g.fill(); g.stroke();
@@ -1261,6 +1340,7 @@
       g.beginPath(); g.roundRect(17, -21, 12, 8, 2); g.fill(); g.stroke();
       for (const [x, y] of [[-13, 0], [-2, 3], [9, -1]]) { leafAt(g, x, y, -2.2, 4.5, 1.6, C.sage); leafAt(g, x, y, -0.95, 4, 1.6, C.moss); }
       return;
+    }
     }
     if (preview) g.globalAlpha *= 0.75;
     const spots = BED_SPOTS.slice(0, flower === 'sunflower' ? 3 : 5);
@@ -1476,6 +1556,9 @@
       const planting = plantingDraft && plantingDraft.bed === item.id ? plantingDraft : null;
       if (planting) g.globalAlpha = 1;
       drawBed(g, item, !!planting, planting);
+    } else if ((item.kind === 'cushion' || item.kind === 'stone') && artImage('garden')) {
+      groundShadow(g, 0, 13, 64);
+      paintPiece(g, 'garden', item.kind, 0, 13, item.kind === 'cushion' ? 62 : 64);
     } else if (item.kind === 'cushion') {
       // a plump round floor cushion: a deep side, a domed top tufted to a button, piping, a tassel
       g.fillStyle = 'rgba(79,70,55,0.16)'; g.beginPath(); g.ellipse(1, 9, 28, 9, 0, 0, TAU); g.fill();
@@ -1540,7 +1623,10 @@
     const W2 = sc.width / 2, H2 = sc.height / 2, line = rgb(hexRgb(C.walnut), 0.4), clear = yardClear(sc, m);
     const k = Math.max(0.6, Math.min(1.15, sc.height / 400));
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
-    // the lawn, fading into nothing at every edge, with faint mown stripes
+    // the lawn, fading into nothing at every edge: painted, or drawn with faint mown stripes
+    const painted = artImage('garden'), lawnArt = paintedLawn(sc.width * 1.16, sc.height * 1.12);
+    if (lawnArt) g.drawImage(lawnArt, -sc.width * 0.58, -sc.height * 0.56, sc.width * 1.16, sc.height * 1.12);
+    else {
     g.save(); g.translate(0, m.roses.y * 0.5); g.scale(W2 / H2 * 1.08, 1);
     let gr = g.createRadialGradient(0, 0, 10, 0, 0, H2 * 1.02);
     gr.addColorStop(0, 'rgba(150,182,112,0.42)'); gr.addColorStop(0.62, 'rgba(160,186,124,0.3)'); gr.addColorStop(1, 'rgba(160,186,124,0)');
@@ -1550,11 +1636,17 @@
     g.strokeStyle = 'rgba(255,255,255,0.07)'; g.lineWidth = 16;
     for (let i = -4; i <= 4; i++) { g.beginPath(); g.moveTo(i * 40 - 36, H2); g.lineTo(i * 40 + 36, -H2); g.stroke(); }
     g.restore();
+    }
     // a wildflower meadow creeping in from the edges as the garden grows
-    const meadow = 6 + tier * 9;
+    const meadow = painted ? 3 + tier * 3 : 6 + tier * 9;
     for (let i = 0; i < meadow; i++) {
       const a = rnd() * TAU, e = 0.86 + rnd() * 0.12, x = Math.cos(a) * (W2 - 6) * e, y = m.roses.y * 0.5 + Math.sin(a) * (H2 - 8) * e;
-      if (!clear(x, y, 6)) continue;
+      if (!clear(x, y, painted ? 14 : 6)) continue;
+      if (painted) {
+        const w = (30 + rnd() * 14) * k, flip = rnd() < 0.5, flowers = tier >= 2 && rnd() < 0.6;
+        paintPiece(g, 'garden', flowers ? 'meadow' : 'grass', x, y, w, flip, 0.75 + 0.25 * (1 - (e - 0.86) / 0.12));
+        continue;
+      }
       const fade = 0.45 + 0.4 * (1 - (e - 0.86) / 0.12);
       g.globalAlpha = fade;
       for (let b = 0; b < 4; b++) {
@@ -1585,15 +1677,23 @@
       }
     }
     // the stepping stones, gathering moss as the garden settles in
-    for (const st of pathStones(m, H2, k)) {
+    for (const [i, st] of pathStones(m, H2, k).entries()) {
+      if (painted) { const w = st.w * 2.3; groundShadow(g, st.x, st.y + st.h * 0.9, w, 0.12); paintPiece(g, 'garden', `step-${i}`, st.x, st.y + st.h * 0.9, w, i % 2 === 1); continue; }
       g.fillStyle = 'rgba(79,107,55,0.14)'; g.beginPath(); g.ellipse(st.x + 1.5, st.y + 2, st.w, st.h, 0, 0, TAU); g.fill();
       g.fillStyle = '#E6DDCB'; g.strokeStyle = line; g.lineWidth = 1; g.beginPath(); g.ellipse(st.x, st.y, st.w, st.h, st.rot, 0, TAU); g.fill(); g.stroke();
       g.fillStyle = 'rgba(255,255,255,0.4)'; g.beginPath(); g.ellipse(st.x - st.w * 0.3, st.y - st.h * 0.3, st.w * 0.3, st.h * 0.2, st.rot, 0, TAU); g.fill();
       if (tier >= 2) { g.fillStyle = 'rgba(110,138,74,0.45)'; g.beginPath(); g.ellipse(st.x + st.w * 0.55, st.y + st.h * 0.35, st.w * 0.3, st.h * 0.28, 0.3, 0, TAU); g.fill(); }
     }
-    drawDeadwood(g, m.deadwood, k, tier);
-    drawRoseBed(g, m.roses, k, sc.nest, tier);
-    drawFountain(g, m.fountain, k, tier, rest);
+    if (painted) {
+      const d = m.deadwood, f = m.fountain;
+      groundShadow(g, d.x, d.y + 6, d.width * 1.15); paintPiece(g, 'garden', 'log', d.x, d.y + 6, d.width * 1.2);
+      drawPaintedRoseBed(g, m.roses);
+      groundShadow(g, f.x, f.y + 2, f.width * 1.2); paintPiece(g, 'garden', 'fountain', f.x, f.y + 2, f.width * 1.28);
+    } else {
+      drawDeadwood(g, m.deadwood, k, tier);
+      drawRoseBed(g, m.roses, k, sc.nest, tier);
+      drawFountain(g, m.fountain, k, tier, rest);
+    }
     // While the garden rests: the lawn grows a little long, a few dandelion clocks
     // appear, and autumn leaves settle on the grass and the stones. Waking clears them.
     if (rest > 0.02) {
@@ -1784,7 +1884,7 @@
   }
   // Live water on the fountain: a thin trickle over each bowl and a slow shimmer.
   function drawFountainFx(now) {
-    if (!gardenScene) return;
+    if (!gardenScene || paintedGarden()) return;
     const f = BloomGardenLayout.landmarks(gardenScene).fountain, x = f.x, base = f.y, h = f.height, w = f.width;
     ctx.save(); ctx.translate(gardenScene.cx, gardenScene.cy);
     const flow = 1 - garden.rest * 0.8;
@@ -4184,63 +4284,36 @@
     const n = gardenScene ? gardenScene.nest : coreR, s = erwuSize(n);
     return poseKind(erwu.pose) === 'side' ? { x: erwu.at.x + erwu.facing * s * 0.5, y: erwu.at.y - s * 0.95 } : { x: erwu.at.x, y: erwu.at.y - s * (inBasket() ? 0.45 : 1.2) };
   }
-  // Painted garden poses. The procedural renderer below remains available while
-  // the local asset loads or if a browser cannot decode it. No save data depends on art.
-  const erwuAtlas = new Image();
-  let erwuFrames = null;
-  erwuAtlas.onload = () => {
-    try {
-      const sheet = document.createElement('canvas'); sheet.width = erwuAtlas.naturalWidth; sheet.height = erwuAtlas.naturalHeight;
-      const g = sheet.getContext('2d', {willReadFrequently:true}); g.drawImage(erwuAtlas,0,0);
-      const pixels = g.getImageData(0,0,sheet.width,sheet.height).data;
-      const unit=sheet.width/1254;
-      // Trim transparent margins once; use a shared pixel scale, never stretch a
-      // pose to fit its box. Bottom alignment keeps weight-bearing paws grounded.
-      erwuFrames=Array.from({length:16},(_,i)=>{
-        // Explicit source regions prevent neighbouring ears/tails leaking into
-        // a pose; the generated sheet is not a mechanically exact square grid.
-        const regions=[
-          [0,0,313,300],[313,0,314,300],[627,0,313,300],[940,0,314,300],
-          [0,313,313,285],[313,313,314,285],[627,313,313,285],[940,313,314,285],
-          [0,605,313,318],[313,700,314,211],[627,627,303,297],[932,735,322,181],
-          [0,925,365,329],[365,920,282,334],[647,940,294,314],[941,922,313,332]
-        ];
-        const box=regions[i];
-        const [ox,oy,cw,ch]=box.map(n=>Math.round(n*unit));
-        let left=cw,top=ch,right=0,bottom=0;
-        for(let y=0;y<ch&&oy+y<sheet.height;y++)for(let x=0;x<cw&&ox+x<sheet.width;x++)if(pixels[((oy+y)*sheet.width+ox+x)*4+3]>24){
-          left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
-        }
-        return {sx:ox+left,sy:oy+top,w:right-left+1,h:bottom-top+1,left:left-(cw-313.5*unit)/2,top,bottom,cw:313.5*unit};
-      });
-    } catch { erwuFrames=null; }
-  };
-  erwuAtlas.src='assets/erwu-romantic-atlas.png';
-  function paintErwuFrame(g,frame,size,opacity=1) {
-    if(!erwuFrames)return;
-    const q=erwuFrames[frame],unit=size*2.5/q.cw;
-    g.save();g.globalAlpha*=opacity;
-    g.drawImage(erwuAtlas,q.sx,q.sy,q.w,q.h,(q.left-q.cw/2)*unit,-q.h*unit,q.w*unit,q.h*unit);
-    g.restore();
-  }
-  function drawPaintedErwu(pose,now,nestR,alpha) {
-    if(!erwuFrames)return false;
-    const nest=inBasket(),d=depthAt(erwu.at.y);
-    const size=nest?nestR:nestR*.78*d;
-    const still={front:8,yawn:8,curl:9,sniff:10,crouch:11,pounce:12,stretch:13,loaf:14,sit:15};
-    const phase=((erwu.phase/TAU)%1+1)%1*8;
-    const index=pose==='walk'?(reduced?0:Math.floor(phase)):still[pose];
-    if(index===undefined)return false;
-    const floor=nest?(pose==='curl'?nestR*.50:nestR*.70):erwu.at.y;
-    ctx.save();ctx.globalAlpha*=alpha;ctx.translate(erwu.at.x,floor);
-    ctx.scale(pose==='front'||pose==='yawn'||pose==='curl'?1:erwu.facing,1);
-    if(pose==='pounce')ctx.translate(0,-(erwu.jump||0)*size*.55);
-    if(pose==='curl'&&!reduced)ctx.scale(1,1+Math.sin(now/1300)*.009);
-    // A short dissolve uses complementary alpha, avoiding doubled opaque limbs.
-    const mix=pose==='walk'&&!reduced?Math.max(0,(phase%1-.75)/.25):0;
-    paintErwuFrame(ctx,index,size,1-mix);
-    if(mix)paintErwuFrame(ctx,(index+1)%8,size,mix);
-    ctx.restore();return true;
+  // Painted Erwu (assets/erwu.webp). The drawn Erwu below stands in while it loads or if a
+  // browser cannot decode it. Side-on poses are painted facing right.
+  const ERWU_POSES = { front: 'sit-front', yawn: 'sit-content', curl: 'curl', sniff: 'sniff', crouch: 'stalk', pounce: 'pounce', stretch: 'stretch', loaf: 'loaf', sit: 'sit-side' };
+  // In the basket its rim hides her lower half: she curls up, peeks out, and yawns there.
+  const ERWU_BASKET = { curl: ['curl', 0.42], yawn: ['yawn', 0.56], stretch: ['stretch', 0.4] };
+  const ERWU_FACING_US = new Set(['front', 'yawn', 'curl', 'loaf']);
+  const ERWU_LENGTH = 2.3;   // her length walking, in units of her size; sets the painted scale
+  function drawPaintedErwu(pose, now, nestR, alpha) {
+    const img = artImage('erwu');
+    if (!img || !paintedGarden()) return false;
+    // walking out of the basket, she is already on her way rather than peeking
+    const nest = inBasket() && pose !== 'walk', size = nestR * 0.78 * depthAt(erwu.at.y), unit = size * ERWU_LENGTH / ART.erwu.frames['walk-0'][2];
+    const phase = ((erwu.phase / TAU) % 1 + 1) % 1 * 8;
+    let name = pose === 'walk' ? `walk-${reduced ? 0 : Math.floor(phase)}` : ERWU_POSES[pose], floor = erwu.at.y;
+    if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; name = b[0]; floor = size * b[1]; }
+    const f = name && ART.erwu.frames[name];
+    if (!f) return false;
+    const flip = !nest && !ERWU_FACING_US.has(pose) && erwu.facing < 0;
+    const lift = pose === 'pounce' ? (erwu.jump || 0) * size * 0.55 : 0;
+    ctx.save(); ctx.globalAlpha *= alpha;
+    if (!nest) groundShadow(ctx, erwu.at.x, floor, f[2] * unit * 0.8 * (1 - Math.min(0.4, lift / size)), 0.2);
+    ctx.translate(erwu.at.x, floor - lift);
+    if (pose === 'curl' && !reduced) ctx.scale(1, 1 + Math.sin(now / 1300) * 0.012);
+    paintPiece(ctx, 'erwu', name, 0, 0, f[2] * unit, flip);
+    // a short dissolve into the next walk frame over an opaque one, so she never turns see-through
+    const mix = pose === 'walk' && !reduced ? Math.max(0, (phase % 1 - 0.75) / 0.25) : 0, next = `walk-${(Math.floor(phase) + 1) % 8}`;
+    if (mix) paintPiece(ctx, 'erwu', next, 0, 0, ART.erwu.frames[next][2] * unit, flip, mix);
+    ctx.restore();
+    if (nest) drawBasketFront(ctx);
+    return true;
   }
   function drawErwuAs(pose, now, nestR, alpha) {
     if (drawPaintedErwu(pose,now,nestR,alpha)) return;
@@ -4543,7 +4616,7 @@
     }
     ctx.globalAlpha = 1;
     const nestR = presentation === 'garden' && gardenScene ? gardenScene.nest : coreR;
-    drawNest(ctx, nestR);
+    if (!paintedGarden()) drawNest(ctx, nestR);
     if (launchFx > 0) {
       ctx.strokeStyle = rgb(hexRgb(C.butter), launchFx * 0.8); ctx.lineWidth = 2 + launchFx * 2;
       ctx.beginPath(); ctx.arc(0, 0, coreR * 1.1 + (1 - launchFx) * R * 0.22, 0, TAU); ctx.stroke();

@@ -4,7 +4,7 @@ const { chromium } = require(process.env.BLOOM_PLAYWRIGHT || 'playwright');
 const fs = require('node:fs'), http = require('node:http'), cp = require('node:child_process');
 const path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu-render';
-const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,world:erwuWorld,paintErwuFrame:typeof paintErwuFrame==='function'?paintErwuFrame:null,atlasReady:()=>typeof erwuFrames!=='undefined'&&!!erwuFrames};";
+const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,world:erwuWorld,paintPiece,atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
 const marker = '  window.claude?.hot?.snapshot?';
 const fixture = require('./fixtures/garden-v1.json');
 
@@ -12,8 +12,8 @@ const fixture = require('./fixtures/garden-v1.json');
   fs.mkdirSync(out, { recursive: true });
   const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0], file = url === '/' || url === '/before' ? 'index.html' : url.slice(1);
-    if (!/^(index\.html|[\w-]+\.js|manifest\.webmanifest|assets\/[\w-]+\.png)$/.test(file)) { res.statusCode = 404; res.end(); return; }
-    if(file.endsWith('.png')){res.setHeader('Content-Type','image/png');res.end(fs.readFileSync(path.join(root,file)));return;}
+    if (!/^(index\.html|[\w-]+\.js|manifest\.webmanifest|assets\/[\w-]+\.(?:png|webp))$/.test(file)) { res.statusCode = 404; res.end(); return; }
+    if(/\.(png|webp)$/.test(file)){res.setHeader('Content-Type','image/'+file.split('.').pop());res.end(fs.readFileSync(path.join(root,file)));return;}
     let data = url === '/before' && process.env.BLOOM_BEFORE_REF
       ? cp.execFileSync('git', ['show', `${process.env.BLOOM_BEFORE_REF}:index.html`], { cwd: root, encoding: 'utf8' })
       : fs.readFileSync(path.join(root, file), 'utf8');
@@ -83,12 +83,13 @@ const fixture = require('./fixtures/garden-v1.json');
       const c=document.createElement('canvas');c.width=1920;c.height=1600;
       c.style='position:fixed;inset:0;width:960px;height:800px;z-index:999';document.body.append(c);
       const g=c.getContext('2d');g.scale(2,2);g.fillStyle='#FBF6EA';g.fillRect(0,0,960,800);
-      const names=['Walk 1','Walk 2','Walk 3','Walk 4','Walk 5','Walk 6','Walk 7','Walk 8','Greeting','Sleeping','Sniffing','Stalking','Pounce','Stretch','Resting','Sitting'];
-      for(let i=0;i<16;i++){
-        const x=(i%4)*240+120,y=Math.floor(i/4)*200+174;
-        g.save();g.translate(x,y);__art.paintErwuFrame(g,i,80);g.restore();
-        g.font='12px sans-serif';g.textAlign='center';g.fillStyle='#655A4F';g.fillText(names[i],x,y+18);
-      }
+      // every painted frame, at the scale she walks in the garden, on her ground anchor
+      const names=Object.keys(BloomArt.erwu.frames);
+      names.forEach((name,i)=>{
+        const x=(i%7)*137+68,y=Math.floor(i/7)*190+150,f=BloomArt.erwu.frames[name];
+        __art.paintPiece(g,'erwu',name,x,y,f[2]*0.3);
+        g.font='12px sans-serif';g.textAlign='center';g.fillStyle='#655A4F';g.fillText(name,x,y+18);
+      });
     });
     await painted.screenshot({path:path.join(out,'painted-poses.png')});await painted.close();
     for (const width of [320, 390]) {
