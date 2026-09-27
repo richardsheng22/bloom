@@ -1165,8 +1165,36 @@
     g.restore(); return true;
   }
   // a soft contact shadow where a painted piece meets the lawn
+  // soft-edged: darkest under the piece, fading out into the grass
   function groundShadow(g, x, y, w, alpha = 0.16) {
-    g.fillStyle = `rgba(62,74,40,${alpha})`; g.beginPath(); g.ellipse(x, y - w * 0.02, w * 0.46, w * 0.1, 0, 0, TAU); g.fill();
+    g.save(); g.translate(x, y - w * 0.02); g.scale(1, 0.22);
+    const gr = g.createRadialGradient(0, 0, 0, 0, 0, w * 0.5);
+    gr.addColorStop(0, `rgba(52,64,32,${alpha * 1.4})`); gr.addColorStop(0.6, `rgba(52,64,32,${alpha})`); gr.addColorStop(1, 'rgba(52,64,32,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, w * 0.5, 0, TAU); g.fill(); g.restore();
+  }
+  // A painted piece relit for the lawn: warmed by the same sunlight, and darker where it
+  // meets the ground. Cached per size. Pieces painted without planting around them need it.
+  const gradedCache = new Map();
+  function paintGraded(g, name, x, y, width) {
+    const img = artImage('garden'), f = img && ART.garden.frames[name];
+    if (!f) return false;
+    const key = `${name}:${Math.round(width * DPR)}`;
+    let c = gradedCache.get(key);
+    if (!c) {
+      const k = width * DPR / f[2], w = Math.ceil(f[2] * k), h = Math.ceil(f[3] * k);
+      c = document.createElement('canvas'); c.width = w; c.height = h;
+      const cg = c.getContext('2d');
+      cg.drawImage(img, f[0], f[1], f[2], f[3], 0, 0, w, h);
+      cg.globalCompositeOperation = 'source-atop';
+      cg.fillStyle = 'rgba(236,205,120,0.2)'; cg.fillRect(0, 0, w, h);
+      const ao = cg.createLinearGradient(0, h * 0.55, 0, h);
+      ao.addColorStop(0, 'rgba(70,78,40,0)'); ao.addColorStop(1, 'rgba(70,78,40,0.34)');
+      cg.fillStyle = ao; cg.fillRect(0, 0, w, h);
+      gradedCache.set(key, c);
+    }
+    const k = width / f[2];
+    g.drawImage(c, x - f[4] * k, y - f[5] * k, width, f[3] * k);
+    return true;
   }
   // The painted lawn, feathered at its edges into the paper, cached per scene size.
   let lawnCache = null;
@@ -1688,7 +1716,13 @@
       const d = m.deadwood, f = m.fountain;
       groundShadow(g, d.x, d.y + 6, d.width * 1.15); paintPiece(g, 'garden', 'log', d.x, d.y + 6, d.width * 1.2);
       drawPaintedRoseBed(g, m.roses);
-      groundShadow(g, f.x, f.y + 2, f.width * 1.2); paintPiece(g, 'garden', 'fountain', f.x, f.y + 2, f.width * 1.28);
+      // the fountain stands in the lawn rather than on it: relit, shadowed, with grass at its foot
+      const fw = f.width * 1.28, fy = f.y + 2;
+      groundShadow(g, f.x + fw * 0.08, fy, fw * 1.25, 0.24);
+      paintPiece(g, 'garden', 'grass', f.x - fw * 0.1, fy - fw * 0.06, fw * 0.8, false, 0.85);
+      paintGraded(g, 'fountain', f.x, fy, fw);
+      paintPiece(g, 'garden', 'grass', f.x - fw * 0.2, fy + fw * 0.07, fw * 0.5, true);
+      paintPiece(g, 'garden', 'meadow', f.x + fw * 0.14, fy + fw * 0.09, fw * 0.44);
     } else {
       drawDeadwood(g, m.deadwood, k, tier);
       drawRoseBed(g, m.roses, k, sc.nest, tier);

@@ -14,3 +14,4 @@ These screenshots were taken in Chromium at phone sizes, with a test garden (no 
 Checks run:
 - `node --test tests/*.test.cjs`: 52 pass.
 - The browser suites `garden-browser`, `garden-view-browser`, `erwu-browser` and `erwu-render-browser` all pass with no page errors.
+- `fountain-grounded.webp`: the fountain relit into the lawn's light, darker at its foot, with grass around the plinth (owner review: it looked like a placed image).
