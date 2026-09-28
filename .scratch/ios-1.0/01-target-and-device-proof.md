@@ -17,6 +17,12 @@ Choose the distribution target and demonstrate that the existing game can run ac
 4. Compare the result with the current web build. Prefer retaining the JS/canvas renderer and adding a thin native boundary. If the device proof exposes a blocking renderer/input limitation, document evidence and propose a bounded alternative before any Swift/SpriteKit rewrite.
 5. Record launch scope, supported-device proposal, minimum iOS version, build-machine arrangement, architecture choice and an initial performance budget in a decision note. Keep credentials and personal photos out of the repo.
 
+## Owner answers so far (2026-09-28)
+
+- **Build host:** no working Mac. Proposed: build in the cloud (a GitHub Actions macOS runner, or a MacinCloud pay-as-you-go day at $4 with a 24-hour minimum for hands-on Xcode sessions) and install on the phone through TestFlight's internal testing, which needs no USB connection or Beta App Review. Device profiling with Instruments needs a Mac connected to the phone; without one, use an in-app debug frame-time overlay in test builds.
+- **Test phones:** an iPhone 11 or 12 is the main test device. The iPhone 7 stops at iOS 15, and the game uses canvas `roundRect` (Safari 16) and CSS `color-mix()` (Safari 16.2), so it cannot run the current game without changes. Proposed minimum: iOS 16.2 (iPhone 8 and later).
+- **Apple Developer Program:** not yet enrolled; the owner is enrolling as an **individual** (the store shows the owner's legal name as seller).
+
 ## Acceptance and evidence
 
 - Decision note distinguishes approved choices from assumptions.
