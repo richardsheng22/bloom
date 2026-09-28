@@ -71,9 +71,26 @@ The leaf button brings you back to the garden without resetting your run. During
 - `garden-view.js`: garden projection and return-request rules
 - `tests/`: [garden validation instructions](tests/README.md)
 - `manifest.webmanifest`, `icons/`: Home Screen install
+- `fonts/`: the game's two typefaces (Fraunces and Bricolage Grotesque, SIL Open Font License), bundled so it needs no network
+- `assets/`, `art-manifest.js`: the painted art, packed by `tools/build-art.cjs`
+- `ios/`, `capacitor.config.json`, `package.json`: the iPhone app, **Erwu's Garden** (see below)
 - `.nojekyll`: tells GitHub Pages to serve the files as they are
 
 The design notes and feedback log live in the `bloom/` folder of the `idea-sketches` repo.
+
+## The iPhone app
+
+The same game ships as an iPhone app, **Erwu's Garden**, in a thin [Capacitor](https://capacitorjs.com/docs/ios) shell (iPhone only, portrait, iOS 16.2+). The web game stays the source; the app bundles a staged copy of it and plays fully offline. The plan is in `.scratch/ios-1.0/`.
+
+```sh
+npm ci
+npm run stage        # copy exactly the files the game needs into www/, with a payload inventory in build/
+npm run ios:sync     # stage, then copy www/ into the iOS project
+npm run test:offline # play the staged package in a browser with every outside request blocked
+node tools/build-icon.cjs   # re-render the app icon and launch image from the painted art
+```
+
+Building the app needs Xcode 26 on a Mac. Without one, GitHub Actions builds it: `.github/workflows/ios.yml` runs the game checks and compiles the app for the iOS Simulator on every push (unsigned, no Apple account needed). Signed TestFlight builds come with iOS ticket 11.
 
 ## Garden saves
 

@@ -61,7 +61,7 @@ Each ticket is one reviewable outcome, usually one PR or a couple of coherent co
 | Ticket | Dependencies | Status |
 |---|---|---|
 | [01 — Lock the 1.0 target and prove the runtime](01-target-and-device-proof.md) | None | Planned |
-| [02 — Build a reproducible offline game package](02-offline-web-package.md), including the iOS shell (former 03) | 01 architecture decision | Planned |
+| [02 — Build a reproducible offline game package](02-offline-web-package.md), including the iOS shell (former 03) | 01 architecture decision | Implemented; device checks wait for the developer account |
 | [03 — Create the production iOS shell and install it](03-production-ios-shell.md) | — | Merged into 02 |
 | [04 — Introduce a small web/native platform boundary](04-platform-boundary.md) | 02, 03 | Planned |
 | [05 — Persist a coherent garden and run safely on iOS](05-durable-native-saves.md) | 04 | Planned |

@@ -1,0 +1,52 @@
+# Checks the game and compiles the iOS app on every push to develop and the Claude branches.
+# No signing yet: the app is built for the iOS Simulator, which needs no Apple account. Signed
+# TestFlight builds come later (iOS ticket 11). GitHub's macOS runners are free for public repos.
+name: iOS build
+
+on:
+  push:
+    branches: [develop, main, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  web:
+    name: Game checks and offline package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:offline
+
+  ios:
+    name: iOS app (Simulator, unsigned)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - name: Use the newest Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - run: npm ci
+      - run: npm run ios:sync
+      - name: Build for the Simulator
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build | tail -40
+          test -d build/ios/Build/Products/Release-iphonesimulator/App.app
+      - name: Check the built app
+        run: |
+          APP=build/ios/Build/Products/Release-iphonesimulator/App.app
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist"
+          test -f "$APP/public/index.html" && test -f "$APP/public/fonts/fraunces.woff2" && test -f "$APP/public/assets/garden-plate.webp"
+          test ! -e "$APP/public/.scratch" && test ! -e "$APP/public/tests"
+          du -sh "$APP"

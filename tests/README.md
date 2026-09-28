@@ -53,3 +53,7 @@ The painted regression checks also exercise run/greeting blinks, sunflower direc
 `node tests/erwu-render-browser.cjs` uses the same Playwright environment overrides. It captures twelve enlarged poses/expressions and 320/390 px garden views, checks repeatable grain for an identical pose, and reports a local drawing-time sample. Set `BLOOM_BEFORE_REF=30a22a9` to also render the original v0.9 art. Its drawing hooks are injected by the local test server; they are not shipped in the game. The phone screenshots deliberately freeze one walking frame for visual comparison. Use `erwu-browser.cjs` for live behavior acceptance. Timing is a desktop sample, not an iPhone performance guarantee.
 
 The current art review additionally loads the painted atlas, renders its sixteen production source regions in `painted-poses.png`, and records six seconds of the game canvas in `garden-motion.webm`. `after-poses.png` now shows the procedural fallback, not the primary painted garden art. The static art sheet does not certify animation quality; inspect the motion clip and the live game.
+
+## Offline package (iOS app)
+
+`npm run test:offline` (or `node tests/offline-package-browser.cjs`, with the same overrides) stages the package into `www/`, checks it holds exactly the listed files, then serves only `www/` and aborts every request to any other origin. It checks the bundled fonts and painted art load, plants a bed and plays a run. Evidence defaults to `/tmp/bloom-offline-package`.

@@ -12,8 +12,8 @@ const fixture = require('./fixtures/garden-v1.json');
   fs.mkdirSync(out, { recursive: true });
   const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0], file = url === '/' || url === '/before' ? 'index.html' : url.slice(1);
-    if (!/^(index\.html|[\w-]+\.js|manifest\.webmanifest|assets\/[\w-]+\.(?:png|webp))$/.test(file)) { res.statusCode = 404; res.end(); return; }
-    if(/\.(png|webp)$/.test(file)){res.setHeader('Content-Type','image/'+file.split('.').pop());res.end(fs.readFileSync(path.join(root,file)));return;}
+    if (!/^(index\.html|[\w-]+\.js|manifest\.webmanifest|assets\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2))$/.test(file)) { res.statusCode = 404; res.end(); return; }
+    if(/\.(png|webp|css|woff2)$/.test(file)){res.setHeader('Content-Type',{png:'image/png',webp:'image/webp',css:'text/css',woff2:'font/woff2'}[file.split('.').pop()]);res.end(fs.readFileSync(path.join(root,file)));return;}
     let data = url === '/before' && process.env.BLOOM_BEFORE_REF
       ? cp.execFileSync('git', ['show', `${process.env.BLOOM_BEFORE_REF}:index.html`], { cwd: root, encoding: 'utf8' })
       : fs.readFileSync(path.join(root, file), 'utf8');

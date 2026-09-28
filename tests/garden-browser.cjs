@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
-const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|[\w-]+\.js)$/;
+const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2)|[\w-]+\.js)$/;
 const fixture = require('./fixtures/garden-v1.json');
 const G = require('../garden-state.js');
 const root = path.resolve(__dirname, '..');
@@ -20,7 +20,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
     const rel = req.url.split('?')[0];
     const file = rel === '/' ? 'index.html' : rel.slice(1);
     if (!SERVED.test(file)) { res.statusCode=404; res.end(); return; }
-    res.setHeader('Content-Type', { js: 'application/javascript', html: 'text/html', png: 'image/png', webp: 'image/webp' }[file.split('.').pop()] || 'application/json');
+    res.setHeader('Content-Type', { js: 'application/javascript', html: 'text/html', png: 'image/png', webp: 'image/webp', css: 'text/css', woff2: 'font/woff2' }[file.split('.').pop()] || 'application/json');
     res.end(fs.readFileSync(path.join(root,file)));
   }).listen(0,'127.0.0.1');
   await new Promise(r => server.on('listening',r));

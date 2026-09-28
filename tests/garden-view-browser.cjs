@@ -1,7 +1,7 @@
 const {chromium}=require(process.env.BLOOM_PLAYWRIGHT||'playwright');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
-const SERVED=/^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|[\w-]+\.js)$/;
+const SERVED=/^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2)|[\w-]+\.js)$/;
 const fixture=require('./fixtures/garden-v1.json');
 const root=path.resolve(__dirname,'..'),out=process.env.BLOOM_EVIDENCE||'/tmp/bloom-ticket02';
 const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,1,0,0,0,0,0,0],items:[
@@ -10,7 +10,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
  fs.mkdirSync(out,{recursive:true});
  const server=http.createServer((req,res)=>{const file=req.url==='/'?'index.html':req.url.slice(1);
   if(!SERVED.test(file)){res.statusCode=404;res.end();return;}
-  res.setHeader('Content-Type',{ js: 'application/javascript', html: 'text/html', png: 'image/png', webp: 'image/webp' }[file.split('.').pop()] || 'application/json');res.end(fs.readFileSync(path.join(root,file)));
+  res.setHeader('Content-Type',{ js: 'application/javascript', html: 'text/html', png: 'image/png', webp: 'image/webp', css: 'text/css', woff2: 'font/woff2' }[file.split('.').pop()] || 'application/json');res.end(fs.readFileSync(path.join(root,file)));
  }).listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));
  let browser;const errors=[];
  try{

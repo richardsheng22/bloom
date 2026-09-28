@@ -1,0 +1,12 @@
+{
+  "appId": "com.richardsheng.erwusgarden",
+  "appName": "Erwu's Garden",
+  "webDir": "www",
+  "backgroundColor": "#F3ECDD",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#F3ECDD",
+    "scrollEnabled": false,
+    "allowsLinkPreview": false
+  }
+}
