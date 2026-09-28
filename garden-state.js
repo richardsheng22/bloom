@@ -5,7 +5,10 @@
 })(typeof globalThis === 'object' ? globalThis : this, function (Layout, Beds) {
   'use strict';
   const KEY = 'bloom.garden2', BACKUP = 'bloom.garden2.backup', LEGACY = 'bloom.garden1';
-  const REST = Object.freeze({ graceHours: 12, settleHours: 72, wakeSeconds: 90, turnRecovery: 0.18 });
+  // Rest arrives after a few hours away and deepens over a day and a half. Simply visiting
+  // wakes the garden only part way (`visitWake`); playing turns brings the rest of it back,
+  // so it is play that brings the garden to life (owner review, 2026-09-28).
+  const REST = Object.freeze({ graceHours: 4, settleHours: 32, wakeSeconds: 90, visitWake: 0.5, turnRecovery: 0.18 });
   const VERSION = 3;
   const KINDS = new Set(['grass', 'clover', 'fern', 'mushroom', 'daisy', 'cosmos', 'lavender', 'forget', 'buttercup']);
   const domains = ['plant', 'patch', 'object', 'discovery', 'seed'];
@@ -115,10 +118,12 @@
     g.lastSeen = now;
     return g.rest;
   }
-  function wake(g, seconds) {
+  // Visiting wakes the garden gradually, but never below `floor` (the caller passes the part
+  // of the rest a visit can't lift: see REST.visitWake). Turns lift the rest (`tend`).
+  function wake(g, seconds, floor = 0) {
     if (!finite(seconds) || seconds <= 0) return false;
     const before = g.rest;
-    g.rest = clamp(g.rest - Math.min(seconds, 1) / REST.wakeSeconds);
+    g.rest = clamp(Math.max(Math.min(g.rest, floor), g.rest - Math.min(seconds, 1) / REST.wakeSeconds));
     return before !== g.rest;
   }
   function tend(g, now = Date.now()) {

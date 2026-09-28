@@ -66,3 +66,9 @@ The owner generated all seven sheets from `PROMPTS.md` (the `-v2` files, `garden
 - **Erwu:** the new poses and walk. The walk was generated paler than the poses, so the build matches its colours to theirs.
 
 Still to tune after play on the phone: sizes of pieces against the backdrop, and whether the arena's flat sage disc should become painted too.
+
+## Owner review on phones (2026-09-28)
+
+- **Overlaps:** wild plants now keep clear of the taller painted beds and the rose bed (`scene.scenery.clear`), and her swat and delight are cropped above the rim painted into them, so only her own basket's rim shows.
+- **Play brings life:** planted beds stay in the garden during a run (their news floats up above the flower). Rest now starts after 4 hours away and deepens over about a day and a half (was 12 h and 3 days). A visit only wakes the garden half way; turns bring the rest back. A resting garden drains to a muted, dusky grey, with Erwu, the flower and everything play brings in full colour above it, and colour eases back turn by turn (`rest-awake-vs-resting.webp`, `run-resting-390.webp`).
+- **Legibility:** words over the painted garden sit on small paper labels.

@@ -33,7 +33,7 @@ test('0h through 30d absences preserve all ownership including future placed obj
     const before = structuredClone(ownership(g));
     G.arrive(g, NOW + hours * HOUR);
     assert.deepEqual(ownership(g), before);
-    assert.equal(g.rest, Math.min(1, Math.max(0, hours - 12) / 72));
+    assert.equal(g.rest, Math.min(1, Math.max(0, hours - G.REST.graceHours) / G.REST.settleHours));
     assert.ok(G.save(disk, session));
     assert.deepEqual(ownership(G.load(disk, NOW + hours * HOUR).garden), before);
   }
@@ -50,13 +50,22 @@ test('reload during waking neither resets rest nor grants growth; IDs remain uni
   assert.deepEqual(restored.garden.plants, before);
   assert.equal(G.allocateId(restored.garden), 'plant-10');
 });
-test('visiting alone wakes the garden completely without altering growth', () => {
+test('visiting wakes the garden only part way; play brings the rest back; growth untouched', () => {
   const { session } = fixture(), g = session.garden;
   const before = structuredClone(g.plants);
   G.arrive(g, NOW + 720 * HOUR);
+  const floor = g.rest * (1 - G.REST.visitWake);
+  for (let i = 0; i < 200; i++) G.wake(g, 1, floor);
+  assert.equal(g.rest, 0.5);
+  assert.deepEqual(g.plants, before);
+  for (let i = 0; i < 2; i++) G.tend(g, NOW + 720 * HOUR);
+  assert.ok(Math.abs(g.rest - (0.5 - 2 * G.REST.turnRecovery)) < 1e-10);
+  G.wake(g, 1, floor);
+  assert.ok(g.rest < floor, 'waking never pushes rest back up to the floor');
+  // with no floor, visiting still wakes completely
+  G.arrive(g, NOW + 1440 * HOUR);
   for (let i = 0; i < 91; i++) G.wake(g, 1);
   assert.equal(g.rest, 0);
-  assert.deepEqual(g.plants, before);
 });
 test('turns nurture owned growth and accelerate wake-up without changing plant identity', () => {
   const { session } = fixture(), g = session.garden;

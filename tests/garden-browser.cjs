@@ -54,7 +54,7 @@ const clone = x => JSON.parse(JSON.stringify(x));
       const page = await pageFor(hours);
       const g = await data(page);
       assert.deepEqual(strip(g.plants),fixture.plants);
-      assert.equal(g.rest,Math.min(1,Math.max(0,hours-12)/72));
+      assert.equal(g.rest,Math.min(1,Math.max(0,hours-G.REST.graceHours)/G.REST.settleHours));
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden1'))),fixture);
       assert.equal(await page.locator('#play').innerText(),'Continue · turn 8');
       // The run's own fields are unchanged; v0.8 adds a garden log alongside them.

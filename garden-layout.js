@@ -142,11 +142,14 @@
     const ox = Math.max(20, scene.width / 2 - 14), oy = Math.max(20, scene.height / 2 - 16);
     const ix = Math.min(ox - 8, r.rx + 16), iy = Math.min(oy - 8, r.ry + 16);
     const t0 = Math.max(0, Math.min(1, (plant.d - 1.04) / 1.56));
+    // painted pieces stand taller and wider than their places: `scene.scenery.clear` widens the
+    // room kept around beds (side, above) and the rose bed (above), so no plant grows over them
+    const c = (scene.scenery && scene.scenery.clear) || {}, side = c.side || 0, up = c.up || 0, roseUp = c.roseUp || 0;
     const free = (x, y) => {
-      if (slots.some(a => Math.abs(x - a.x) < a.width / 2 + 10 && y > a.y - a.height / 2 - 6 && y - 26 < a.y + a.height / 2 + 6)) return false;
+      if (slots.some(a => Math.abs(x - a.x) < a.width / 2 + 10 + side && y > a.y - a.height / 2 - 6 - up && y - 26 < a.y + a.height / 2 + 6)) return false;
       if (slots.some(a => Math.hypot(x - a.interaction.x, y - 12 - a.interaction.y) < 22)) return false;
       if ([m.fountain, m.deadwood].some(f => Math.abs(x - f.x) < f.width / 2 + 10 && y > f.y - f.height - 6 && y - 22 < f.y + 8)) return false;
-      if (((x - r.x) / (r.rx + 10)) ** 2 + ((y - r.y) / (r.ry + 10)) ** 2 < 1) return false;
+      if (((x - r.x) / (r.rx + 10 + side)) ** 2 + ((y - r.y) / (r.ry + 10 + (y < r.y ? roseUp : 0))) ** 2 < 1) return false;
       if (y > m.path.top - 6 && Math.abs(x) < m.path.width) return false;
       return Math.abs(x) < scene.width / 2 - 8 && y > -scene.height / 2 + 26 && y < scene.height / 2 - 4;
     };

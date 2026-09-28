@@ -28,8 +28,9 @@ const ERWU = [
   { file: 'erwu-walk-v2.png', match: 'erwu', regions: Object.fromEntries([
     [16, 156, 412, 236], [444, 152, 412, 240], [884, 152, 408, 240], [1320, 152, 420, 240],
     [20, 500, 412, 228], [448, 500, 412, 228], [884, 504, 412, 228], [1316, 500, 424, 232]].map((r, i) => [`walk-${i}`, r])) },
-  // her swat and her delight, chest-high over the basket rim, from the play-pieces sheet
-  { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 252], delighted: [1102, 824, 296, 248] } },
+  // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
+  // rim there, since her own basket's front is drawn over her
+  { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
 ];
 const GARDEN = [
   { file: 'garden-pieces-v2.png', split: ['steps'], regions: {

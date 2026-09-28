@@ -383,8 +383,13 @@
     background: radial-gradient(closest-side, var(--ground) 55%, color-mix(in srgb, var(--ground) 0%, transparent));
   }
   /* over the painted garden, words carry their own soft paper glow */
-  body.painted #t-status, body.painted #t-note, body.painted #title .tagline {
-    text-shadow: 0 0 4px var(--ground), 0 0 10px var(--ground), 0 0 18px var(--ground);
+  /* over the painted garden, the words sit on small paper labels, like seed-packet tags */
+  body.painted #t-status:not(:empty), body.painted #t-note:not(:empty), body.painted #garden-invitation:not(:empty), body.painted #hint:not(:empty), body.painted #title .tagline {
+    width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box;
+    padding: 5px 14px; border-radius: 14px;
+    background: color-mix(in srgb, var(--ground) 90%, transparent);
+    box-shadow: 0 1px 0 rgba(110,78,51,0.16), 0 2px 10px rgba(80,70,40,0.12);
+    color: var(--ink);
   }
   /* over the painted garden, only a light veil right behind the words */
   body.painted #title .t-top::before, body.painted #title .t-bottom::before {
@@ -1028,14 +1033,16 @@
   const plantXY = (p) => presentation === 'garden' && gardenScene ? BloomGardenLayout.projectPlant(p, gardenScene) : plantWorld(p);
   const sceneOrigin = () => presentation === 'garden' && gardenScene ? { x: gardenScene.cx, y: gardenScene.cy } : { x: CX, y: CY };
 
-  let greetPending = false, runChangedBeds = [];
+  let greetPending = false, runChangedBeds = [], restFloor = 0, shownRest = null;
   function welcomeBack() {
     const away = Math.max(0, Date.now() - garden.lastSeen);
     BloomGarden.arrive(garden);
+    // a visit wakes the garden only part way; the rest comes back as you play
+    restFloor = garden.rest * (1 - BloomGarden.REST.visitWake);
     // after real time away, Erwu comes to say hello when you next see the garden
     if (garden.rest > 0.2 || away > 3 * 3.6e6) greetPending = true;
     gardenDirty = true;
-    gardenNote = garden.rest > 0.05 ? 'The garden is resting. Settle in with Erwu.'
+    gardenNote = garden.rest > 0.05 ? 'The garden is resting. A few turns will wake it.'
       : away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '';
     el.tNote.textContent = gardenMessage();
   }
@@ -1054,29 +1061,11 @@
     const found = BloomBeds.noteFlowering(garden, BloomGarden.allocateId);
     if (found.length) saveGarden();
     if (presentation !== 'run' || change.after === 'planted') return;
-    const spot = runBedSpots().find((q) => q.item.id === change.bed.id);
     const text = `${bedName(change.bed).replace(/^the /, 'The ')} ${stageWords[change.after]}`;
-    if (spot) {
-      for (let i = 0; i < 5; i++) glint(spot.x + (Math.random() - 0.5) * 40 * spot.scale, spot.y - Math.random() * 26 * spot.scale, 1.1);
-      addFloat(spot.x, spot.y - 36 * spot.scale, change.after === 'established' ? 'Established' : change.after === 'flowering' ? 'Flowering' : 'Growing', 'moss', 0.85);
-    }
+    // the bed itself waits in the garden; its news floats up above the flower
+    addFloat(0, -R - 18, `${bedName(change.bed).replace(/^the /, '')} · ${change.after === 'established' ? 'established' : change.after === 'flowering' ? 'flowering' : 'growing'}`, 'moss', 0.8);
     el.bedLive.textContent = text + '.';
   }
-  // Where the planted beds sit around the flower during play (arena coordinates).
-  function bedReserve() {
-    const scale = Math.min(0.78, R / 190);
-    return [0, 1, 2].map((i) => ({ x: (i - 1) * R * 0.52, y: -R - 20 * scale - (i === 1 ? 8 : 0), scale }));
-  }
-  // Now and then a bloom's seed flies to the bed you're growing instead of the border.
-  function seedToBed(from) {
-    const bed = BloomBeds.focusBed(garden);
-    const spot = bed && runBedSpots().find((q) => q.item.id === bed.id);
-    if (!spot || reduced || flights.length > 12) return false;
-    const to = { x: spot.x + (Math.random() - 0.5) * 30 * spot.scale, y: spot.y - 4 * spot.scale };
-    flights.push({ x0: from.x, y0: from.y, to, t: 0, dur: 0.45 + Math.hypot(to.x - from.x, to.y - from.y) / (R * 2.4), col: from.col || hexRgb(C.honey), trail: [] });
-    return true;
-  }
-
   // Find open ground outside the flower, preferring spots near the rim and near `pref` (an angle).
   function findSpot(pref, dmin, dmax) {
     const u = R * 0.065, gap = R * 0.08;
@@ -1088,7 +1077,6 @@
       if (sx < u || sx > W - u || sy > gBottom || sy - u * 3.2 < gTop) continue;
       if (Math.hypot(x, y - u * 2.4) < R * 1.05) continue;
       if (garden.plants.some((p) => { const q = plantWorld(p); return Math.hypot(q.x - x, q.y - y) < gap; })) continue;
-      if (bedReserve().some((q) => Math.abs(q.x - x) < 36 * q.scale && y < q.y + 10 * q.scale && y > q.y - 30 * q.scale)) continue;
       return { a, d };
     }
     return null;
@@ -1136,7 +1124,6 @@
       if (shot) shot.bedGrowth = (shot.bedGrowth || 0) + amount;
       bedGrew(BloomBeds.grow(garden, amount, 'bloom'));
     }
-    if (shot && Math.random() < 0.3 && seedToBed(from)) return;
     if (shot && shot.flowers < 8 && plant(pick(FLOWER_KINDS), a, 0.3, 1.06, 2.6, from)) shot.flowers++;
     else nurture(a, 0.06);
   }
@@ -1197,7 +1184,8 @@
     const r = plateRect();
     if (!r || !sc) return undefined;
     const at = (q, wf, hf) => ({ x: r.x + q.x * r.w - sc.cx, y: r.y + q.y * r.h - sc.cy, width: r.w * wf, height: r.h * hf });
-    return { fountain: at(ART.lawn.fountain, ART.lawn.fountain.width * 0.8, 0.21), deadwood: at(ART.lawn.log, ART.lawn.log.width, 0.1) };
+    return { fountain: at(ART.lawn.fountain, ART.lawn.fountain.width * 0.8, 0.21), deadwood: at(ART.lawn.log, ART.lawn.log.width, 0.1),
+      clear: { side: 14, up: 34, roseUp: sc.nest * 1.4 } };
   }
   // Draws a painted piece `width` wide with its ground anchor at (x, y). Returns false if it can't.
   function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1) {
@@ -1307,7 +1295,7 @@
   }
   // Erwu in her basket during a run and on the end card: the painted poses that fit her moods.
   // Her lower half is always inside the basket, so the chest-high poses work here.
-  const IN_BASKET = { swat: 0.5, delighted: 0.5, peek: 0.42, 'peek-glance': 0.42, 'peek-turn': 0.42, 'peek-sleepy': 0.42, yawn: 0.5, curl: 0.34, 'sit-content': 0.8, 'sit-grumpy': 0.8 };
+  const IN_BASKET = { swat: 0.4, delighted: 0.4, peek: 0.42, 'peek-glance': 0.42, 'peek-turn': 0.42, 'peek-sleepy': 0.42, yawn: 0.5, curl: 0.34, 'sit-content': 0.8, 'sit-grumpy': 0.8 };
   // widths of the chest-high poses from the play sheet, relative to her peek
   const BASKET_WIDTH = { swat: 1.5, delighted: 1.12 };
   function basketPose(o) {
@@ -1737,7 +1725,7 @@
     } else if (presentation === 'run') {
       // Only planted beds come along during play, small and just above the flower,
       // so they never crowd the aiming area. Props remain in the garden.
-      for (const q of runBedSpots()) drawGardenObject(g, q.item, q, false, q.scale);
+      // (planted beds stay in the garden; a run shows only the flower and what play grows)
     }
   }
   // ----- The garden itself, after the real one: a rose bed with its arch in the middle,
@@ -2105,17 +2093,6 @@
       }
     }
     ctx.restore();
-  }
-  // Where planted beds sit in the run view, in arena coordinates; empty when there is no room.
-  function runBedSpots() {
-    const out = [], spots = bedReserve();
-    for (const [i, anchor] of BloomGardenLayout.anchors.filter(a => a.type === 'patch').entries()) {
-      const item = BloomGardenLayout.at(garden, anchor.id);
-      const q = { ...spots[i], item }, scale = q.scale;
-      if (!item || !item.flower || CY + q.y - 34 * scale < gTop + 4 || Math.abs(q.x) + 32 * scale > W / 2 - 8) continue;
-      out.push(q);
-    }
-    return out;
   }
   function paintGarden() {
     swaying = [];
@@ -3186,7 +3163,7 @@
     // Visiting is enough to wake the garden. Hidden tabs never perform catch-up care.
     if (!document.hidden) {
       garden.lastSeen = Date.now();
-      if (BloomGarden.wake(garden, dt)) gardenDirty = true;
+      if (BloomGarden.wake(garden, dt, restFloor)) gardenDirty = true;
       if (garden.rest < 0.05 && gardenNote.startsWith('The garden is resting')) {
         gardenNote = ''; el.tNote.textContent = gardenMessage(); refreshInspection();
         if (state === 'ready') updateHud();
@@ -4702,7 +4679,9 @@
     }
   }
 
+  let lastDraw = 0;
   function draw(now) {
+    const dtFrame = lastDraw ? Math.min(0.1, (now - lastDraw) / 1000) : 0; lastDraw = now;
     if (!bgCache) { readTheme(); bgCache = paintBackground(); }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(bgCache, 0, 0);
@@ -4739,11 +4718,19 @@
     if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
     if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); drawSwaying(now); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
     if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); }
-    if (presentation === 'garden' && garden.rest > 0.02) {
-      // a resting garden sits in soft, cool evening light
-      const k = garden.rest, gr = ctx.createLinearGradient(0, 0, 0, H);
-      gr.addColorStop(0, `rgba(150,160,205,${0.2 * k})`); gr.addColorStop(0.55, `rgba(170,176,214,${0.1 * k})`); gr.addColorStop(1, `rgba(150,160,205,${0.16 * k})`);
-      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    // A resting garden loses its colour: the flowers fade to a muted, dusky hush. Erwu, the
+    // flower you play on and everything play brings stay in full colour above it, and the
+    // colour eases back turn by turn as the garden wakes, so play visibly brings it to life.
+    shownRest = shownRest == null || reduced ? garden.rest : shownRest + (garden.rest - shownRest) * Math.min(1, dtFrame * 1.6);
+    if (shownRest > 0.02) {
+      const k = Math.min(1, shownRest);
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${0.78 * k})`; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'multiply';
+      const gr = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gr.addColorStop(0, `rgba(196,190,214,${0.5 * k})`); gr.addColorStop(1, `rgba(214,200,186,${0.45 * k})`);
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
     }
 
     const origin = sceneOrigin();
