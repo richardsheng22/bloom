@@ -1,5 +1,7 @@
 # Bloom: an owned garden and a life for Erwu
 
+**Next roadmap:** [Bloom 1.0 — iOS delivery map](ios-1.0/README.md). Fifteen planned tickets cover the device proof, packaging, saves and transfer, iPhone experience, deferred device acceptance, TestFlight and release. The web-series ticket 09 album remains deferred.
+
 Status (2026-09-28): **Core v0.8/v0.9 features implemented**, including the shared storybook art and two subsequent owner-review rounds on `develop` at `b461a28`. The current closeout restores painted plant traits and Erwu expressions, and the final feature-branch changes (rest as dormancy, a lower home garden, a full garden that keeps maturing, gently harder late turns) complete v0.9; see [the closeout record](v09-closeout/README.md). Ticket 03's Arrange/furniture editing was deliberately retired. **Ticket 09 is deferred. Physical-phone acceptance under ticket 10 is deferred to the future iOS roadmap by owner instruction**, not a blocker for this web milestone and not claimed as passed. Browser and save checks remain in scope. Character likeness and subjective pacing can still be refined from future owner observations.
 
 The requirements and release history below preserve the original plan. The dated closeout notes take precedence where later owner decisions changed it. Current art direction is [storybook](art-direction/README.md), replacing the earlier painterly-naturalism experiment.

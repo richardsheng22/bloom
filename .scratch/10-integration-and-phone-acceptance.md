@@ -4,6 +4,8 @@ Status: web regression validation remains in scope; **physical-phone acceptance 
 
 ## Current scope override — 2026-09-28
 
+**iOS follow-on:** the deferred physical checks are now planned in [iOS 13 — Physical-device acceptance](ios-1.0/13-physical-device-acceptance.md), with lifecycle, feedback and performance prerequisites in the [1.0 map](ios-1.0/README.md). This adds a future release gate; it does not retroactively claim phone acceptance for v0.9.
+
 The original acceptance matrix below is retained as a future planning input. Arrange/Put away/furniture taps were retired in `b461a28`: their UI acceptance cases are superseded. Continue testing bed planting/inspection, Erwu touch, immediate Play, save migration, run preservation and reduced motion. Retain model-level layout tests for old saves and behavior destinations.
 
 No owner phone session is required for this web closeout. Carry device/iOS versions, Safari and standalone launch, safe areas, gestures, sound preferences, haptics, background/resume and busy-scene frame timing into the future iOS roadmap. Native packaging, deployment and App Store readiness are outside this task.
