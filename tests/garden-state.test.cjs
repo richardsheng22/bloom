@@ -56,10 +56,10 @@ test('visiting wakes the garden only part way; play brings the rest back; growth
   G.arrive(g, NOW + 720 * HOUR);
   const floor = g.rest * (1 - G.REST.visitWake);
   for (let i = 0; i < 200; i++) G.wake(g, 1, floor);
-  assert.equal(g.rest, 0.5);
+  assert.ok(Math.abs(g.rest - floor) < 1e-10);
   assert.deepEqual(g.plants, before);
   for (let i = 0; i < 2; i++) G.tend(g, NOW + 720 * HOUR);
-  assert.ok(Math.abs(g.rest - (0.5 - 2 * G.REST.turnRecovery)) < 1e-10);
+  assert.ok(Math.abs(g.rest - (floor - 2 * G.REST.turnRecovery)) < 1e-10);
   G.wake(g, 1, floor);
   assert.ok(g.rest < floor, 'waking never pushes rest back up to the floor');
   // with no floor, visiting still wakes completely

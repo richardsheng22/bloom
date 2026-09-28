@@ -5,10 +5,10 @@
 })(typeof globalThis === 'object' ? globalThis : this, function (Layout, Beds) {
   'use strict';
   const KEY = 'bloom.garden2', BACKUP = 'bloom.garden2.backup', LEGACY = 'bloom.garden1';
-  // Rest arrives after a few hours away and deepens over a day and a half. Simply visiting
-  // wakes the garden only part way (`visitWake`); playing turns brings the rest of it back,
-  // so it is play that brings the garden to life (owner review, 2026-09-28).
-  const REST = Object.freeze({ graceHours: 4, settleHours: 32, wakeSeconds: 90, visitWake: 0.5, turnRecovery: 0.18 });
+  // Rest arrives after a few hours away and is complete after a day. Simply visiting wakes
+  // the garden only a little (`visitWake`); playing turns brings the rest of it back, so it is
+  // play that brings the garden to life (owner reviews, 2026-09-28).
+  const REST = Object.freeze({ graceHours: 3, settleHours: 21, wakeSeconds: 90, visitWake: 0.2, turnRecovery: 0.18 });
   const VERSION = 3;
   const KINDS = new Set(['grass', 'clover', 'fern', 'mushroom', 'daisy', 'cosmos', 'lavender', 'forget', 'buttercup']);
   const domains = ['plant', 'patch', 'object', 'discovery', 'seed'];

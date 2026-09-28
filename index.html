@@ -560,17 +560,25 @@
   #bed-plant:not(:disabled) { background: var(--halo); border-color: var(--moss); }
   /* A bed's planting card rises over the foot of the garden instead of growing the dock, so
      the garden above never shifts or rescales when a bed is tapped. */
-  #garden-detail-space { position: relative; }
+  /* The words under the garden float over its foot rather than taking a band of their own,
+     so the garden reaches down to the dock; the invitation fades once read. */
+  #title #garden-detail-space { position: relative; height: 0; display: block; }
+  #garden-detail-space > #garden-invitation, #garden-detail-space > #garden-inspection { position: absolute; left: 0; right: 0; bottom: 6px; }
+  #garden-invitation { transition: opacity 1.2s var(--ease-out); }
+  #garden-invitation.faded { opacity: 0; pointer-events: none; }
+  /* it opens in the middle of the garden, over the rose bed, so every flower bed stays in view */
   #title.bedding #garden-inspection {
-    position: absolute; left: -4px; right: -4px; bottom: 0; z-index: 2;
+    position: absolute; left: -4px; right: -4px; bottom: calc(var(--scene-h, 400px) / 2); transform: translateY(50%); z-index: 2;
     padding: 10px 12px 10px; border-top: 0; border-radius: 16px;
     background: color-mix(in srgb, var(--ground) 96%, transparent);
     box-shadow: 0 2px 0 rgba(110,78,51,0.14), 0 8px 24px rgba(80,70,40,0.18);
     animation: card-rise 220ms var(--ease-out) both;
   }
   #title.bedding .t-status { visibility: hidden; }
-  @keyframes card-rise { from { opacity: 0; transform: translateY(10px); } }
+  @keyframes card-rise { from { opacity: 0; transform: translateY(calc(50% + 10px)); } }
   @media (prefers-reduced-motion: reduce) { #title.bedding #garden-inspection { animation: none; } }
+  /* a landscape phone keeps its words in the side column, as before */
+  @media (orientation: landscape) and (max-height: 500px) { #title #garden-detail-space { height: 100px; } #title.bedding #garden-inspection { bottom: 0; transform: none; animation: none; } }
   @media (orientation: landscape) and (max-height: 500px) {
     #title .t-top { min-height: 30px; }
     #title .logo, #title.settled .logo { font-size: 26px; }
@@ -1167,7 +1175,8 @@
     if (!r || !sc) return undefined;
     const at = (q, wf, hf) => ({ x: r.x + q.x * r.w - sc.cx, y: r.y + q.y * r.h - sc.cy, width: r.w * wf, height: r.h * hf });
     return { fountain: at(ART.lawn.fountain, ART.lawn.fountain.width * 0.8, 0.21), deadwood: at(ART.lawn.log, ART.lawn.log.width, 0.1),
-      clear: { side: 14, up: 34, roseUp: sc.nest * 1.4 } };
+      // beds in flower stand tall (sunflowers most of all): keep wild plants well clear above them
+      clear: { side: 18, up: 64, roseUp: sc.nest * 1.4 } };
   }
   // Draws a painted piece `width` wide with its ground anchor at (x, y). Returns false if it can't.
   function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1) {
@@ -1753,7 +1762,7 @@
     g.restore();
     }
     // a wildflower meadow creeping in from the edges as the garden grows
-    const meadow = painted ? 3 + tier * 3 : 6 + tier * 9;
+    const meadow = Math.round((painted ? 3 + tier * 3 : 6 + tier * 9) * (1 - (paintedRest ?? rest) * 0.75));
     for (let i = 0; i < meadow; i++) {
       const a = rnd() * TAU, e = 0.86 + rnd() * 0.12, x = Math.cos(a) * (W2 - 6) * e, y = m.roses.y * 0.5 + Math.sin(a) * (H2 - 8) * e;
       if (!clear(x, y, painted ? 14 : 6)) continue;
@@ -2076,8 +2085,18 @@
     }
     ctx.restore();
   }
+  // ----- Rest as dormancy. A resting garden draws back: most of what play has grown goes
+  // quiet and out of sight (never removed; it stays owned and in place), and comes back as
+  // you play, a few plants popping up with every turn. Which plants rest first is fixed per
+  // plant, so the same ones return in the same order. -----
+  const DORMANT_MAX = 0.85;
+  const dormantAt = (p) => seeded(p.s * 7 + 3)();            // a plant rests once rest passes this
+  const dormant = (p, rest) => rest > 0.01 && dormantAt(p) < rest * DORMANT_MAX;
+  let paintedRest = null, lastVisible = null;
+  const waking = new Map();                                   // plant id -> time it began to reappear
   function paintGarden() {
     swaying = [];
+    paintedRest = shownRest == null ? garden.rest : shownRest;
     const c = gardenCache || document.createElement('canvas');
     c.width = canvas.width; c.height = canvas.height;
     const g = c.getContext('2d');
@@ -2086,7 +2105,11 @@
     const u = R * 0.065, moss = hexRgb(C.moss);
     // soft moss that spreads under whatever grows
     if (presentation === 'garden' && gardenScene) drawYard(g);
-    const settled = garden.plants.filter((p) => p.live == null);
+    // plants that have just woken pop up in the live layer before joining the painted garden
+    const visible = new Set(garden.plants.filter((p) => !dormant(p, paintedRest)).map((p) => p.id));
+    if (lastVisible && !reduced) for (const id of visible) if (!lastVisible.has(id) && !waking.has(id)) waking.set(id, performance.now());
+    lastVisible = visible;
+    const settled = garden.plants.filter((p) => p.live == null && visible.has(p.id) && !waking.has(p.id));
     for (const p of settled) {
       const { x, y } = plantXY(p);
       g.fillStyle = rgb(moss, 0.1 + 0.08 * p.g);
@@ -2131,9 +2154,15 @@
         for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x + i, y); g.quadraticCurveTo(x + i * 2, y - 6, x + i * 3.5 + side * 2, y - 10 - rnd() * 4); g.stroke(); }
       }
     }
-    drawArrangedGarden(g);
-    const sorted = settled.sort((a, b) => plantXY(a).y - plantXY(b).y);
-    for (const p of sorted) drawPlant(g, p);
+    // Beds, furnishings and plants back to front, so nothing further back draws over them.
+    const depth = settled.map((p) => ({ y: plantXY(p).y, draw: () => drawPlant(g, p) }));
+    if (presentation === 'garden' && gardenScene && arrangementAvailable) {
+      for (const q of BloomGardenLayout.geometry(gardenScene)) {
+        const item = BloomGardenLayout.at(garden, q.id);
+        if (item) depth.push({ y: q.y + 12, draw: () => drawGardenObject(g, item, q) });
+      }
+    } else drawArrangedGarden(g);
+    for (const d of depth.sort((a, b) => a.y - b.y)) d.draw();
     swayList = swaying; swaying = null;
     gardenCache = c;
     gardenPainted = performance.now();
@@ -2475,6 +2504,7 @@
     const rect = el.scene.getBoundingClientRect();
     gardenScene = BloomGardenView.layout(rect);
     gardenScene.scenery = paintedScenery(gardenScene);
+    el.title.style.setProperty('--scene-h', rect.height + 'px');
     erwuPlaces = null;
     gardenDirty = true;
     refreshArrangementTargets();
@@ -2682,8 +2712,12 @@
     measureGarden(); gardenDirty = true; saveGarden(); updateHud();
     erwuEnter();
     settleTimer = setTimeout(() => el.title.classList.add('settled'), reduced ? 0 : 1600);
+    // the invitation is a first hint: it fades after a few seconds, leaving the garden clear
+    el.invitation.classList.remove('faded');
+    clearTimeout(inviteTimer); inviteTimer = setTimeout(() => el.invitation.classList.add('faded'), 6000);
     requestAnimationFrame(() => { if (presentation === 'garden') el.play.focus({ preventScroll: true }); });
   }
+  let inviteTimer = 0;
   function showStatus() {
     const flowers = bloomingCount(), growingBed = BloomBeds.focusBed(garden);
     el.tStatus.textContent = growingBed ? `Growing ${bedName(growingBed)} · ${BloomBeds.STAGE_NAMES[BloomBeds.stage(growingBed)].toLowerCase()}`
@@ -4632,23 +4666,33 @@
     if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
     if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); drawSwaying(now); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
     if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); }
-    // A resting garden loses its colour: the flowers fade to a muted, dusky hush. Erwu, the
+    // A resting garden also loses a little colour (its plants mostly rest out of sight). Erwu, the
     // flower you play on and everything play brings stay in full colour above it, and the
     // colour eases back turn by turn as the garden wakes, so play visibly brings it to life.
     shownRest = shownRest == null || reduced ? garden.rest : shownRest + (garden.rest - shownRest) * Math.min(1, dtFrame * 1.6);
     if (shownRest > 0.02) {
       const k = Math.min(1, shownRest);
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${0.78 * k})`; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = `rgba(128,128,128,${0.3 * k})`; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = 'multiply';
       const gr = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gr.addColorStop(0, `rgba(196,190,214,${0.5 * k})`); gr.addColorStop(1, `rgba(214,200,186,${0.45 * k})`);
+      gr.addColorStop(0, `rgba(196,190,214,${0.22 * k})`); gr.addColorStop(1, `rgba(214,200,186,${0.18 * k})`);
       ctx.fillStyle = gr; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
     }
 
     const origin = sceneOrigin();
     ctx.translate(origin.x, origin.y);
+    // plants waking from rest pop up in the live layer, then join the painted garden
+    for (const [id, t0] of waking) {
+      const pl = garden.plants.find((q) => q.id === id), t = (now - t0) / 650;
+      if (!pl || t >= 1) { waking.delete(id); gardenDirty = true; continue; }
+      const q = plantXY(pl), k = easeOutBack(Math.max(0.01, t));
+      ctx.save(); ctx.translate(q.x, q.y); ctx.scale(k, k); ctx.translate(-q.x, -q.y);
+      drawPlant(ctx, pl);
+      ctx.restore();
+    }
+    if (paintedRest != null && Math.abs(shownRest - paintedRest) > 0.012) gardenDirty = true;
     // plants that have just sprouted grow in live before joining the painted garden
     for (const pl of growing) {
       const q = plantXY(pl), k = reduced ? 1 : easeOutBack(Math.min(1, pl.live));
