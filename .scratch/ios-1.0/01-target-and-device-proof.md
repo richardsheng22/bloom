@@ -38,4 +38,3 @@ Production shell, native persistence, purchasing accounts, publishing, and redes
 - [Reference 3](https://developer.apple.com/app-store/submitting/)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-

@@ -30,4 +30,3 @@ Optional final test with an exported existing garden after synthetic tests pass;
 ## Out of scope
 
 Cloud accounts, automatic merge, supporting arbitrary third-party save formats.
-

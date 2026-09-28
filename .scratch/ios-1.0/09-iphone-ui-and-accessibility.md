@@ -31,4 +31,3 @@ Optional readability preferences; a short accessible-control demonstration for f
 ## Out of scope
 
 iPad redesign, new garden interactions, album, reintroducing Arrange.
-

@@ -30,4 +30,3 @@ None unless a font license cannot be established; present the concrete fallback 
 ## Out of scope
 
 Native signing, a PWA service worker, new game features, CDN infrastructure.
-

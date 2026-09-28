@@ -36,4 +36,3 @@ App Store upload and final launch artwork/metadata approval; production persiste
 - [Reference 1](https://capacitorjs.com/docs/ios)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-

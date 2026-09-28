@@ -30,4 +30,3 @@ Choose available Mac/CI host, Apple team roles and credential setup through secu
 ## Out of scope
 
 Automatically submitting or releasing every develop commit, purchases of hosted CI.
-

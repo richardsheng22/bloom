@@ -36,4 +36,3 @@ Public App Store release, messaging people without authorization, indefinite fea
 - [Reference 1](https://developer.apple.com/testflight/)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-

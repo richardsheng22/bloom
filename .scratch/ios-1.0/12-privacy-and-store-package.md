@@ -38,4 +38,3 @@ Legal conclusions, accounts/ads/IAP, public posting of personal photos, actual s
 - [Reference 3](https://developer.apple.com/documentation/bundleresources/privacy-manifest-files)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-

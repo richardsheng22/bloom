@@ -38,4 +38,3 @@ Guaranteed Apple approval, Android launch, monetization additions, new roadmap f
 - [Reference 2](https://developer.apple.com/app-store/review/guidelines/)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-

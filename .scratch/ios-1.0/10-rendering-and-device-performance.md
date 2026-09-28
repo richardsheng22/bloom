@@ -30,4 +30,3 @@ Access to agreed baseline phone(s); confirm only if measurements require raising
 ## Out of scope
 
 Speculative optimization, new asset generation, a renderer rewrite without the ticket 01 decision being revisited.
-

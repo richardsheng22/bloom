@@ -30,4 +30,3 @@ Confirm preferred default sound/haptic settings after hearing a proposed build; 
 ## Out of scope
 
 New soundtrack production, microphone access or continuous background audio.
-

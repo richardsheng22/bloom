@@ -31,4 +31,3 @@ A short hands-on session on agreed iPhone(s), including sound/haptics and the ga
 ## Out of scope
 
 Album implementation, broad new mechanics, claiming untested hardware coverage.
-

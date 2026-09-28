@@ -36,4 +36,3 @@ Selecting a backend service, login, cloud sync or a broad engine rewrite.
 - [Reference 1](https://capacitorjs.com/docs/apis/app)
 
 Checked during planning on 2026-09-28; recheck version-dependent requirements when implementing.
-
