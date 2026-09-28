@@ -21,6 +21,8 @@ Choose the distribution target and demonstrate that the existing game can run ac
 
 - **Build host:** no working Mac. Proposed: build in the cloud (a GitHub Actions macOS runner, or a MacinCloud pay-as-you-go day at $4 with a 24-hour minimum for hands-on Xcode sessions) and install on the phone through TestFlight's internal testing, which needs no USB connection or Beta App Review. Device profiling with Instruments needs a Mac connected to the phone; without one, use an in-app debug frame-time overlay in test builds.
 - **Test phones:** an iPhone 11 or 12 is the main test device. The iPhone 7 stops at iOS 15, and the game uses canvas `roundRect` (Safari 16) and CSS `color-mix()` (Safari 16.2), so it cannot run the current game without changes. Proposed minimum: iOS 16.2 (iPhone 8 and later).
+- **Repository:** stays public (free, unlimited GitHub macOS build minutes). Erwu appearing publicly is fine with the owner and family.
+- **Store name:** **Erwu's Garden** ("Bloom" is crowded on the App Store). Proposed subtitle: "Grow a garden with a lazy cat" (29/30 characters). A future Nest release would follow the same pattern as "Erwu's Nest". The name is confirmed only when the App Store Connect app record is created, so create it as soon as the developer account is approved.
 - **Apple Developer Program:** not yet enrolled; the owner is enrolling as an **individual** (the store shows the owner's legal name as seller).
 
 ## Acceptance and evidence

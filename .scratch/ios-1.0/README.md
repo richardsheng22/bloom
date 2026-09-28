@@ -47,8 +47,8 @@ Confirmed by the owner on 2026-09-28: public App Store after a TestFlight beta; 
 | Data | **Confirmed:** local durable progress, fresh start in the app, no transfer from the web; no cloud sync. Privacy label target: Data Not Collected | Storage architecture |
 | Toolchain/devices | Supported runtime/Xcode pair and measured device floor | Device proof |
 | Build host | Available compatible Mac, local or hosted by explicit choice | Native builds |
-| Store name | "Bloom" is likely taken; check availability early and keep a fallback | Bundle/display name, store record |
-| Seller | Individual account (seller shows the owner's legal name) or organisation (company name, D-U-N-S, slower) | Developer enrollment |
+| Store name | **Chosen:** Erwu's Garden (a future Nest would be Erwu's Nest); confirm by creating the App Store Connect record once enrolled | Bundle/display name, store record |
+| Seller | **Chosen:** individual account (seller shows the owner's legal name); enrollment in progress | Developer enrollment |
 | Price | Free proposed | Store configuration |
 | Web version after launch | Keep, freeze or retire the web game on `main` | Release (15) |
 
