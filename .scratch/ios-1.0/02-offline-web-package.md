@@ -1,6 +1,6 @@
 # iOS 02 — Build a reproducible offline game package
 
-Status: **implemented, pending the first cloud build** (2026-09-28). Signing, device install and the shell's on-device checks wait for the Apple Developer account (ticket 01). Release: 1.0. Dependencies: 01 architecture decision.
+Status: **implemented; the app builds in the cloud** (2026-09-28). Signing, device install and the shell's on-device checks wait for the Apple Developer account (ticket 01). Release: 1.0. Dependencies: 01 architecture decision.
 
 Suggested chunk: One packaging PR. These are review boundaries, not calendar estimates.
 
@@ -53,3 +53,5 @@ Native signing, a PWA service worker, new game features, CDN infrastructure.
 - A signed build and install on a phone: needs the Apple Developer account (tickets 01, 11).
 - A startup failure screen: the game already falls back to its drawn art if images fail; a failure of the page itself is left to on-device testing.
 - Safe areas and the status bar are checked only in the browser so far; ticket 09 checks them on the phone.
+
+**First cloud build** ([run 36476886127](https://github.com/richardsheng22/bloom/actions/runs/36476886127), commit `4899a81`): both jobs passed. The game checks and the offline package test passed on Linux. On `macos-26` with Xcode 26, the app compiled for the Simulator: display name "Erwu's Garden", minimum iOS 16.2, 11 MB, with the game, fonts and art bundled and no scratch or test files. The workflow then moved to `actions/checkout@v5` and `actions/setup-node@v5` (the v4 actions run on a deprecated Node).
