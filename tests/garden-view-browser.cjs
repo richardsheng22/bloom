@@ -29,24 +29,30 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   async function shot(p){const box=await p.locator('#stage').boundingBox();const x=box.x+box.width/2,y=box.y+box.height*.7;
    await p.mouse.move(x,y);await p.mouse.down();await p.mouse.move(x+65,y,{steps:6});await p.waitForTimeout(80);await p.mouse.up();}
   async function assertBounds(p){
-   const boxes=await p.evaluate(()=>['#play','#arrange','#erwu-touch','#garden-scene','#garden-inspection'].map(sel=>{
+   const boxes=await p.evaluate(()=>['#play','#erwu-touch','#garden-scene','#garden-inspection'].map(sel=>{
     const e=document.querySelector(sel),r=e.getBoundingClientRect();return {sel,hidden:e.hidden,x:r.x,y:r.y,w:r.width,h:r.height};}));
    const size=p.viewportSize();for(const b of boxes.filter(b=>!b.hidden)){assert.ok(b.x>=-1&&b.y>=-1&&b.x+b.w<=size.width+1&&b.y+b.h<=size.height+1,JSON.stringify(b));}
-   for(const b of boxes.filter(b=>['#play','#arrange','#erwu-touch'].includes(b.sel)))assert.ok(b.w>=44&&b.h>=44,JSON.stringify(b));
-   const scene=boxes.find(b=>b.sel==='#garden-scene'),sheet=boxes.find(b=>b.sel==='#garden-inspection');
-   if(!sheet.hidden)assert.ok(scene.y+scene.h<=sheet.y+1||scene.x+scene.w<=sheet.x+1,'inspection must not cover scene');
+   for(const b of boxes.filter(b=>['#play','#erwu-touch'].includes(b.sel)))assert.ok(b.w>=44&&b.h>=44,JSON.stringify(b));
+   // a bed's card may rise over the foot of the garden, but never over the beds themselves
+   const sheet=boxes.find(b=>b.sel==='#garden-inspection');
+   if(!sheet.hidden){const beds=await p.evaluate(()=>[...document.querySelectorAll('.anchor-target:not([hidden])')].map(e=>{const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};}));
+    for(const c of beds)assert.ok(!(c.x>sheet.x&&c.x<sheet.x+sheet.w&&c.y>sheet.y&&c.y<sheet.y+sheet.h),'the card leaves the beds visible');}
   }
   for(const [width,height]of [[320,568],[375,667],[390,844],[430,932],[568,320],[1024,768]]){
    const p=await setup(width,height);const before=await snapshot(p),owned=await plants(p);
    await assertBounds(p);await p.screenshot({path:path.join(out,`garden-${width}x${height}.png`)});
    await p.locator('#erwu-touch').tap();assert.equal(await p.locator('#inspection-name').innerText(),'Erwu');assert.deepEqual(await snapshot(p),before);
-   // Only beds, the cushion and the stone open; a bed opens from the keyboard too.
-   // Escape closes it and returns focus without touching the run.
-   await p.locator('.anchor-target').first().focus();await p.keyboard.press('Enter');await assertBounds(p);
+   // Only the beds open (Arrange and the furnishings were retired); a bed opens from the
+   // keyboard too, without moving or rescaling the garden. Escape closes it without touching the run.
+   assert.equal(await p.locator('#arrange, #edit-selected, #arrange-panel').count(),0);
+   assert.equal(await p.locator('.anchor-target:not([hidden])').count(),3);
+   const still=await p.locator('#garden-scene').boundingBox();
+   await p.locator('.anchor-target:not([hidden])').first().focus();await p.keyboard.press('Enter');await assertBounds(p);
+   assert.deepEqual(await p.locator('#garden-scene').boundingBox(),still,'opening a bed leaves the garden still');
    assert.ok(await p.locator('#bed-actions').isVisible());assert.ok(await p.locator('.bed-chip').first().isVisible());
    await p.screenshot({path:path.join(out,`inspection-${width}x${height}.png`)});
    await p.keyboard.press('Escape');
-   assert.ok(await p.locator('#garden-inspection').isHidden());assert.equal(await p.evaluate(()=>document.activeElement.id),'arrange');
+   assert.ok(await p.locator('#garden-inspection').isHidden());assert.equal(await p.evaluate(()=>document.activeElement.id),'play');
    assert.equal(await p.locator('#explore, #plant-picker').count(),0);
    // A drag in garden space is not a slingshot or an inspection tap.
    const scene=await p.locator('#garden-scene').boundingBox();await p.mouse.move(scene.x+12,scene.y+25);await p.mouse.down();await p.mouse.move(scene.x+65,scene.y+85,{steps:5});await p.mouse.up();
@@ -68,8 +74,8 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   const target=await p.evaluate(()=>{const r=document.querySelector('#garden-scene').getBoundingClientRect(),scene=BloomGardenView.layout(r),g=JSON.parse(localStorage.getItem('bloom.garden2'));
    const item=g.plants[0],at=BloomGardenLayout.projectPlant(item,scene);return {x:scene.cx+at.x,y:scene.cy+at.y-8};});
   await p.touchscreen.tap(target.x,target.y);assert.ok(await p.locator('#garden-inspection').isHidden());
-  await p.locator('.anchor-target').nth(3).tap();assert.ok(await p.locator('#garden-inspection').isVisible());
-  assert.equal(await p.locator('#inspection-name').innerText(),'Cushion');
+  await p.locator('.anchor-target:not([hidden])').nth(2).tap();assert.ok(await p.locator('#garden-inspection').isVisible());
+  assert.match(await p.locator('#inspection-name').innerText(),/bed/i);
   const rect=await p.locator('#garden-scene').boundingBox();await p.mouse.click(rect.x+2,rect.y+2);assert.ok(await p.locator('#garden-inspection').isHidden());
   await p.locator('#erwu-touch').tap();await play(p);assert.ok(await p.locator('#title').isHidden());
   // Cancel a pointer before leaving the run; its late release cannot launch in the garden.
@@ -87,7 +93,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   await garden(p);const completed=await snapshot(p);assert.equal(completed.turn,9);
   await play(p);assert.deepEqual(await snapshot(p),completed);await p.waitForTimeout(900);assert.equal(await p.evaluate(()=>document.body.dataset.view),'run');
   await p.reload();await garden(p);assert.deepEqual(await snapshot(p),completed);
-  console.log('PASS safe-area reservations, resize, wild plants stay untouchable, bed and cushion taps, dismissal, immediate play, pointer cancellation, queued return/cancel');await p.close();
+  console.log('PASS safe-area reservations, resize, wild plants stay untouchable, bed taps, dismissal, immediate play, pointer cancellation, queued return/cancel');await p.close();
   // A queued return also handles loss without silently creating a new run or a delayed dialog.
   const losing={...run,petalNext:false,items:[{kind:'shape',sector:0,ring:1,hp:999,maxHp:999,sp:0,ci:0}]};
   const lost=await setup(390,844,{run:losing});await play(lost);await shot(lost);await lost.locator('#visit-garden').click();await garden(lost);

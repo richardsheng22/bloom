@@ -72,3 +72,9 @@ Still to tune after play on the phone: sizes of pieces against the backdrop, and
 - **Overlaps:** wild plants now keep clear of the taller painted beds and the rose bed (`scene.scenery.clear`), and her swat and delight are cropped above the rim painted into them, so only her own basket's rim shows.
 - **Play brings life:** planted beds stay in the garden during a run (their news floats up above the flower). Rest now starts after 4 hours away and deepens over about a day and a half (was 12 h and 3 days). A visit only wakes the garden half way; turns bring the rest back. A resting garden drains to a muted, dusky grey, with Erwu, the flower and everything play brings in full colour above it, and colour eases back turn by turn (`rest-awake-vs-resting.webp`, `run-resting-390.webp`).
 - **Legibility:** words over the painted garden sit on small paper labels.
+
+## Second phone review (2026-09-28)
+
+- **Arrange and Put away are retired for now.** The cushion and sunny stone stay where they are and are no longer tappable; the three flower beds are the only things tapped in the garden. The layout module keeps its arranging code and tests, so it can come back.
+- **Tapping a bed no longer moves the garden.** Its planting card rises over the foot of the garden instead of growing the dock, so the garden never rescales (`bed-card-over-garden.webp`).
+- **A smoother walk.** The generated walk frames differed: the second row was drawn ~4% smaller and the torso drifted up to 11 px, so her body jumped every half-stride. The build now scales every frame to one height and anchors each on its torso. She also strolls slower (34 px/s, was 42), with a stride of about her body length (her legs used to cycle every quarter-length, about 12 frame changes a second; now about 3), and each frame eases into the next over most of its time (`walk-16-frames.webp`: 16 captures ~0.1 s apart).

@@ -84,21 +84,17 @@ function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
     assert.notDeepEqual(await at(p), stopped, 'on her way again');
     console.log('PASS a hello mid-walk: she stops, looks, carries on');
 
-    // 3. Arranging holds her still; moving her target makes her choose again.
+    // 3. Opening a bed's planting card leaves the garden still, and Erwu carries on with her day.
     await p.evaluate(() => window.__erwu.trigger('cushion'));
-    await p.waitForTimeout(600);
-    await p.locator('#arrange').click();
-    const held = await at(p);
-    await p.waitForTimeout(1500);
-    assert.deepEqual(await at(p), held);
-    const cushion = await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden2')).objects.find((o) => o.kind === 'cushion').id);
-    await p.locator('#arrange-picker').selectOption(cushion);
-    await p.locator('.anchor-target[data-anchor="nook-right"]').click();
-    await p.locator('#arrange-confirm').click();
-    assert.match((await info(p)).reason, /nook-left changed|nook-right changed/);
-    await p.locator('#arrange').click();
-    await p.waitForTimeout(800);
-    console.log('PASS arranging pauses her; moving her destination re-plans');
+    await p.waitForTimeout(400);
+    const scene = await p.locator('#garden-scene').boundingBox(), going = await at(p);
+    await p.locator('.anchor-target:not([hidden])').first().click();
+    assert.ok(await p.locator('#bed-actions').isVisible());
+    await p.waitForTimeout(1200);
+    assert.deepEqual(await p.locator('#garden-scene').boundingBox(), scene);
+    assert.notDeepEqual(await at(p), going, 'she keeps walking while you plant');
+    await p.locator('#inspection-close').click();
+    console.log('PASS a bed card leaves the garden still and Erwu free');
 
     // 4. A hidden page does nothing, and replays nothing when it comes back.
     await p.evaluate(() => window.__erwu.trigger('sun-stone'));

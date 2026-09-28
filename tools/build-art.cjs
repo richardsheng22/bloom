@@ -25,7 +25,7 @@ const ERWU = [
     'look-up': [630, 1054, 192, 272], 'sit-grumpy': [866, 1074, 244, 256], 'lie-side': [6, 1114, 353, 204], 'loaf-side': [360, 1114, 250, 204],
   } },
   // two rows of four; each frame is anchored on its nose so the body holds still
-  { file: 'erwu-walk-v2.png', match: 'erwu', regions: Object.fromEntries([
+  { file: 'erwu-walk-v2.png', match: 'erwu', walk: true, regions: Object.fromEntries([
     [16, 156, 412, 236], [444, 152, 412, 240], [884, 152, 408, 240], [1320, 152, 420, 240],
     [20, 500, 412, 228], [448, 500, 412, 228], [884, 504, 412, 228], [1316, 500, 424, 232]].map((r, i) => [`walk-${i}`, r])) },
   // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
@@ -137,9 +137,9 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
           ? big.filter((p) => p.box[4] > 400).sort((a, b) => a.box[1] - b.box[1] || a.box[0] - b.box[0]).map((p, i) => [`${name.replace(/s$/, '')}-${i}`, [p.id]])
           : [[name, big.map((p) => p.id)]];
         for (const [n, ids] of groups) {
-          const c = cut(P, ids), walk = /^walk-/.test(n);
-          // anchor: where the piece meets the ground. Walk frames anchor on the nose.
-          made.push({ name: n, ...c, ax: walk ? c.w - 200 : c.w / 2, ay: c.h,
+          const c = cut(P, ids);
+          // anchor: where the piece meets the ground (walk frames are re-anchored below)
+          made.push({ name: n, ...c, ax: c.w / 2, ay: c.h,
             ref: typeof sheet.ref === 'number' ? sheet.ref : sheet.ref && sheet.ref[n] });
         }
       }
@@ -159,6 +159,19 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
             d.data[i + k] = Math.max(0, Math.min(255, (d.data[i + k] - m0) / s0 * s1 + m1));
           }
           cg.putImageData(d, 0, 0);
+        }
+      }
+      if (sheet.walk) {
+        // A walk must hold still: the generated frames differ a little in size (the second row
+        // is drawn ~4% smaller) and drift sideways. Scale every frame to the tallest, and anchor
+        // each on its torso (the centroid of its upper body) with the feet on the ground line.
+        const H = Math.max(...made.map((p) => p.h));
+        for (const p of made) {
+          const k = H / p.h, w = Math.round(p.w * k), sc = document.createElement('canvas'); sc.width = w; sc.height = H;
+          const sg = sc.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(p.canvas, 0, 0, w, H);
+          const d = sg.getImageData(0, 0, w, H).data; let cx = 0, n = 0;
+          for (let y = 0; y < H * 0.6; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 128) { cx += x; n++; }
+          Object.assign(p, { canvas: sc, w, h: H, ax: cx / n, ay: H });
         }
       }
       for (const p of made) {

@@ -531,27 +531,12 @@
   }
   @media (prefers-reduced-motion: reduce) { #title .logo { transition: none; } }
 
-  /* Arrangement uses the same dock; no sheet covers the garden or Play. */
-  /* Arrange sits beside Play; wild plants aren't edited, so there's nothing else here. */
-  .garden-actions { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 2fr); gap: 8px; }
+  /* Play fills the dock; the flower beds are the only things tapped in the garden. */
+  .garden-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
   #title #play { grid-column: auto; }
   #arrangement-targets { position: absolute; inset: 0; pointer-events: none; }
   .anchor-target { position: absolute; width: 56px; height: 48px; transform: translate(-50%,-50%); border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--moss); font: 500 20px var(--font); pointer-events: auto; touch-action: manipulation; cursor: pointer; }
   .anchor-target.available { border: 1.5px dashed var(--moss); background: rgba(255,253,245,.3); }
-  .anchor-target.selected { border: 2px solid var(--walnut); }
-  .anchor-target.preview { outline: 2px dotted var(--bud-deep); outline-offset: 4px; }
-  #edit-selected { grid-column: 1 / -1; min-height: 44px; text-align: left; }
-  #title.arranging #garden-detail-space { height: 170px; }
-  #title.arranging #garden-invitation, #title.arranging #garden-inspection, #title.arranging .t-status, #title.arranging .t-note { display: none; }
-  #title.arranging .garden-actions { grid-template-columns: 1fr 1fr; }
-  #title.arranging #play { grid-column: auto; }
-  #arrange-panel { text-align: left; border-top: 1px solid var(--hairline); padding-top: 6px; }
-  .arrange-choice { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; }
-  #arrange-picker { width: 100%; min-height: 44px; border: 1px solid var(--hairline); border-radius: 9px; background: var(--chip); padding: 5px 7px; color: var(--ink); font: 14px var(--font); }
-  #arrange-message { min-height: 52px; margin: 5px 0; font-size: 13px; line-height: 1.3; color: var(--ink-soft); }
-  .arrange-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  #arrange-panel .garden-button { min-height: 44px; padding: 5px 8px; }
-  #arrange-confirm:not(:disabled) { background: var(--halo); color: var(--ink); border-color: var(--moss); }
   .garden-button:disabled { opacity: .45; cursor: default; }
 
   /* Beds and the seed tin. Choices are chips in the scene's own style, not a form. */
@@ -573,18 +558,23 @@
   .bed-buttons .garden-button { min-height: 44px; padding: 5px 8px; }
   .bed-buttons [hidden] { display: none; }
   #bed-plant:not(:disabled) { background: var(--halo); border-color: var(--moss); }
-  #title.bedding #garden-detail-space { height: 176px; }
-  #title.bedding .t-status { display: none; }
-  @media (max-height: 680px) { #title.bedding #garden-detail-space { height: 168px; } }
+  /* A bed's planting card rises over the foot of the garden instead of growing the dock, so
+     the garden above never shifts or rescales when a bed is tapped. */
+  #garden-detail-space { position: relative; }
+  #title.bedding #garden-inspection {
+    position: absolute; left: -4px; right: -4px; bottom: 0; z-index: 2;
+    padding: 10px 12px 10px; border-top: 0; border-radius: 16px;
+    background: color-mix(in srgb, var(--ground) 96%, transparent);
+    box-shadow: 0 2px 0 rgba(110,78,51,0.14), 0 8px 24px rgba(80,70,40,0.18);
+    animation: card-rise 220ms var(--ease-out) both;
+  }
+  #title.bedding .t-status { visibility: hidden; }
+  @keyframes card-rise { from { opacity: 0; transform: translateY(10px); } }
+  @media (prefers-reduced-motion: reduce) { #title.bedding #garden-inspection { animation: none; } }
   @media (orientation: landscape) and (max-height: 500px) {
     #title .t-top { min-height: 30px; }
     #title .logo, #title.settled .logo { font-size: 26px; }
-    .garden-actions { grid-template-columns: auto minmax(0,1fr); gap: 5px; }
-    .garden-actions .garden-button { padding: 6px 8px; font-size: 12px; }
     #title #play { grid-column: auto; font-size: 14px; }
-    #title.arranging .t-top { display: none; }
-    #title.arranging .t-bottom { grid-row: 1 / 3; }
-    #title.arranging #garden-detail-space { height: 162px; }
     #title .t-note { margin-top: 5px; min-height: 24px; font-size: 11px; }
   }
 </style>
@@ -640,7 +630,7 @@
     <div id="arrangement-targets"></div>
     <button id="erwu-touch" aria-label="Say hello to Erwu" title="Say hello to Erwu"></button>
     <button id="seed-tin" class="tin-button" aria-label="Seed tin" title="Seed tin" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="16" rx="3" fill="#C7A27A" stroke="#8A6444" stroke-width="1.4"/><rect x="5" y="7" width="22" height="5" rx="2" fill="#E3C79C" stroke="#8A6444" stroke-width="1.4"/><path d="M16 14.5c2.2 1.9 3.1 3.7 3.1 5.4a3.1 3.1 0 0 1-6.2 0c0-1.7.9-3.5 3.1-5.4Z" fill="#6E8A4A"/></svg><b id="tin-count"></b></button>
-    <p class="sr-only">Tap a flower bed, the cushion or the sunny stone. Wild plants grow on their own as you play.</p>
+    <p class="sr-only">Tap a flower bed to plant it. Wild plants grow on their own as you play.</p>
   </div>
   <div class="t-bottom">
     <div id="garden-detail-space">
@@ -655,16 +645,10 @@
             <button id="bed-plant" class="garden-button" hidden>Plant</button><button id="bed-cancel" class="garden-button" hidden>Cancel</button>
           </div>
         </div>
-        <button id="edit-selected" class="garden-button" hidden>Arrange this</button>
-      </section>
-      <section id="arrange-panel" hidden aria-label="Arrange your garden">
-        <div class="arrange-choice"><label class="sr-only" for="arrange-picker">Choose an item to arrange</label><select id="arrange-picker"></select><button id="arrange-undo" class="garden-button" disabled>Undo</button></div>
-        <p id="arrange-message" role="status">Choose something to arrange.</p>
-        <div class="arrange-buttons"><button id="arrange-confirm" class="garden-button" disabled>Place</button><button id="arrange-cancel" class="garden-button" disabled>Cancel</button><button id="arrange-remove" class="garden-button" disabled>Put away</button></div>
       </section>
     </div>
     <p class="t-status" id="t-status"></p>
-    <div class="garden-actions"><button id="arrange" class="garden-button" aria-pressed="false">Arrange</button><button id="play" class="wood">Play</button></div>
+    <div class="garden-actions"><button id="play" class="wood">Play</button></div>
     <p class="t-note" id="t-note" role="status"></p>
   </div>
 </section>
@@ -706,9 +690,7 @@
     visitGarden: $('#visit-garden'), scene: $('#garden-scene'), erwuTouch: $('#erwu-touch'),
     inspection: $('#garden-inspection'), inspectionName: $('#inspection-name'), inspectionDescription: $('#inspection-description'),
     inspectionClose: $('#inspection-close'), invitation: $('#garden-invitation'),
-    arrange: $('#arrange'), arrangePanel: $('#arrange-panel'), arrangePicker: $('#arrange-picker'), arrangeMessage: $('#arrange-message'),
-    arrangeConfirm: $('#arrange-confirm'), arrangeCancel: $('#arrange-cancel'), arrangeRemove: $('#arrange-remove'), arrangeUndo: $('#arrange-undo'),
-    arrangementTargets: $('#arrangement-targets'), editSelected: $('#edit-selected'),
+    arrangementTargets: $('#arrangement-targets'),
     seedHud: $('#seed-hud'), seedCount: $('#seed-count'), bedLive: $('#bed-live'),
     seedTin: $('#seed-tin'), tinCount: $('#tin-count'), bedActions: $('#bed-actions'), bedChoices: $('#bed-choices'),
     bedFocus: $('#bed-focus'), bedReplant: $('#bed-replant'), bedPlant: $('#bed-plant'), bedCancel: $('#bed-cancel'),
@@ -1715,12 +1697,12 @@
   }
   function drawArrangedGarden(g) {
     if (!arrangementAvailable) return;
-    const layout = arranging && arrangementDraft ? BloomGardenLayout.preview(garden, arrangementDraft) : garden;
+    const layout = garden;
     if (presentation === 'garden' && gardenScene) {
       // back to front, so taller plantings overlap correctly
       for (const q of BloomGardenLayout.geometry(gardenScene).sort((a, b) => a.y - b.y)) {
         const item = BloomGardenLayout.at(layout, q.id);
-        if (item) drawGardenObject(g, item, q, !!arrangementDraft?.changes.some(c => c.id === item.id));
+        if (item) drawGardenObject(g, item, q);
       }
     } else if (presentation === 'run') {
       // Only planted beds come along during play, small and just above the flower,
@@ -2479,14 +2461,14 @@
   const depthAt = (y) => !gardenScene ? 1 : 0.84 + 0.2 * Math.max(0, Math.min(1, (y + gardenScene.height / 2) / gardenScene.height));
   function erwuWorld() {
     if (!erwuPlaces && gardenScene) erwuPlaces = BloomErwu.places(gardenScene, BloomGardenLayout.geometry(gardenScene), BloomGardenLayout.landmarks(gardenScene));
-    return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, stride: gardenScene ? gardenScene.nest * 0.5 : 26,
+    return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.35 : 0.5) : 26,
       beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
       objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 })) };
   }
   const catnipGrown = () => garden.patches.some((p) => p.anchor && p.flower === 'catnip' && p.growth >= 0.55);
   let titleT = 0, settleTimer = 0, overTimer = 0, inspectedErwu = false;
   let scenePress = null;
-  let arranging = false, arrangementSelection = null, arrangementDraft = null, arrangementUndo = null, inspectedObject = null;
+  let inspectedObject = null;
   const bloomingCount = () => garden.plants.filter((p) => p.g >= 0.68 && !['grass', 'clover', 'fern', 'mushroom'].includes(p.k)).length;
   function measureGarden() {
     if (el.title.hidden) return;
@@ -2509,13 +2491,11 @@
     inspectedErwu = false; inspectedObject = null;
     resetPlanting(); tinOpen = false; tinSeed = null;
     el.title.classList.remove('bedding'); el.bedActions.hidden = true; refreshArrangementTargets();
-    el.editSelected.hidden = true;
     el.inspection.hidden = true; el.invitation.hidden = false;
-    if (focus && presentation === 'garden') el.arrange.focus({ preventScroll: true });
+    if (focus && presentation === 'garden') el.play.focus({ preventScroll: true });
   }
   function refreshInspection() {
     if (el.inspection.hidden) return;
-    el.editSelected.hidden = !inspectedObject;
     const bed = inspectedObject && garden.patches.find((p) => p.id === inspectedObject);
     el.title.classList.toggle('bedding', !!bed || tinOpen);
     el.bedActions.hidden = !bed && !tinOpen;
@@ -2532,7 +2512,7 @@
     } else closeInspection();
   }
   function greetErwu() {
-    if (presentation !== 'garden' || arranging) return;
+    if (presentation !== 'garden') return;
     inspectedObject = null;
     clearTimeout(settleTimer); el.title.classList.add('settled');
     inspectedErwu = true;
@@ -2540,31 +2520,22 @@
     BloomErwu.tap(erwu);
     refreshInspection();
   }
+  // Invisible tap targets over the flower beds, the only things tapped in the garden. The seed
+  // tin marks them when a seed is chosen.
   function refreshArrangementTargets() {
     if (!gardenScene || el.title.hidden) return;
-    const selected = BloomGardenLayout.find(garden, arrangementSelection);
-    const proposed = arrangementDraft ? BloomGardenLayout.preview(garden, arrangementDraft) : garden;
     for (const q of BloomGardenLayout.geometry(gardenScene)) {
       let button = el.arrangementTargets.querySelector(`[data-anchor="${q.id}"]`);
       if (!button) {
         button = document.createElement('button'); button.className = 'anchor-target'; button.dataset.anchor = q.id;
-        button.addEventListener('click', () => chooseArrangementAnchor(q.id)); el.arrangementTargets.append(button);
+        button.addEventListener('click', () => inspectObject(BloomGardenLayout.at(garden, q.id))); el.arrangementTargets.append(button);
       }
-      const item = BloomGardenLayout.at(proposed, q.id);
-      const compatible = selected && BloomGardenLayout.kinds[selected.kind].type === q.type;
-      button.hidden = !arrangementAvailable || (!arranging && !item);
-      if (!arranging) button.classList.toggle('available', !!(tinSeed && item && q.type === 'patch'));
+      const item = BloomGardenLayout.at(garden, q.id), bed = item?.kind === 'flower-patch';
+      button.hidden = !arrangementAvailable || !bed;
+      button.classList.toggle('available', !!(tinSeed && bed));
       button.style.left = (gardenScene.width/2+q.x)+'px'; button.style.top = (gardenScene.height/2+q.y)+'px';
-      if (arranging) button.classList.toggle('available', !!compatible);
-      button.classList.toggle('selected', !!(arranging && item?.id === arrangementSelection));
-      button.classList.toggle('preview', !!arrangementDraft?.changes.some(c=>c.to===q.id));
-      button.textContent = arranging && compatible && !item ? '+' : '';
-      button.setAttribute('aria-label', arranging && compatible ? `Preview ${BloomGardenLayout.label(garden,selected)} at ${q.name}`
-        : item?.kind === 'flower-patch' ? (item.flower ? `${BloomBeds.NAMES[item.flower]} in ${q.name}` : `Empty flower bed, ${q.name}`)
-        : item ? `${BloomGardenLayout.label(garden,item)} at ${q.name}` : q.name);
+      button.setAttribute('aria-label', !bed ? q.name : item.flower ? `${BloomBeds.NAMES[item.flower]} in ${q.name}` : `Empty flower bed, ${q.name}`);
     }
-    el.erwuTouch.disabled = arranging;
-    erwu.paused = arranging;
   }
   function inspectObject(item) {
     if (!item) return;
@@ -2603,7 +2574,6 @@
     const flower = bed.flower, st = BloomBeds.stage(bed), focused = BloomBeds.focusBed(garden) === bed;
     const place = BloomGardenLayout.label(garden, bed);
     el.inspectionName.textContent = flower ? `${BloomBeds.NAMES[flower]} · ${place.toLowerCase()}` : place;
-    el.editSelected.hidden = true;
     const choosing = !flower || replanting || plantingDraft;
     el.bedChoices.replaceChildren();
     if (choosing) {
@@ -2637,7 +2607,6 @@
   }
   function refreshTin() {
     el.inspectionName.textContent = 'Seed tin';
-    el.editSelected.hidden = true;
     el.bedChoices.replaceChildren();
     for (const seed of garden.seeds) {
       el.bedChoices.append(chip(BloomBeds.NAMES[seed.kind], seedNote(seed), seed.kind, tinSeed === seed.id, () => {
@@ -2650,7 +2619,7 @@
     for (const b of [el.bedPlant, el.bedCancel, el.bedFocus, el.bedReplant]) b.hidden = true;
   }
   function openTin() {
-    if (presentation !== 'garden' || arranging) return;
+    if (presentation !== 'garden') return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
     inspectedErwu = false; inspectedObject = null; resetPlanting();
     tinOpen = true; tinSeed = garden.seeds.length === 1 ? garden.seeds[0].id : null;
@@ -2692,65 +2661,10 @@
         rot: 0, vr: 0, ph: Math.random() * TAU, life: 1.6 + Math.random(), decay: 0.45, size: 2 + Math.random() });
     }
   }
-  function chooseArrangementAnchor(anchor) {
-    const item = BloomGardenLayout.at(garden, anchor);
-    if (!arranging) { inspectObject(item); return; }
-    const selected = BloomGardenLayout.find(garden, arrangementSelection);
-    const slot = BloomGardenLayout.anchors.find(a=>a.id===anchor);
-    if (!selected || BloomGardenLayout.kinds[selected.kind].type !== slot.type) {
-      if (item) { arrangementSelection = item.id; arrangementDraft = null; refreshArrange(); }
-      return;
-    }
-    arrangementDraft = BloomGardenLayout.plan(garden, selected.id, anchor);
-    refreshArrange(arrangementDraft ? '' : 'It is already here. Choose another place.');
-  }
-  function refreshArrange(message = '') {
-    el.arrangePicker.replaceChildren();
-    const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Choose an item…'; el.arrangePicker.append(placeholder);
-    for (const item of BloomGardenLayout.records(garden)) {
-      const option = document.createElement('option'); option.value = item.id;
-      option.textContent = `${BloomGardenLayout.label(garden,item)}${item.anchor === null ? ' · collection' : ''}`; el.arrangePicker.append(option);
-    }
-    el.arrangePicker.value = arrangementSelection || '';
-    const selected = BloomGardenLayout.find(garden, arrangementSelection);
-    el.arrangeMessage.textContent = message || (arrangementDraft ? BloomGardenLayout.describe(garden,arrangementDraft)
-      : selected ? `${BloomGardenLayout.kinds[selected.kind].description} Choose a dotted place.` : 'Choose an item below, or tap one in the garden.');
-    el.arrangeConfirm.disabled = !arrangementDraft;
-    el.arrangeConfirm.textContent = arrangementDraft?.action === 'swap' ? 'Swap' : arrangementDraft?.action === 'remove' ? 'Put away' : 'Place';
-    el.arrangeCancel.disabled = !arrangementDraft;
-    el.arrangeRemove.disabled = !selected || selected.anchor === null || arrangementDraft?.action === 'remove';
-    el.arrangeUndo.disabled = !arrangementUndo;
-    refreshArrangementTargets(); gardenDirty = true;
-  }
-  function beginArrange(id = null) {
-    if (!arrangementAvailable || presentation !== 'garden') return;
-    clearAim(); closeInspection(); clearTimeout(settleTimer); el.title.classList.add('settled','arranging');
-    arranging = true; arrangementSelection = id; arrangementDraft = null; arrangementUndo = null;
-    el.arrangePanel.hidden = false; el.arrange.textContent = 'Done'; el.arrange.setAttribute('aria-pressed','true');
-    measureGarden(); refreshArrange(); el.arrangePicker.focus({preventScroll:true});
-  }
-  function endArrange() {
-    arranging = false; arrangementSelection = null; arrangementDraft = null; arrangementUndo = null;
-    el.title.classList.remove('arranging'); el.arrangePanel.hidden = true;
-    el.arrange.textContent = 'Arrange'; el.arrange.setAttribute('aria-pressed','false');
-    el.erwuTouch.disabled = false; gardenDirty = true; measureGarden();
-  }
-  function commitArrangement(undo = false) {
-    const plan = undo ? arrangementUndo : arrangementDraft;
-    if (!arranging || !plan || !BloomGardenLayout.apply(garden,plan)) return;
-    if (!saveGarden()) {
-      BloomGardenLayout.apply(garden,BloomGardenLayout.reverse(plan));
-      refreshArrange('Saving could not be confirmed. Please try again.'); return;
-    }
-    arrangementUndo = undo ? null : BloomGardenLayout.reverse(plan);
-    for (const c of plan.changes) { if (c.from) BloomErwu.invalidate(erwu, c.from); if (c.to) BloomErwu.invalidate(erwu, c.to); }
-    arrangementDraft = null;
-    refreshArrange(undo ? 'Your previous arrangement is back.' : 'Placed in your garden. You can undo this move.');
-  }
   function showTitle() {
     clearTimeout(overTimer); clearTimeout(introTimer); clearTimeout(settleTimer); clearTimeout(bannerTimer);
     clearTimeout(restartTimer); restartArmed = false; el.restart.classList.remove('armed');
-    clearAim(); endArrange(); closeInspection(); gardenRequested = false;
+    clearAim(); closeInspection(); gardenRequested = false;
     presentation = 'garden'; titleT = 1; gardenCache = null; bgCache = null;
     document.body.dataset.view = presentation;
     cat = freshCat(); cat.mood = 'sleepy';
@@ -2762,7 +2676,6 @@
     el.app.inert = true; el.app.setAttribute('aria-hidden', 'true');
     el.play.textContent = state === 'over' ? 'Play again' : readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
     el.tNote.textContent = gardenMessage();
-    el.arrange.hidden = !arrangementAvailable;
     el.title.hidden = false; el.title.classList.remove('enter', 'leaving');
     el.over.hidden = true;
     showStatus();
@@ -2781,7 +2694,7 @@
   }
   function leaveTitle() {
     if (presentation !== 'garden') return;
-    clearTimeout(settleTimer); clearAim(); endArrange(); closeInspection();
+    clearTimeout(settleTimer); clearAim(); closeInspection();
     presentation = 'run'; titleT = 0; gardenRequested = false; gardenCache = null; bgCache = null;
     arenaReveal = reduced ? 1 : 0;
     document.body.dataset.view = presentation;
@@ -4552,8 +4465,9 @@
     ctx.translate(erwu.at.x, floor - lift);
     if (pose === 'curl' && !reduced) ctx.scale(1, 1 + Math.sin(now / 1300) * 0.012);
     paintPiece(ctx, 'erwu', name, 0, 0, f[2] * unit, flip);
-    // a short dissolve into the next walk frame over an opaque one, so she never turns see-through
-    const mix = pose === 'walk' && !reduced ? Math.max(0, (phase % 1 - 0.75) / 0.25) : 0, next = `walk-${(Math.floor(phase) + 1) % 8}`;
+    // an eased dissolve into the next walk frame over an opaque one, across the latter part of
+    // each frame, so the legs flow rather than snap; she never turns see-through
+    const u = Math.max(0, (phase % 1 - 0.35) / 0.65), mix = pose === 'walk' && !reduced ? u * u * (3 - 2 * u) : 0, next = `walk-${(Math.floor(phase) + 1) % 8}`;
     if (mix) paintPiece(ctx, 'erwu', next, 0, 0, ART.erwu.frames[next][2] * unit, flip, mix);
     ctx.restore();
     if (nest) drawBasketFront(ctx);
@@ -4984,9 +4898,7 @@
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (presentation === 'garden') {
-        if (arranging && arrangementDraft) { arrangementDraft = null; refreshArrange(); }
-        else if (arranging) { endArrange(); el.arrange.focus({preventScroll:true}); }
-        else if (plantingDraft || replanting) { resetPlanting(); refreshInspection(); }
+        if (plantingDraft || replanting) { resetPlanting(); refreshInspection(); }
         else closeInspection(true);
       }
       else { clearAim(); gardenRequested = false; updateHud(); }
@@ -5005,13 +4917,6 @@
     }
   });
 
-  el.arrange.addEventListener('click', () => { if (arranging) { endArrange(); el.arrange.focus({preventScroll:true}); } else beginArrange(); });
-  el.editSelected.addEventListener('click', () => beginArrange(inspectedObject));
-  el.arrangePicker.addEventListener('change', () => { arrangementSelection = el.arrangePicker.value || null; arrangementDraft = null; refreshArrange(); });
-  el.arrangeConfirm.addEventListener('click', () => commitArrangement());
-  el.arrangeCancel.addEventListener('click', () => { arrangementDraft = null; refreshArrange(); });
-  el.arrangeRemove.addEventListener('click', () => { arrangementDraft = BloomGardenLayout.plan(garden,arrangementSelection,null); refreshArrange(); });
-  el.arrangeUndo.addEventListener('click', () => commitArrangement(true));
   el.erwuTouch.addEventListener('click', greetErwu);
   el.seedTin.addEventListener('click', () => { if (tinOpen) closeInspection(true); else openTin(); });
   el.bedPlant.addEventListener('click', commitPlanting);
@@ -5034,7 +4939,7 @@
     if (!scenePress || scenePress.id !== e.pointerId) return;
     const tapped = !scenePress.moved && Math.hypot(e.clientX - scenePress.x, e.clientY - scenePress.y) <= 10;
     clearAim();
-    if (!tapped || presentation !== 'garden' || !gardenScene || arranging) return;
+    if (!tapped || presentation !== 'garden' || !gardenScene) return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
     // Wild plants grow on their own; tapping the lawn just closes whatever is open.
     closeInspection();

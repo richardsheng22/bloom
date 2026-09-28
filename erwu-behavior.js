@@ -189,7 +189,7 @@
     start(st, name, steps, reason || `asked: ${name}`);
     return true;
   }
-  const SPEED = 42; // px per second at full size; the walk cycle is driven by distance, so feet don't slide
+  const SPEED = 34; // px per second at full size, an unhurried stroll; the walk cycle is driven by distance, so feet don't slide
   // Add an action after whatever she's doing now (for short scripted sequences).
   function queue(st, name, w, arg, reason) {
     const steps = plan(st, name, w, arg);
