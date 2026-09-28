@@ -10,7 +10,9 @@
   // play that brings the garden to life (owner reviews, 2026-09-28).
   const REST = Object.freeze({ graceHours: 3, settleHours: 21, wakeSeconds: 90, visitWake: 0.2, turnRecovery: 0.18 });
   const VERSION = 3;
-  const KINDS = new Set(['grass', 'clover', 'fern', 'mushroom', 'daisy', 'cosmos', 'lavender', 'forget', 'buttercup']);
+  // the last six are the wildflowers a full garden matures into
+  const KINDS = new Set(['grass', 'clover', 'fern', 'mushroom', 'daisy', 'cosmos', 'lavender', 'forget', 'buttercup',
+    'foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild']);
   const domains = ['plant', 'patch', 'object', 'discovery', 'seed'];
   const collections = ['plants', 'patches', 'objects', 'discoveries', 'seeds'];
   const finite = (n) => typeof n === 'number' && Number.isFinite(n);

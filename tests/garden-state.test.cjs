@@ -166,3 +166,10 @@ test('a crowded legacy garden keeps all 170 plants, including duplicate visual s
   assert.ok(G.save(disk, session));
   assert.equal(G.allocateId(G.load(disk, NOW).garden), 'plant-171');
 });
+test('a full garden matures: the wildflowers it grows into are valid saved plants', () => {
+  const { disk, session } = fixture();
+  for (const k of ['foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild']) session.garden.plants.push({ id: G.allocateId(session.garden), a: 1, d: 1.5, k, g: 0.5, s: 7 });
+  assert.ok(G.save(disk, session));
+  assert.equal(G.load(disk, NOW).issue, null);
+  assert.deepEqual(G.load(disk, NOW).garden.plants.slice(-6).map(p => p.k), ['foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild']);
+});

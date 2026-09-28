@@ -876,7 +876,10 @@
 
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
-    const base = 0.46 * t + 0.34 * ballCount;
+    // Past turn 60 the buds toughen a little more each turn (1.24x by turn 100, 1.54x by 150),
+    // so a long run builds towards an ending instead of levelling out.
+    const late = 1 + Math.max(0, t - 60) * 0.006;
+    const base = (0.46 * t + 0.34 * ballCount) * late;
     let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.55)));
     if (t > 6 && Math.random() < 0.12) h = Math.round(h * 1.8);
     return h;
@@ -914,7 +917,7 @@
     add({ kind: 'orb' });
     if (t >= 10 && Math.random() < Math.min(0.75, 0.35 + (t - 10) * 0.025)) {
       add({ kind: 'mushroom' });
-      if (t >= 22 && Math.random() < 0.35) add({ kind: 'mushroom' });
+      if (t >= 22 && Math.random() < Math.min(0.6, 0.35 + Math.max(0, t - 60) * 0.005)) add({ kind: 'mushroom' });
     }
     if (t >= 8 && Math.random() < 0.2) add({ kind: 'ring' });
     if (t > 3 && Math.random() < 0.22) add({ kind: pick(POWERS) });
@@ -1073,8 +1076,30 @@
   }
   // Plant something. With `from`, a glowing seed flies there first and the
   // plant sprouts when it lands.
+  // A full garden keeps maturing instead of stopping: new growth turns a plant near where it
+  // landed into the next thing along — grass into clover, clover and fern into flowers, and
+  // common flowers into the rarer wildflowers (foxglove, bluebell, sweet pea, cornflower, a
+  // little rose bush, a wild tuft), which are as far as it goes.
+  const WILDFLOWERS = ['foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild'];
+  const WILD_NAMES = { foxglove: 'Foxgloves', bluebell: 'Bluebells', sweetpea: 'Sweet peas', cornflower: 'Cornflowers', rose: 'A rose bush', wild: 'Wildflowers' };
+  const matured = (k) => k === 'grass' ? 'clover' : k === 'clover' || k === 'fern' ? pick(FLOWER_KINDS) : FLOWER_KINDS.includes(k) ? pick(WILDFLOWERS) : null;
+  function mature(pref, from) {
+    let best = null, bd = Infinity;
+    for (const p of garden.plants) {
+      if (p.live != null || !matured(p.k)) continue;
+      const d = pref == null ? Math.random() : Math.abs(angleDiff(p.a, pref)) + Math.random() * 0.4;
+      if (d < bd) { bd = d; best = p; }
+    }
+    if (!best) return false;
+    best.k = matured(best.k); best.g = Math.max(0.45, best.g * 0.6); best.s = Math.floor(Math.random() * 1e9);
+    gardenDirty = true;
+    const q = plantXY(best);
+    glint(q.x, q.y - R * 0.05, 1.4);
+    if (WILDFLOWERS.includes(best.k) && presentation === 'run') addFloat(q.x, q.y - R * 0.1, WILD_NAMES[best.k], 'moss', 0.75);
+    return true;
+  }
   function plant(kind, pref, g, dmin = 1.06, dmax = 2.6, from = null) {
-    if (garden.plants.length >= MAX_PLANTS) return false;
+    if (garden.plants.length >= MAX_PLANTS) return mature(pref, from);
     const spot = findSpot(pref, dmin, dmax);
     if (!spot) return false;
     const p = { id: BloomGarden.allocateId(garden), a: spot.a, d: spot.d, k: kind, g, s: Math.floor(Math.random() * 1e9) };
@@ -1391,7 +1416,8 @@
     leafAt(g, x + lean * h * 0.35, y - h * 0.45, -Math.PI / 2 + 0.8 + rest * 0.24, ll * 0.85, ll * 0.3, leaf, dark);
     if (gr < 0.4) return;
     // Resting flowers keep their colour, just a little softer, as if in evening light.
-    const base = { daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender }[p.k] || C['petal-bloom'];
+    const base = { daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender,
+      foxglove: '#E6A3C4', bluebell: '#8FA3DC', sweetpea: '#F4C3D6', cornflower: '#6F8FD9', rose: '#EE9DB0', wild: '#F2D478' }[p.k] || C['petal-bloom'];
     const col = rgb(mix(base, C.ground, rest * 0.25));
     if (p.k === 'lavender') {
       const n = 3 + Math.floor(gr * 6);
