@@ -4,7 +4,7 @@
 
 Implemented on `develop`, based on `b461a28` (owner review: retire Arrange, keep the garden still, smooth Erwu's walk). Implementation commit subject: `Restore painted garden traits and close v0.9 web tickets`. This is a web closeout, not a deployment or a tagged release.
 
-The owner explicitly deferred ticket 09 (album) and physical-phone acceptance in ticket 10. Carry physical Safari/Home Screen testing, audio, haptics, safe areas, lifecycle and device performance into the future complete iOS-build roadmap. No phone acceptance or native readiness is claimed here. The separate feature-branch commit `5b4a1dd` is not included.
+The owner explicitly deferred ticket 09 (album) and physical-phone acceptance in ticket 10. Carry physical Safari/Home Screen testing, audio, haptics, safe areas, lifecycle and device performance into the future complete iOS-build roadmap. No phone acceptance or native readiness is claimed here. The feature-branch commits that followed (`5b4a1dd`, `9c845d4`, below) are merged on top and are the final v0.9 changes, by owner instruction.
 
 ## Changes
 
@@ -40,8 +40,20 @@ All four browser suites completed without page errors. The render suite's first 
 
 Automated tests do not establish real-phone performance or subjective likeness. First-bloom browser coverage reaches the visit/stalking and checks discovery deduplication; it does not certify the entire sequence's artistic quality. These are documented limits, not requests for a phone session in this milestone. Further owner observations can guide later polish.
 
+## Final v0.9 changes (feature branch, merged at `2ffb9c8`)
+
+From the owner's third phone review:
+
+- **Rest draws plants back, not colour.** While resting, up to 85% of wild plants go dormant (hidden, never removed) and the lawn's edge flowers thin. They pop back as turns wake the garden, and the colour hush is light. Rest starts after 3 hours away and is complete after a day. A visit alone brings back a fifth (`REST.visitWake`).
+- **Depth order and clearance:** beds, furnishings and plants are drawn back to front, with more room above beds for tall flowers (sunflowers).
+- **Home layout:** the words under the garden float over its foot, so the garden reaches the dock and the front beds, cushion and stone sit lower. The invitation fades after 6 seconds. A bed's card opens over the rose bed, keeping all three beds in view; landscape keeps its side column.
+- **A full garden keeps maturing.** At 170 wild plants, new growth matures a nearby plant instead of stopping: grass into clover, clover and fern into flowers, and common flowers into six rarer wildflowers (foxglove, bluebell, sweet pea, cornflower, rose bush, wild tuft). The save format accepts the new kinds; an older build would not read a save containing them.
+- **Later turns are a little harder:** from turn 60, bud counts grow 0.6% more per turn (1.24x at turn 100) and a second mushroom becomes a little more likely.
+
+Checks on the merged result: `node --test tests/*.test.cjs` passes 54 tests, and the four browser suites pass with no page errors.
+
 ## Remaining roadmap
 
 1. Future iOS planning: bring forward ticket 10's physical-device acceptance matrix.
 2. Deferred enrichment: ticket 09's memory album, including its UI and narrative curation.
-3. Optional polish: Erwu's distinctive habits/likeness and the complete first-bloom sequence; consider the separate rest-presentation branch when integrating subsequent work.
+3. Optional polish: Erwu's distinctive habits/likeness and the complete first-bloom sequence.
