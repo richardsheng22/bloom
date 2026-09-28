@@ -10,7 +10,8 @@ Choose the distribution target and demonstrate that the existing game can run ac
 
 ## Work
 
-1. Default proposal: iPhone-first, portrait during play, English, offline single-player, TestFlight followed by a public App Store release. Confirm these choices; personal-only distribution remains a legitimate alternate target. Do not assume iPad, Mac, Android or monetization are included.
+1. Confirmed 2026-09-28: TestFlight followed by a public App Store release, and no web-to-app save transfer (everyone starts fresh). Proposed, to record: iPhone-first, portrait during play, English, offline single-player, free, Data Not Collected. Do not assume iPad, Mac, Android or monetization are included.
+1a. Check App Store name availability early ("Bloom" is likely taken) and choose a fallback. Choose an individual or organisation developer account (an individual account shows the owner's legal name as seller). Decide the web version's future after launch.
 2. Inventory access to a compatible Mac/Xcode environment, an iPhone and Apple Developer team. Record exact hardware, OS, runtime and plugin versions. Current Capacitor v8 documentation lists iOS 15+ and Xcode 26+; these are reference constraints, not a promise that every supported device will meet Bloom's performance target. Recheck current Apple submission requirements when choosing the toolchain.
 3. Make a disposable Capacitor/WKWebView proof using local game assets. Demonstrate launch, aiming, a busy shot, garden rendering, an Erwu walk and suspend/resume on one physical iPhone. Capture frame/memory observations. This proof may use existing storage; it does not establish production save safety.
 4. Compare the result with the current web build. Prefer retaining the JS/canvas renderer and adding a thin native boundary. If the device proof exposes a blocking renderer/input limitation, document evidence and propose a bounded alternative before any Swift/SpriteKit rewrite.

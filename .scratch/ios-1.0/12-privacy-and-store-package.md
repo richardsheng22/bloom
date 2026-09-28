@@ -1,6 +1,6 @@
 # iOS 12 — Prepare privacy, rights and store materials
 
-Status: planned. Release: 1.0. Dependencies: 01, 03; finalize after 06, 08, 09, 11.
+Status: planned. Release: 1.0. Dependencies: 01, 02; finalize after 08, 09, 11.
 
 Suggested chunk: One documentation/assets PR; external forms remain drafts until authorized. These are review boundaries, not calendar estimates.
 

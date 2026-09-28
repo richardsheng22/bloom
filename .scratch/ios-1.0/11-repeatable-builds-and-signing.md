@@ -2,13 +2,16 @@
 
 Status: planned. Release: 1.0. Dependencies: 03, 05.
 
-Suggested chunk: One build/release tooling PR; can proceed alongside 06–10. These are review boundaries, not calendar estimates.
+Suggested chunk: One build/release tooling PR; can proceed alongside 07–10. These are review boundaries, not calendar estimates.
 
 ## Outcome
 
 Produce traceable, installable builds without developer-machine state becoming a hidden dependency.
 
 ## Work
+
+Scope for 1.0 (owner review, 2026-09-28): start light. A documented, repeatable Xcode archive from a clean checkout, with version, build number and signing ownership recorded, is enough for the beta and release. CI automation (item 2) is optional and can follow when updates become frequent.
+
 
 1. Add documented clean-checkout commands for web validation, asset staging, native sync, build/test and archive/export. Separate unsigned checks from signing/upload jobs.
 2. Run JS/unit/browser checks on ordinary CI and native build checks on an available macOS runner. Pin supported versions and record the dependency-update policy. Do not add paid infrastructure without an owner decision.

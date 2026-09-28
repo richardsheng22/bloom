@@ -10,7 +10,7 @@ Let the same game use web fallbacks or native services without scattering platfo
 
 ## Work
 
-1. Extract a small platform module for initialization, persistence calls, app-active events, haptic feedback, audio lifecycle notifications and file sharing/import. Implement only interfaces used by the following tickets; avoid a generalized framework.
+1. Extract a small platform module for initialization, persistence calls, app-active events, haptic feedback and audio lifecycle notifications (no file import: ticket 06 was dropped). Implement only interfaces used by the following tickets; avoid a generalized framework.
 2. Keep garden-state, garden-beds, garden-layout, garden-view and erwu-behavior independent of native plugin imports. Do not rewrite physics or split the whole canvas file merely to modernize its structure.
 3. Make startup await platform readiness before loading saves or creating a garden. Introduce an explicit loading/failure state; never seed a fresh garden while native reads are still pending.
 4. Define event ownership and cleanup: one lifecycle subscription, no duplicated resume events and a consistent timestamp source for elapsed rest. Calls unsupported on web should have intentional fallbacks.

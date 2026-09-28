@@ -11,8 +11,8 @@ Validate installation, updates and everyday use outside the development setup.
 ## Work
 
 1. Prepare a signed candidate with the archive/metadata from earlier tickets. Upload to App Store Connect and establish the appropriate TestFlight testing group when authorized. Internal versus external testing determines available review/distribution steps; verify current requirements.
-2. Start with the owner and a small invited group chosen by the owner. Provide install/upgrade steps, known limitations and a focused feedback prompt. Do not contact testers without explicit authorization.
-3. Test upgrade from a previous beta with real fixture gardens, preserve saves and recheck import. Ask testers to use cold launch, offline play and return after an absence in ordinary use.
+2. Start with the owner and a small invited group chosen by the owner. Friends outside the developer team are external testers: their build needs Beta App Review first. Provide install/upgrade steps, known limitations and a focused feedback prompt. Do not contact testers without explicit authorization.
+3. Test upgrade from a previous beta with real fixture gardens, and preserve saves. Ask testers to use cold launch, offline play and return after an absence in ordinary use.
 4. Collect reproducible defects and available crash reports with build numbers; avoid adding telemetry merely for convenience. Retain symbols and record privacy implications of any diagnostic collection.
 5. Keep a beta log: build, changes, known issues, crash findings, save incidents and acceptance results. Ship bounded fixes and retest affected scenarios; do not introduce the deferred album or other scope expansion.
 

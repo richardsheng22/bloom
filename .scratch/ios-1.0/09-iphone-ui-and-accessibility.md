@@ -1,6 +1,6 @@
 # iOS 09 — Finish iPhone interaction and accessible controls
 
-Status: planned. Release: 1.0. Dependencies: 03, 04, 06, 08.
+Status: planned. Release: 1.0. Dependencies: 02, 04, 08.
 
 Suggested chunk: Two bounded commits: layout/input, then accessibility/settings. These are review boundaries, not calendar estimates.
 
@@ -12,7 +12,7 @@ Make the game comfortable on supported iPhones with clear, reachable controls an
 
 1. Audit the actual native safe-area insets, status bar, home indicator, notches and supported orientation changes. Fix primary actions, planting cards and settings at the smallest supported size; preserve the stationary garden when a card opens.
 2. Test aiming near system edges, pointer cancellation, multiple touches, interrupted drags and accidental scrolling/selection. Protect immediate Play/Continue and the single aiming decision per turn.
-3. Provide one restrained settings/help area for sound, haptics, reduced motion, transfer/backup, version and support. Keep engineering details out of normal gameplay.
+3. Provide one restrained settings/help area for sound, haptics, reduced motion, version and support. Keep engineering details out of normal gameplay.
 4. Give DOM controls useful names, focus order, selected states and generous targets. Honor text-size changes in UI labels/cards without scaling the canvas out of bounds; check contrast and differentiate essential information beyond colour.
 5. Audit VoiceOver on real hardware. Define an accessible aiming route (adjust angle, explicit launch/cancel and concise turn/result announcements) using the same physics, plus bed selection and inspection. If the core loop cannot be made usable within this slice, record a concrete follow-up and accurate accessibility claims rather than declaring full support.
 6. Apply Reduce Motion consistently to native and canvas effects, including changes while the app is open. Preserve gameplay timing/progress even when decorative movement is suppressed.

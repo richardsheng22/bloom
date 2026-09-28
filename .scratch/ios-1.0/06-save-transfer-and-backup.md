@@ -1,6 +1,6 @@
 # iOS 06 — Move an existing web garden into the app
 
-Status: planned. Release: 1.0. Dependencies: 05.
+Status: **dropped** (owner decision, 2026-09-28): the app starts every player with a fresh garden, so no web-to-app transfer or import is built. Kept for reference if transfer is ever wanted. Release: 1.0. Dependencies: 05.
 
 Suggested chunk: One import/export feature PR. These are review boundaries, not calendar estimates.
 

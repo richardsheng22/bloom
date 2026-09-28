@@ -13,7 +13,7 @@ Protect owned plants, rare seeds, preferences and the current run across native 
 1. Inventory all bloom.* keys and garden backups, including run3, scores, preferences and introduction flags. Define a versioned save envelope linking the garden and stable run checkpoint with one revision. Specify what is durable after each completed turn.
 2. Choose storage from measured data size/write frequency: lightweight Preferences may suit settings; use an app-private file or database if save atomicity/workload needs it. Record the rationale. Do not treat webview localStorage as the only native durable store.
 3. Serialize writes and retain a last-known-good snapshot. Validate schema and bounds before applying data; commit a new revision atomically using the chosen backend's actual guarantees. Handle low disk, failed reads/writes, corrupt newest data and newer unsupported formats without silently resetting. Include final-v0.9 mature gardens with newly introduced wildflower kinds; older builds cannot read those saves, so downgrade compatibility must not be assumed from an unchanged version number.
-4. Preserve the existing v1/v2/v3 garden migration and rare-reward deduplication behavior. Native bootstrap imports only data it can actually access; Safari/PWA transfer is ticket 06.
+4. Preserve the existing v1/v2/v3 garden migration and rare-reward deduplication behavior. The app starts fresh; there is no Safari/PWA transfer (ticket 06 dropped).
 5. Expose a calm save-failure/recovery state and retry path. Do not report saved while a native write is pending. Explicitly document that uninstall can remove local saves; backup/export and cloud sync are separate capabilities.
 
 ## Acceptance and evidence

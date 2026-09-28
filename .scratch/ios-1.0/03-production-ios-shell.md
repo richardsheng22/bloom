@@ -1,6 +1,6 @@
 # iOS 03 — Create the production iOS shell and install it
 
-Status: planned. Release: 1.0. Dependencies: 01, 02.
+Status: **merged into [02](02-offline-web-package.md)** (owner review, 2026-09-28). Its work items below are carried out there. Release: 1.0. Dependencies: 01, 02.
 
 Suggested chunk: One native shell PR. These are review boundaries, not calendar estimates.
 

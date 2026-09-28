@@ -16,6 +16,10 @@ Produce a minimal, versioned web payload that an installed app can run from its 
 4. Generate a payload inventory with hashes and sizes. Check missing assets, case-sensitive paths and relative URLs. Avoid hard-coded developer server URLs and remote code updates in release configuration.
 5. Measure compressed package and decoded-image sizes as baseline evidence. Do not regenerate or re-style existing art as part of packaging.
 
+## Includes the iOS shell (former ticket 03)
+
+The native shell work in [03](03-production-ios-shell.md) is done in this ticket: packaging and a shell that installs it are one reviewable outcome. Its work items and acceptance apply here.
+
 ## Acceptance and evidence
 
 - A clean checkout produces the same payload content and passes existing web tests.

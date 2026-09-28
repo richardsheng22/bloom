@@ -1,10 +1,10 @@
 # Bloom 1.0 — iOS delivery map
 
-Status: planning only. Created 2026-09-28 on `develop`; reconciled with `d86c314` (final v0.9 feature-branch changes) before committing. No native project, account setup, build, upload or release is performed by this map.
+Status: planning only. Created 2026-09-28 on `develop`; reconciled with `d86c314` (final v0.9 feature-branch changes) before committing. Revised the same day after owner review: public App Store confirmed, no save transfer (06 dropped), shell merged into packaging (03 → 02), builds kept light at first (11), 15 → 13 active tickets. No native project, account setup, build, upload or release is performed by this map.
 
 ## Goal
 
-Deliver Bloom as a reliable, offline-capable iPhone application that preserves the current game, owned garden and Erwu's storybook identity. The proposed finish line is a tested TestFlight candidate followed by an approved, available App Store 1.0 release. Ticket 01 confirms public distribution; if this remains a private family app, revise the distribution tickets explicitly.
+Deliver Bloom as a reliable, offline-capable iPhone application that preserves the current game, owned garden and Erwu's storybook identity. The finish line is a tested TestFlight candidate followed by an approved, available App Store 1.0 release. **Public App Store distribution is confirmed by the owner (2026-09-28)**: store installs don't expire, update themselves, and show how the game is received beyond the family.
 
 This is a platform/release milestone. The album from [legacy ticket 09](../09-discoveries-and-memory-album.md) remains deferred. The physical acceptance deferred in [legacy ticket 10](../10-integration-and-phone-acceptance.md) now lives in iOS ticket 13, with prerequisites covering lifecycle, audio/haptics, accessibility and performance.
 
@@ -18,7 +18,7 @@ This is a platform/release milestone. The album from [legacy ticket 09](../09-di
 - Web Audio, vibration/switch-input fallback and document visibility/pagehide handlers; native services and interruption testing remain.
 - Baseline: the final v0.9 closeout records 54 unit tests and four Chromium browser suites passing. This is web evidence, not native certification.
 - Arrange/furniture editing was retired. Preserve fixed beds and legacy saved positions; do not resurrect retired UI.
-- Final v0.9 now includes rest as dormancy, revised home/card positioning, continued plant maturation at the 170-plant cap and gentler late-game difficulty growth. Preserve these when packaging the app. Saves containing the newly added wildflower kinds are not readable by older builds: include them in upgrade/import fixtures and do not promise safe save downgrades. Reinspect develop before implementation to preserve subsequent owner work.
+- Final v0.9 now includes rest as dormancy, revised home/card positioning, continued plant maturation at the 170-plant cap and gentler late-game difficulty growth. Preserve these when packaging the app. Saves containing the newly added wildflower kinds are not readable by older builds: include them in app-upgrade fixtures and do not promise safe save downgrades. Reinspect develop before implementation to preserve subsequent owner work.
 
 ## Recommended architecture
 
@@ -28,23 +28,29 @@ Bundle code, art and fonts locally. Keep web and native builds from the same gam
 
 Protect progress early. Native saves must not rely solely on webview localStorage. Capacitor describes Preferences as lightweight persistence and cautions about localStorage eviction; ticket 05 chooses the backend from measured size, write frequency and atomicity needs. [Preferences documentation](https://capacitorjs.com/docs/apis/preferences)
 
-Treat Safari/Home Screen saves and installed-app storage as separate. Provide deliberate export/import, preview replacement and retain the original save.
+**No web-to-app save transfer (owner decision, 2026-09-28).** The app starts every player with a fresh garden, including the owner's family; installed-app storage and Safari/Home Screen saves stay separate. Durable native saves (ticket 05) still matter: they protect every player's garden across app updates and iOS storage clean-ups.
 
 A complete offline game and native polish support a submission but do not guarantee approval. Review the actual finished binary for completeness and minimum functionality; do not add unrelated features to pad a wrapper. [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 
-## Defaults to confirm in ticket 01
+## Decisions (confirmed or proposed) for ticket 01
+
+Confirmed by the owner on 2026-09-28: public App Store after a TestFlight beta; no save transfer. The rest are proposals until ticket 01 records them. Web-version fate, when the owner leaves it undecided, defaults to keeping it up unchanged.
 
 | Decision | Proposal | Needed before |
 |---|---|---|
-| Distribution | TestFlight then public App Store | Production distribution setup |
+| Distribution | **Confirmed:** TestFlight, then public App Store | Production distribution setup |
 | Platforms | iPhone first; no dedicated iPad, Mac or Android work | Native project configuration |
 | Orientation | Portrait gameplay with safe handling of system transitions | Shell/UI work |
 | Content | Existing game, fixed beds and current art | All implementation |
 | Language | English | Store materials |
 | Business model | No ads, IAP, accounts or analytics added; price is an owner decision | Store configuration |
-| Data | Local durable progress and manual export/import; no cloud sync | Storage architecture |
+| Data | **Confirmed:** local durable progress, fresh start in the app, no transfer from the web; no cloud sync. Privacy label target: Data Not Collected | Storage architecture |
 | Toolchain/devices | Supported runtime/Xcode pair and measured device floor | Device proof |
 | Build host | Available compatible Mac, local or hosted by explicit choice | Native builds |
+| Store name | "Bloom" is likely taken; check availability early and keep a fallback | Bundle/display name, store record |
+| Seller | Individual account (seller shows the owner's legal name) or organisation (company name, D-U-N-S, slower) | Developer enrollment |
+| Price | Free proposed | Store configuration |
+| Web version after launch | Keep, freeze or retire the web game on `main` | Release (15) |
 
 Surface Mac access, target iPhone, Apple team, bundle namespace and distribution intent early. Missing access need not stop independent packaging or fixture work, but never replace physical evidence with a simulator pass. Record unresolved choices rather than demanding every preference before useful work.
 
@@ -55,27 +61,27 @@ Each ticket is one reviewable outcome, usually one PR or a couple of coherent co
 | Ticket | Dependencies | Status |
 |---|---|---|
 | [01 — Lock the 1.0 target and prove the runtime](01-target-and-device-proof.md) | None | Planned |
-| [02 — Build a reproducible offline game package](02-offline-web-package.md) | 01 architecture decision | Planned |
-| [03 — Create the production iOS shell and install it](03-production-ios-shell.md) | 01, 02 | Planned |
+| [02 — Build a reproducible offline game package](02-offline-web-package.md), including the iOS shell (former 03) | 01 architecture decision | Planned |
+| [03 — Create the production iOS shell and install it](03-production-ios-shell.md) | — | Merged into 02 |
 | [04 — Introduce a small web/native platform boundary](04-platform-boundary.md) | 02, 03 | Planned |
 | [05 — Persist a coherent garden and run safely on iOS](05-durable-native-saves.md) | 04 | Planned |
-| [06 — Move an existing web garden into the app](06-save-transfer-and-backup.md) | 05 | Planned |
+| [06 — Move an existing web garden into the app](06-save-transfer-and-backup.md) | — | Dropped (no save transfer) |
 | [07 — Make interruptions and resume deterministic](07-interruptions-and-resume.md) | 05 | Planned |
 | [08 — Make audio and touch feedback behave like an iOS game](08-native-audio-and-haptics.md) | 04, 07 | Planned |
-| [09 — Finish iPhone interaction and accessible controls](09-iphone-ui-and-accessibility.md) | 03, 04, 06, 08 | Planned |
-| [10 — Tune the existing art and renderer for device budgets](10-rendering-and-device-performance.md) | 03, 07, 09 | Planned |
-| [11 — Automate repeatable builds and release artifacts](11-repeatable-builds-and-signing.md) | 03, 05 | Planned |
-| [12 — Prepare privacy, rights and store materials](12-privacy-and-store-package.md) | 01, 03; finalize after 06, 08, 09, 11 | Planned |
-| [13 — Complete the deferred phone acceptance on the native app](13-physical-device-acceptance.md) | 06, 07, 08, 09, 10, 11 | Planned |
+| [09 — Finish iPhone interaction and accessible controls](09-iphone-ui-and-accessibility.md) | 02, 04, 08 | Planned |
+| [10 — Tune the existing art and renderer for device budgets](10-rendering-and-device-performance.md) | 02, 07, 09 | Planned |
+| [11 — Make builds repeatable (light: documented archive first, automation later)](11-repeatable-builds-and-signing.md) | 02, 05 | Planned |
+| [12 — Prepare privacy, rights and store materials](12-privacy-and-store-package.md) | 01, 02; finalize after 08, 09, 11 | Planned |
+| [13 — Complete the deferred phone acceptance on the native app](13-physical-device-acceptance.md) | 07, 08, 09, 10, 11 | Planned |
 | [14 — Distribute and stabilize a TestFlight beta](14-testflight-beta.md) | 11, 12, 13 | Planned |
 | [15 — Submit and release Bloom 1.0](15-submit-and-release-1-0.md) | 12, 14 | Planned |
 
 ## Milestones and order
 
-1. **Feasibility and install: 01 → 02 → 03.** Exit: device proof accepted and production shell launches bundled assets.
-2. **Safe native foundation: 04 → 05 → 06/07.** Exit: coherent saves, web transfer and deterministic interruptions.
+1. **Feasibility and install: 01 → 02 (with the shell).** Exit: device proof accepted and production shell launches bundled assets.
+2. **Safe native foundation: 04 → 05 → 07.** Exit: coherent saves and deterministic interruptions.
 3. **iPhone experience: 08 → 09 → 10.** Exit: native feedback, usable/accessibility-reviewed controls and measured performance.
-4. **Release preparation:** 11 can proceed after 03/05 alongside experience work. Draft 12 after 01/03; finalize against the finished binary.
+4. **Release preparation:** 11 can proceed after 02/05 alongside experience work. Draft 12 after 01/02; finalize against the finished binary.
 5. **Acceptance and beta: 13 → 14.** Exit: physical matrix and owner review passed, then distributed beta installation/upgrade verified.
 6. **1.0: 15.** Exit: approval, store availability and installed-release smoke test recorded separately.
 
@@ -85,7 +91,7 @@ Native device installation begins in ticket 01; do not wait for every feature to
 
 - Installed game launches offline with bundled fonts/art and plays without a website connection.
 - Progress survives supported upgrades and interruptions. Failed reads/writes and malformed data cannot silently erase an owned garden.
-- Web players can deliberately transfer progress. Uninstall recovery is not promised without an export/backup.
+- Every player starts fresh in the app; no transfer from the web is offered. Uninstalling removes the local garden, and store materials don't promise otherwise.
 - Supported-device input, safe areas, lifecycle, audio/haptics, accessibility and performance gates have evidence.
 - No unresolved crash, save-loss or core-interaction blocker. Artistic preferences and minor polish are recorded honestly.
 - Signed binary, source revision and asset payload are traceable.
@@ -94,7 +100,7 @@ Native device installation begins in ticket 01; do not wait for every feature to
 
 ## Carry-forward and exclusions
 
-Legacy 01–08 and 11 are the implemented gameplay baseline. Legacy 03's Arrange criteria remain superseded, and legacy 09 remains deferred beyond this map. Legacy 10's phone checks are reactivated in iOS 13 with the native app as the main target; Safari/Home Screen still matter for transfer and web regression.
+Legacy 01–08 and 11 are the implemented gameplay baseline. Legacy 03's Arrange criteria remain superseded, and legacy 09 remains deferred beyond this map. Legacy 10's phone checks are reactivated in iOS 13 with the native app as the main target; Safari/Home Screen matter only for web regression, while the web version stays up.
 
 No cloud sync, push reminders, multiplayer, accounts, monetization system, engine rewrite or art overhaul unless separately planned. No publishing, enrollment purchases, tester messages or signing-secret collection is authorized by writing this plan. Later external actions follow the user's instructions at execution time.
 
