@@ -54,3 +54,15 @@ These work with the current art and carry over unchanged when the sheets arrive.
 - **Buttons:** Play and Continue are a painted wooden sign with a grain, a serif label and a sprig at each end; the buttons beside them are parchment.
 
 Waiting on the sheets: the stronger storybook style, the garden backdrop's composition and borders, the variety of clumps (only two for now), and the painted play pieces.
+
+## The storybook sheets are in (2026-09-28)
+
+The owner generated all seven sheets from `PROMPTS.md` (the `-v2` files, `garden-background-v2.png`, `garden-clumps.png`, `garden-beds.png`, `play-pieces.png`). `tools/build-art.cjs` packs them into `erwu.webp`, `garden.webp`, `play.webp` and `garden-plate.webp`. Screenshots: `progress/storybook-*.webp`.
+
+- **Backdrop:** the painted garden fills both screens whole, deckled edge included. Its fountain and log are the backdrop's own; the layout reads where they stand (`scene.scenery`, see `garden-layout.js`), so beds, furnishings and Erwu's walks keep to them.
+- **Beds:** each kind flowers in its own painted bed (daisies share the lavender-and-daisy bed). Moonflowers open only in the evening; a blown dandelion is leafy for a few turns.
+- **Clumps:** what play grows comes up as a painted clump of its own kind (a leafy tuft while young), and the lawn's edges fill in with flowers as the garden grows. All sway.
+- **Run:** painted petals (white, washing pink from the base as they charge, with a soft leading edge), painted buds that open on their last hits, a painted pollen grain, sun, golden seed head and seed pod, and the clean basket. Erwu swats from it with a painted paw and looks delighted after a big shot.
+- **Erwu:** the new poses and walk. The walk was generated paler than the poses, so the build matches its colours to theirs.
+
+Still to tune after play on the phone: sizes of pieces against the backdrop, and whether the arena's flat sage disc should become painted too.

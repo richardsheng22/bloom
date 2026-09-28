@@ -1,3 +1,5 @@
+> **Current art (2026-09-28):** the storybook sheets. See [`.scratch/art-direction/README.md`](../.scratch/art-direction/README.md) for the direction, the prompts and what uses which piece; the notes below describe the earlier painterly pass and the pipeline, which is unchanged apart from the sheet list at the top of `tools/build-art.cjs`.
+
 # Painted art
 
 The garden and Erwu are painted in the **painterly naturalism** direction the owner chose on 2026-09-27, ahead of soft picture book and ink and watercolour. All the images here were generated from written prompts. The photos of Erwu were used only as reference and are not stored in this repository.

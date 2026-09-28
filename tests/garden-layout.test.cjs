@@ -104,3 +104,13 @@ test('the scenery, beds and furnishings keep clear of each other at every phone 
     }
   }
 });
+
+test('a painted backdrop can place the fountain and the log; the rest of the layout is unchanged', () => {
+  const V = require('../garden-view.js');
+  const scene = V.layout({ left: 0, top: 0, width: 358, height: 470 }), plain = L.landmarks(scene);
+  const scenery = { fountain: { x: -120, y: -150, width: 80, height: 110 }, deadwood: { x: 125, y: -148, width: 100, height: 45 } };
+  const m = L.landmarks({ ...scene, scenery });
+  assert.deepEqual([m.fountain, m.deadwood], [scenery.fountain, scenery.deadwood]);
+  assert.notEqual(m.fountain, scenery.fountain, 'a copy, so callers cannot move the scenery');
+  assert.deepEqual([m.roses, m.path], [plain.roses, plain.path]);
+});

@@ -122,11 +122,14 @@
     const x = Math.max(62, scene.width / 2 - 40), h = scene.height, n = scene.nest;
     const rx = Math.min(n * 1.9, scene.width * 0.3), ry = rx * 0.62;
     const fh = Math.max(44, Math.min(n * 1.4, h * 0.2));
+    // A painted backdrop can carry the fountain and the log itself; `scene.scenery` then says
+    // where they stand (scene coordinates, base centre), and everything keeps clear of them there.
+    const painted = scene.scenery || {};
     return {
       roses: { x: 0, y: n * 0.35, rx, ry },
-      fountain: { x: -Math.min(x * 0.82, scene.width / 2 - fh * 0.42), y: -h * 0.19, width: fh * 0.72, height: fh },
+      fountain: painted.fountain ? { ...painted.fountain } : { x: -Math.min(x * 0.82, scene.width / 2 - fh * 0.42), y: -h * 0.19, width: fh * 0.72, height: fh },
       // a fallen log, lying a little lower and further in than the fountain opposite
-      deadwood: { x: Math.min(scene.width / 2 - fh * 0.55 - 6, Math.max(x * 0.76, rx * 0.74 + fh * 0.55)), y: Math.min(-h * 0.05, n * 0.35 - ry * 0.75), width: fh * 1.1, height: fh * 0.42 },
+      deadwood: painted.deadwood ? { ...painted.deadwood } : { x: Math.min(scene.width / 2 - fh * 0.55 - 6, Math.max(x * 0.76, rx * 0.74 + fh * 0.55)), y: Math.min(-h * 0.05, n * 0.35 - ry * 0.75), width: fh * 1.1, height: fh * 0.42 },
       // the stepping-stone path from the front of the lawn up to the rose bed
       path: { top: n * 0.35 + ry + 6, width: 24 },
     };
