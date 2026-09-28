@@ -1,6 +1,6 @@
 # 07 — Connect cultivation, visitors, and Erwu in one complete scene
 
-Status: implemented for v0.9; awaiting a recording review with the owner. Priority: first playable milestone. Dependencies: 04, 06.
+Status: implemented for v0.9. Browser checks cover first-bloom discovery, a visit and stalking, and persistence without repeat discovery. They do not certify the subjective quality of the entire flower-to-rest sequence. Recording/character review remains a future polish input, not a required owner action in this web closeout; physical-phone acceptance is deferred under ticket 10. See [closeout evidence](v09-closeout/README.md). Dependencies: 04, 06.
 
 ## Outcome
 

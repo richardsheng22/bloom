@@ -1,6 +1,12 @@
 # 10 — Validate the whole experience on phones and protect saved progress
 
-Status: planned. Priority: release acceptance. Applied per release: v0.8 covers 01–04, 05 phase A, and 11; v0.9 covers 05 phase B and 06–08; include 09 when shipping it.
+Status: web regression validation remains in scope; **physical-phone acceptance deferred by the owner on 2026-09-28 to a future complete iOS-build roadmap**. This deferral covers physical Safari/Add to Home Screen interaction, haptics/audio and device performance; these are unverified, not passed. Ticket 09 is also deferred. See [the web closeout record](v09-closeout/README.md) for automated evidence.
+
+## Current scope override — 2026-09-28
+
+The original acceptance matrix below is retained as a future planning input. Arrange/Put away/furniture taps were retired in `b461a28`: their UI acceptance cases are superseded. Continue testing bed planting/inspection, Erwu touch, immediate Play, save migration, run preservation and reduced motion. Retain model-level layout tests for old saves and behavior destinations.
+
+No owner phone session is required for this web closeout. Carry device/iOS versions, Safari and standalone launch, safe areas, gestures, sound preferences, haptics, background/resume and busy-scene frame timing into the future iOS roadmap. Native packaging, deployment and App Store readiness are outside this task.
 
 ## Outcome
 

@@ -1,6 +1,8 @@
 # Bloom: an owned garden and a life for Erwu
 
-Status: **v0.8 released** to `main` on 2026-09-26 (01–04, 05 phase A, 11) after owner play on the phone; formal ticket 10 checks (Safari performance while a rested garden wakes, haptics, audio) remain open. v0.9 (05 phase B, 06–08) is implemented on the working branch, awaiting owner review and on-phone play; 09 remains planned. Painted art (painterly naturalism: Erwu, garden pieces, lawn) replaced the drawn garden and Erwu on 2026-09-27; see [`assets/README.md`](../assets/README.md) and [`erwu-painted-evidence/`](erwu-painted-evidence/README.md). See each ticket for its record and evidence, and [`v08-evidence/`](v08-evidence/README.md) for screenshots.
+Status (2026-09-28): **Core v0.8/v0.9 features implemented**, including the shared storybook art and two subsequent owner-review rounds on `develop` at `b461a28`. The current closeout restores painted plant traits and Erwu expressions; see [the closeout record](v09-closeout/README.md). Ticket 03's Arrange/furniture editing was deliberately retired. **Ticket 09 is deferred. Physical-phone acceptance under ticket 10 is deferred to the future iOS roadmap by owner instruction**, not a blocker for this web milestone and not claimed as passed. Browser and save checks remain in scope. Character likeness and subjective pacing can still be refined from future owner observations.
+
+The requirements and release history below preserve the original plan. The dated closeout notes take precedence where later owner decisions changed it. Current art direction is [storybook](art-direction/README.md), replacing the earlier painterly-naturalism experiment.
 Planning date: 2026-09-25. Roadmap revised 2026-09-26 (release split, Erwu phasing, review notes, ticket 11).
 Source baseline: `3df8d53` (Bloom v0.7). Working branch: `develop`.
 
@@ -26,7 +28,7 @@ The full series is too large for one release, and its riskiest work (a walking, 
 |---|---|---|---|
 | **v0.8 — “Her garden”** | An owned garden you shape and grow | 01, 02, 03, 04, 05 phase A, 11; 10 for this slice | Your wife can pick a patch, grow it through ordinary play, find a rare seed, plant it, and come back to a resting garden that welcomes her. Erwu has a curled sleep and a seated pose that match her current face. |
 | **v0.9 — “Erwu at home”** | Erwu lives in the garden | 05 phase B, 06, 07, 08; 10 for this slice | The first living-garden sequence (ticket 07) and the return ritual (ticket 08) are accepted from a recording. |
-| Later | Keepsakes | 09 | After v0.9 feels right. |
+| Deferred | Keepsakes | 09 | Revisit in a separately planned follow-on; no album build in this milestone. |
 
 Why this order: tickets 01–04 plus 11 give a complete reason to return (something you chose is growing, and something new might turn up) without any new character animation. Ticket 05 phase A adds the poses that matter most for a still scene, stays close to the existing drawing, and can ship as provisional art if the reference pack is not ready. Walking, navigation, and contextual behaviour (05 phase B, 06, 07) are the largest and least certain pieces; they get their own release with the reference pack in hand.
 
@@ -38,14 +40,14 @@ Deploying v0.8 to `main` also retires v0.7's destructive decay for real players.
 |---|---|---|
 | [01](01-owned-garden-and-resting.md) | Persistent ownership and non-destructive rest | None |
 | [02](02-garden-view-and-mobile-interaction.md) | Interactive garden view; safe switch to/from a saved run | 01 |
-| [03](03-garden-layout-and-customization.md) | A small, editable layout of patches and useful objects | 01, 02 |
+| [03](03-garden-layout-and-customization.md) | Fixed beds remain; Arrange and furniture editing retired by owner review | 01, 02 |
 | [04](04-cultivation-through-play.md) | Choose a patch and grow it through normal play | 01, 03 |
 | [05](05-erwu-reference-and-animation-foundation.md) | Phase A (v0.8): curled sleep and seated poses. Phase B (v0.9): full-body motion set | A: 02. B: reference pack, 03 |
 | [06](06-erwu-behavior-and-touch.md) | Contextual behavior, navigation, and gentle touch responses | 02, 03, 05 |
 | [07](07-first-living-garden-sequence.md) | Cultivation → flower → butterfly → Erwu visit → rest | 04, 06 |
 | [08](08-in-round-personality-and-return-ritual.md) | Restrained play reactions and a welcoming return | 01, 02, 05, 06, 07 |
 | [09](09-discoveries-and-memory-album.md) | Occasional discoveries and a small personal scrapbook | 07, 08; later enrichment |
-| [10](10-integration-and-phone-acceptance.md) | Migration, interaction, accessibility, and phone acceptance | Each release's tickets |
+| [10](10-integration-and-phone-acceptance.md) | Web regression checks now; physical-phone acceptance deferred to future iOS roadmap | Each release's tickets |
 | [11](11-rare-seeds-and-unique-plants.md) | Rare seeds found in play grow unique plants | 03, 04 |
 
 Release v0.8 is 01–04, 05 phase A, and 11. Release v0.9 is 05 phase B and 06–08. Before the release split, the first complete playable slice was 01–07; that is now the v0.9 goal. Ticket 08 completes the return experience; ticket 09 is optional enrichment after the core feels right. Ticket 10 applies to each shipped release. Numeric order is a reading order; dependency order governs implementation. Ticket 05 reference gathering can happen while garden foundations are built.

@@ -4,7 +4,7 @@ const { chromium } = require(process.env.BLOOM_PLAYWRIGHT || 'playwright');
 const fs = require('node:fs'), http = require('node:http'), cp = require('node:child_process');
 const path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu-render';
-const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
+const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,get cat(){return cat},catPose,basketPose,paintedErwuPose,bedArtVariant,drawBed,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
 const marker = '  window.claude?.hot?.snapshot?';
 const fixture = require('./fixtures/garden-v1.json');
 
@@ -76,6 +76,49 @@ const fixture = require('./fixtures/garden-v1.json');
       assert.equal(result.stable, true, 'identical pose has stable grain');
       assert.ok(result.painted > 1000, 'pose actually renders');
       console.log(before ? 'BEFORE' : 'AFTER', result); await p.close();
+    }
+    // Check the production painted path, not only its procedural fallback.
+    for (const reduced of [false, true]) {
+      const p = await open({ width: 900, height: 480 });
+      await p.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+      await p.waitForFunction(() => __art.atlasReady());
+      const result = await p.evaluate(() => {
+        const a = __art;
+        a.cat.blink = 0.14; a.cat.mood = 'idle'; a.cat.happy = 0; a.cat.bat = 0; a.cat.yawn = 0;
+        const runBlink = a.basketPose({ ...a.catPose(), look: null })[0];
+        a.cat.blink = 0; a.erwu.blink = 0.4;
+        const hello = a.paintedErwuPose('front', false), nestHello = a.paintedErwuPose('front', true);
+        a.erwu.blink = 0;
+        const awake = a.paintedErwuPose('front', false), yawn = a.paintedErwuPose('yawn', false);
+        const pixels = v => Array.from(v.image.getContext('2d').getImageData(0, 0, v.image.width, v.image.height).data);
+        const morning = a.bedArtVariant('sunflower', 1, 8), evening = a.bedArtVariant('sunflower', 1, 18);
+        const m = pixels(morning), e = pixels(evening), rim = Math.ceil(morning.image.height * 0.75) * morning.image.width * 4;
+        const red = v => pixels(v).reduce((sum, x, i, p) => i % 4 === 0 && p[i + 3] > 100 ? sum + Math.max(0, x - p[i + 1] * 1.2) : sum, 0);
+        const reds = [0.55, 0.85, 1].map(g => red(a.bedArtVariant('strawberry', g, 12)));
+        const c = document.createElement('canvas'); c.width = 1800; c.height = 960;
+        c.style = 'position:fixed;inset:0;width:900px;height:480px;z-index:999'; document.body.append(c);
+        const g = c.getContext('2d'); g.scale(2, 2); g.fillStyle = '#FBF6EA'; g.fillRect(0, 0, 900, 480);
+        const RealDate = Date;
+        try {
+          [8, 12, 18, 0.55, 0.85, 1].forEach((value, i) => {
+            window.Date = class extends RealDate { getHours() { return i < 3 ? value : 12; } getMinutes() { return 0; } };
+            g.save(); g.translate(i % 3 * 300 + 150, i < 3 ? 155 : 395); g.scale(2, 2);
+            a.drawBed(g, { id: 'bed-1', flower: i < 3 ? 'sunflower' : 'strawberry', growth: i < 3 ? 1 : value }); g.restore();
+            g.fillStyle = '#655A4F'; g.font = '16px sans-serif'; g.textAlign = 'center';
+            g.fillText(i < 3 ? `${value}:00` : `growth ${value}`, i % 3 * 300 + 150, i < 3 ? 215 : 455);
+          });
+        } finally { window.Date = RealDate; }
+        return { runBlink, hello, nestHello, awake, yawn, reds,
+          followsLight: m.some((x, i) => x !== e[i]), rimStable: m.slice(rim).every((x, i) => x === e[rim + i]),
+          reversible: a.bedArtVariant('sunflower', 1, 8) === morning };
+      });
+      assert.equal(result.runBlink, 'peek-sleepy');
+      assert.equal(result.hello, 'sit-drowsy'); assert.equal(result.nestHello, 'peek-sleepy');
+      assert.equal(result.awake, 'sit-front'); assert.equal(result.yawn, 'stretch');
+      assert.ok(result.followsLight && result.rimStable && result.reversible, 'sunflower follows reversible clock changes with its bed fixed');
+      assert.ok(result.reds[0] < result.reds[1] && result.reds[1] < result.reds[2], 'fruit visibly ripens over growth stages');
+      await p.screenshot({ path: path.join(out, `plant-traits${reduced ? '-reduced' : ''}.png`) });
+      console.log('PASS painted expressions and plant traits', { reduced, ...result }); await p.close();
     }
     const painted = await open({width:960,height:800});
     await painted.waitForFunction(()=>__art.atlasReady());

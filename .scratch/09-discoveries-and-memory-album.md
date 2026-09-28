@@ -1,6 +1,6 @@
 # 09 — Preserve a few personal discoveries and moments
 
-Status: planned, later enrichment (after v0.9). Priority: after the first playable slice feels good. Dependencies: 07, 08.
+Status: **deferred by the owner on 2026-09-28**. Outside the current web closeout; revisit in a future roadmap. Discovery events are recorded, but no album UI is implemented or claimed complete. Dependencies: 07, 08.
 
 ## Outcome
 

@@ -1,6 +1,6 @@
 # 05 — Build a recognizable full-body Erwu
 
-Status: phase A released in v0.8; phase B implemented for v0.9 as provisional motion, awaiting owner review. Priority: core. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
+Status: phases A and B implemented; subsequent owner reviews established the shared storybook direction and smoothed the painted walk (`b461a28`). The web closeout restores painted slow blinks and uses the existing full-body stretch/yawn outside the basket. See [closeout evidence](v09-closeout/README.md). Physical-phone acceptance is deferred under ticket 10; further likeness tuning remains optional owner feedback. Dependencies: phase A needs 02; phase B needs the reference pack and 03.
 
 ## Outcome
 

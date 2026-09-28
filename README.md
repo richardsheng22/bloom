@@ -8,7 +8,7 @@ Open the GitHub Pages site on your iPhone in Safari, tap Share, then **Add to Ho
 
 ## How it plays
 
-The game opens in Erwu's garden, drawn after the real one: a round rose bed with a rose arch in the middle, where Erwu is curled up asleep in her basket; a three-tier stone fountain and a fallen log at the back; and stepping stones up a lawn that fades softly into the page. Tap her and she sits up to say hello; left alone, she curls back up. Tap a flower bed to plant it, or the cushion or sunny stone to see what it's for. Everything else in the garden grows by itself as you play. **Play** or **Continue** starts immediately, even while Erwu is responding.
+The game opens in Erwu's garden, drawn after the real one: a round rose bed with a rose arch in the middle, where Erwu is curled up asleep in her basket; a three-tier stone fountain and a fallen log at the back; and stepping stones up a lawn that fades softly into the page. Tap her to say hello, or tap a flower bed to plant it. The cushion and sunny stone are resting places she visits herself. Everything else in the garden grows by itself as you play. **Play** or **Continue** starts immediately, even while Erwu is responding.
 
 The leaf button brings you back to the garden without resetting your run. During a shot it waits for the turn to finish; tap it again to cancel. After a run ends, **Back to the garden** lets you linger, and **Play again** explicitly starts the next run.
 
@@ -35,7 +35,7 @@ The leaf button brings you back to the garden without resetting your run. During
 - The bed you planted last grows as you play: a little every turn, a little more for every bud you bloom, and a clear boost at full bloom. Other planted beds grow slowly alongside. Tap a bed and **Grow this bed** to choose which one you're growing. Now and then a bloom's seed flies to it during a run.
 - Beds go from *just planted* to *growing*, *flowering* and finally *established*. The garden screen says which bed you're growing and how far along it is, and the end of a run says what changed.
 - **Replant** a bed any time. Nothing is thrown away: whatever was growing waits in your seed tin, just as grown, to be planted again.
-- **Arrange** moves beds (with whatever is growing in them), the cushion and the stone between their places, with a preview, **Undo** and **Put away**.
+- Beds stay in their places while you choose what to grow. Arrange and furniture editing were retired after owner review.
 
 ## Rare seeds
 
@@ -55,18 +55,18 @@ The leaf button brings you back to the garden without resetting your run. During
 - Every bud you bloom sends a glowing seed arcing out into the garden, where it sprouts a flower (daisy, cosmos, lavender, buttercup, forget-me-not).
 - Pollen that bounces off the rim drops seeds, so even a miss grows grass, clover and ferns, or feeds the nearest plant.
 - Each turn Erwu tends the garden and everything grows a little. While you're aiming, she keeps an eye on it (the little glints of dew).
-- The garden has its own uncluttered view, with a detail area below the scene. On a short landscape screen, the details sit beside it. Rotating the phone changes the presentation, never saved plant positions.
+- The garden has its own view. A bed's planting card overlays the foot of the scene without moving or resizing the garden. Rotating the phone changes the presentation, never saved plant positions.
 - The five buds under **Best** show how grown the garden is. Once it's growing well, butterflies start to visit.
 - **Full bloom** lights the petals one by one, then bursts: sunbeams, a petal shower, hearts from Erwu and a couple of butterflies set free.
 - Everything growing on the lawn comes from play. As the garden grows, lawn daisies and clover spread, a wildflower meadow creeps in from the edges, moss finds the stepping stones, ferns unfurl by the log, ivy climbs the fountain, a robin starts visiting it, and a fairy ring appears.
-- Your plants and their growth stay yours, however long you are away. After about half a day, the garden gradually rests: the light turns soft and cool like evening, flowers fold and droop a little, fewer petals drift by, visitors grow quieter, and tufts of grass appear along the edges. Autumn leaves settle on the lawn, the fountain stills with a leaf floating in it, the grass grows a little long with a few dandelion clocks, fireflies drift in the evening light, and a snail takes its time across the path. It never withers away.
-- Returning gently wakes the garden even if you just sit with Erwu. Playing a few turns helps it wake sooner; there are no cleanup chores or lost progress.
+- Your plants and their growth stay yours, however long you are away. Rest begins after about four hours and deepens over the following 36 hours: the garden grows quieter and its colour becomes subdued. It never withers away.
+- Sitting with Erwu restores half the garden's liveliness; ordinary turns bring back the rest. There are no cleanup chores or lost progress.
 
 ## Files
 
 - `index.html`: the interface and canvas game (no build step)
 - `garden-state.js`: garden ownership, save migration, and temporary rest
-- `garden-layout.js`: flower beds and furnishings, their places, and arranging them
+- `garden-layout.js`: persisted bed/furnishing positions and Erwu's destinations; legacy arrangement operations remain for compatibility
 - `garden-beds.js`: what grows in the beds, rare seeds and the seed tin
 - `garden-view.js`: garden projection and return-request rules
 - `tests/`: [garden validation instructions](tests/README.md)
