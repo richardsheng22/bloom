@@ -169,3 +169,28 @@ test('a hello while she sits: she looks at you, then goes back to sitting', () =
   run(st, wd, 2);
   assert.equal(st.pose, 'sit');
 });
+
+test('she never walks far straight up or down the lawn: steep stretches zigzag, still clear of the roses and on screen', () => {
+  let legs = 0, steep = 0, before = 0;
+  for (const [w, h] of [[288, 250], [343, 330], [358, 400], [358, 600], [398, 470], [536, 270]]) {
+    const pl = world(w, h).places;
+    for (const name of Object.keys(pl.nodes).filter((k) => k.startsWith('spot:'))) {
+      const raw = E.route(pl, { x: 0, y: 0 }, name), path = E.meander(pl, { x: 0, y: 0 }, raw, 1);
+      assert.deepEqual(path[path.length - 1], raw[raw.length - 1], `${name} still ends where it should at ${w}x${h}`);
+      let prev = { x: 0, y: 0 };
+      for (const [i, p] of path.entries()) {
+        assert.ok(Math.abs(p.x) <= w / 2 && Math.abs(p.y) <= h / 2, `${name} stays on screen at ${w}x${h}`);
+        const out = !pl.inRoses(prev, 4) && !pl.inRoses(p, 4);
+        if (out) assert.ok(pl.clear(prev, p), `${name} leg ${i} clear of the roses at ${w}x${h}`);
+        const dx = Math.abs(p.x - prev.x), dy = Math.abs(p.y - prev.y);
+        if (dy > 48) { legs++; if (dy > dx * 1.3) steep++; }
+        prev = p;
+      }
+      prev = { x: 0, y: 0 };
+      for (const p of raw) { const dx = Math.abs(p.x - prev.x), dy = Math.abs(p.y - prev.y); if (dy > 48 && dy > dx * 1.3) before++; prev = p; }
+    }
+  }
+  // only short steps along the side of the rose bed stay steep
+  assert.ok(before > 20, `the plain routes had long steep legs: ${before}`);
+  assert.equal(steep, 0, `long steep legs ${steep} of ${legs}, down from ${before}`);
+});

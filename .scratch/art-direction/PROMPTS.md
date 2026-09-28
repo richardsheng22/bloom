@@ -108,3 +108,21 @@ Attach: the mockup and `assets/garden-pieces.png`.
 > - Row 2: dandelions, some gone to seed as white clocks; arching stems of pink bleeding-heart flowers; wild strawberries with white flowers and red berries; a bed of lavender only.
 >
 > Flat plain light grey background (#E6E6E6), with no ground, no shadows, no text, and wide space so nothing touches. Highest resolution.
+
+## 8. Erwu walking toward and away from us → `assets/erwu-walk-updown.png`
+
+Attach: the mockup, `assets/erwu-walk-v2.png` and `assets/erwu-sprite-v2.png` (so she stays the same cat).
+
+Why: the walk above is side-on only, so when she walks up or down the lawn she seems to slide (the "moonwalk"). The game now zigzags her across the lawn instead. With this sheet she can walk straight toward us and away from us.
+
+> Draw a new sprite sheet of the same cat as in the attached sheets, in EXACTLY the storybook illustration style of the attached mockup: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, pastel palette (butter yellow, blush pink, lilac, cornflower blue, sage green, cream), warm afternoon light from the upper left, subtle paper grain. NOT photographic, NOT 3D, NOT glossy, no fine photographic fur, no blocky or mosaic textures.
+>
+> The cat is the same cat as in the attached sheets: a round, plump, charcoal-grey British Shorthair with full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes and a big fluffy tail, drawn with the same soft outline and simplified fur.
+>
+> Two walk cycles, 2 rows of 4 frames, every frame the same size and evenly spaced:
+> - Row 1: walking straight TOWARD the viewer, seen from the front and slightly above (as if we stand on a garden path looking down at her coming to us). Face, chest and front paws toward us, head slightly lowered, relaxed and unhurried. The four frames are one smooth walking loop: left front paw forward; paws passing; right front paw forward; paws passing.
+> - Row 2: walking straight AWAY from the viewer, seen from behind and slightly above: back of the head and ears, round back, hind paws and her big fluffy tail held up with a gentle curve. The same four-step loop: left hind paw forward; passing; right hind paw forward; passing.
+>
+> In every frame: the cat is centred in its cell, the same size, with her paws on the same invisible ground line, and the body, head and tail at the same height; only the legs, shoulders and tail tip move between frames. Flat plain light grey background (#E6E6E6), no ground, no shadows, no text, no grid lines, and wide empty space so nothing touches. Highest resolution.
+
+Tips if the first try is off: ask for "4 frames, not 3 or 6"; if the frames differ in size or position, ask it to "keep every frame identical in size and position, only the legs move"; if she looks like a different cat, re-attach `erwu-sprite-v2.png` and say "the same cat as the attached sheet, same face and colouring".

@@ -57,9 +57,11 @@ const clone = x => JSON.parse(JSON.stringify(x));
       assert.equal(g.rest,Math.min(1,Math.max(0,hours-G.REST.graceHours)/G.REST.settleHours));
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden1'))),fixture);
       assert.equal(await page.locator('#play').innerText(),'Continue · turn 8');
-      // The run's own fields are unchanged; v0.8 adds a garden log alongside them.
-      const {log,...saved}=await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3')));
+      // The run's own fields are unchanged; v0.8 adds a garden log alongside them, and the
+      // special-turn schedule starts a few turns after an older save's current turn.
+      const {log,special,...saved}=await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3')));
       assert.deepEqual(saved,run); assert.deepEqual(log.seeds,[]);
+      assert.deepEqual(special,{next:Math.max(12,run.turn+6),kind:null,last:null,bonus:0});
       assert.doesNotMatch(await page.locator('#t-note').innerText(),/missed|kept what|lost/i);
       if (hours===0||hours===168) await page.screenshot({path:path.join(output,hours===0?'awake.png':'resting.png')});
       if (hours===168) {

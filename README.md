@@ -15,14 +15,17 @@ The leaf button brings you back to the garden without resetting your run. During
 - **Aim:** pull back anywhere on the screen like a slingshot, then let go. Letting go near where you started cancels the shot.
 - **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Pollen pips under a bud (or a number, for tough ones) show the hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
 - **Pollen clusters** give you one more ball. The **petal** pickup splits your next shot three ways.
-- **Power-ups** (from turn 4): a **dewdrop** splashes every bud around it, a **bee** buzzes from bud to bud for a few seconds, and a **sunbeam** hits every bud in a line straight out from Erwu for two.
-- **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Each new thing gets a short introduction the first time it appears.
+- **Power-ups** (from turn 4) sit on glowing, pulsing medallions: hit one with pollen to use it. A **dewdrop** splashes every bud around it, a **bee** buzzes from bud to bud for a few seconds, and a **sunbeam** hits every bud in a line straight out from Erwu for two. If several drift past unused, the game gently reminds you how they work.
+- **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** (at most one a turn) bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Each new thing gets a short introduction the first time it appears.
+- **Buds** are drawn as compact flower heads with their count at their foot, so a crowded board stays readable.
+- **Seasons:** every 25 turns the season turns: spring, summer, autumn, evening and starlight, then a new year. The light changes and something new drifts on the air (summer pollen, autumn leaves, fireflies).
+- **Special turns:** from turn 12, every 10-15 turns one turn is different: **a gust of wind** shifts everything one place round the flower, **a stubborn bud** comes alone but tough, or **a butterfly turn** gives an extra pollen for each bloom (up to five).
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
 
 ## Erwu
 
-- In the garden, Erwu has her own day. She naps in her basket, on the cushion or on the sunny stone; sniffs the beds; sits by the fountain; investigates the log; stretches; and now and then stalks a butterfly that has settled nearby, crouching with her tail twitching before she pounces (she never catches one).
+- In the garden, Erwu has her own day. She is drawn from the side, so she ambles across the lawn in a lazy zigzag rather than walking straight up or down it. She naps in her basket, on the cushion or on the sunny stone; sniffs the beds; sits by the fountain; investigates the log; stretches; and now and then stalks a butterfly that has settled nearby, crouching with her tail twitching before she pounces (she never catches one).
 - Tap her to say hello. She stops whatever she's doing, turns to look at you with a slow blink, then carries on; if she was asleep she sits up. With sound on, she purrs.
 - After time away, she wakes up, stretches, and comes to the front of the rose bed to greet you.
 - The first time one of your beds flowers, a butterfly finds it and so does Erwu. After a run that changed a bed, she goes to have a look.
@@ -58,6 +61,7 @@ The leaf button brings you back to the garden without resetting your run. During
 - The garden has its own view. A bed's planting card overlays the foot of the scene without moving or resizing the garden. Rotating the phone changes the presentation, never saved plant positions.
 - The five buds under **Best** show how grown the garden is. Once it's growing well, butterflies start to visit.
 - **Full bloom** lights the petals one by one, then bursts: sunbeams, a petal shower, hearts from Erwu and a couple of butterflies set free.
+- During a run the painted meadow around the flower is washed back to a plain lawn by however much of your garden is missing or resting, so it visibly fills in as you play.
 - Everything growing on the lawn comes from play. As the garden grows, lawn daisies and clover spread, a wildflower meadow creeps in from the edges, moss finds the stepping stones, ferns unfurl by the log, ivy climbs the fountain, a robin starts visiting it, and a fairy ring appears.
 - Your plants and their growth stay yours, however long you are away. Rest begins after about four hours and deepens over the following 36 hours: the garden grows quieter and its colour becomes subdued. It never withers away.
 - Sitting with Erwu restores half the garden's liveliness; ordinary turns bring back the rest. There are no cleanup chores or lost progress.

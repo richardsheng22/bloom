@@ -75,6 +75,48 @@
     return path;
   }
 
+  // She is only ever drawn from the side, so a stretch straight up or down the lawn looked
+  // like a moonwalk. Steep stretches become a lazy zigzag instead, each leg no steeper than
+  // MAX_SLOPE (rise over run), never through the roses and never off the lawn.
+  const MAX_SLOPE = 0.75;
+  function meander(pl, from, path, facing = 1) {
+    const out = [];
+    let a = from, side = facing >= 0 ? 1 : -1;
+    const sc = pl.scene, onLawn = (q) => Math.abs(q.x) < sc.width / 2 - 16 && q.y > -sc.height / 2 + 20 && q.y < sc.height / 2 - 10;
+    for (const b of path) {
+      const dx = b.x - a.x, dy = b.y - a.y, rise = Math.abs(dy);
+      // stepping out of the basket she crosses her own rose bed, so that leg may bend inside it
+      const fromNest = pl.nodes && pl.nodes.nest && dist(a, pl.nodes.nest) < 6;
+      if (rise > 14 && rise > Math.abs(dx) * MAX_SLOPE && (fromNest || !pl.inRoses(a, 4) && !pl.inRoses(b, 4))) {
+        const n = Math.max(1, Math.ceil(rise / 55)), off = rise / n / MAX_SLOPE * 0.55;
+        if (Math.abs(dx) > 4) side = dx > 0 ? 1 : -1;
+        // each turning point swings out to alternate sides; where the lawn is too narrow (beside
+        // the roses, near its edge) it swings less, the other way, or not at all
+        const ok = (q, prev) => onLawn(q) && (fromNest || !pl.inRoses(q, 6) && pl.clear(prev, q));
+        let prev = a, sd = side;
+        for (let i = 0; i < n; i++) {
+          const t = (i + 0.5) / n, base = { x: a.x + dx * t, y: a.y + dy * t };
+          const edge = sc.width / 2 - 17, clampX = (x) => Math.max(-edge, Math.min(edge, x));
+          // of the turning points that fit, the one whose legs are least steep (the preferred
+          // side wins ties, so the zigzag keeps alternating)
+          const steep = (u, v) => Math.abs(v.y - u.y) / (Math.abs(v.x - u.x) + 1);
+          const q = [sd, sd * 0.6, 'edge', -sd, -sd * 0.6, 0].map((k) => k === 'edge' ? { x: clampX(base.x + sd * off), y: base.y, k: sd }
+            : { x: base.x + k * off, y: base.y, k }).filter((c) => ok(c, prev))
+            .map((c) => ({ c, cost: Math.max(steep(prev, c), i === n - 1 ? steep(c, b) : 0) - (Math.sign(c.k) === sd ? 0.05 : 0) }))
+            .sort((u, v) => u.cost - v.cost).map((u) => u.c)[0];
+          if (!q) break;
+          // the next turn swings back across from wherever this one went
+          if (q.k) sd = q.k > 0 ? -1 : 1;
+          delete q.k; out.push(q); prev = q;
+        }
+        // the last leg must not cut through the roses either
+        while (!fromNest && out.length && out[out.length - 1] === prev && !pl.clear(prev, b)) { out.pop(); prev = out.length ? out[out.length - 1] : a; }
+      }
+      out.push(b); a = b;
+    }
+    return out;
+  }
+
   // ----- What she does -----
   // Each action is a short list of steps. Weights, cooldowns and a short memory keep
   // her from repeating herself; doing nothing much is always an option.
@@ -214,8 +256,8 @@
       if (s.do === 'begin') { start(st, s.name, st.steps, s.reason); st.step = null; return st; }
       const v = s.visitor && w.visitors.find((x) => x.id === s.visitor);
       if (s.visitor && !v) { st.steps = st.steps.filter((x) => !x.visitor); st.step = null; st.reason = 'the butterfly left'; return st; }
-      if (s.do === 'walk') s.path = route(w.places, st.at, s.to);
-      if (s.do === 'walk-free') s.path = [s.to];
+      if (s.do === 'walk') s.path = meander(w.places, st.at, route(w.places, st.at, s.to), st.facing);
+      if (s.do === 'walk-free') s.path = meander(w.places, st.at, [s.to], st.facing);
       if (s.do === 'approach') {
         const side = v.x >= st.at.x ? -1 : 1, near = { x: v.x + side * s.gap, y: v.y + 14 };
         s.path = w.places.inRoses(near, 6) ? route(w.places, st.at, 'gate').concat([near]) : [near];
@@ -300,5 +342,5 @@
     return { action: st.action, step: st.step ? (st.step.do === 'pose' ? st.step.pose : st.step.do) : '', pose: st.pose, reason: st.reason,
       at: `${Math.round(st.at.x)},${Math.round(st.at.y)}`, cooldowns: cds };
   }
-  return { places, route, create, update, tap, request, queue, invalidate, reset, info, ACTIONS, SPEED };
+  return { places, route, meander, MAX_SLOPE, create, update, tap, request, queue, invalidate, reset, info, ACTIONS, SPEED };
 });

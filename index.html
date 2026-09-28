@@ -774,7 +774,7 @@
     return Math.min(maxShape, 0.47 * Math.hypot(dr, r * STEP / 2));
   }
   // Each step inward also turns half a slot, so the board spirals in.
-  function itemAngle(it) { return (it.sector + it.rf * 0.5) * STEP - Math.PI / 2; }
+  function itemAngle(it) { return (it.sector + (it.sf || 0) + it.rf * 0.5) * STEP - Math.PI / 2; }
   function itemPos(it) {
     const a = itemAngle(it), rr = ringRadius(it.rf);
     return { x: Math.cos(a) * rr, y: Math.sin(a) * rr, a, r: sizeAt(it.rf) };
@@ -859,7 +859,7 @@
   // ---------- Game state ----------
   let items = [], balls = [], particles = [], floats = [], tweens = [], blooms = [];
   // show-and-tell: seeds flying out to the garden, plants sprouting, confetti, butterflies
-  let flights = [], growing = [], confetti = [], flies = [], bees = [], beams = [];
+  let flights = [], growing = [], confetti = [], flies = [], bees = [], beams = [], bursts = [];
   let petalFx = new Array(SECTORS).fill(-1), fbT = -1, raysFx = 0, launchFx = 0, lastTier = -1;
   let turn = 1, ballCount = START_BALLS, pending = 0, petalNext = false, pawReady = true;
   let charges = new Array(SECTORS).fill(0), shownCharges = new Array(SECTORS).fill(0);
@@ -889,14 +889,41 @@
   const INTRO = {
     mushroom: ['Mushrooms', "bouncy, and they can't be picked"],
     ring: ['Flower rings', 'pollen through a ring turns golden and hits twice'],
-    dew: ['Dewdrop', 'splashes every bud around it'],
-    bee: ['Bee', 'buzzes about, nudging buds open'],
-    sun: ['Sunbeam', 'a beam of light straight out from Erwu'],
+    powers: ['Power-ups', 'hit a glowing medallion with pollen to use it'],
+    dew: ['Dewdrop', 'hit it with pollen to splash every bud around it'],
+    bee: ['Bee', 'hit it with pollen to set a bee loose on the buds'],
+    sun: ['Sunbeam', 'hit it with pollen: a beam of light strikes every bud in its line'],
     seedbud: ['A seed bud', 'open it to find a rare seed for your garden'],
   };
   let seen = store.get('seen', {}), introQueue = [];
   // This run's rare seed (a turn and a kind, or null) and what changed in the garden during it.
   let runSeed = null, runLog = null;
+  let powersMissed = 0, powerTipShown = false;
+  // ----- Variety in a long run. Every 25 turns the season turns (the light and what drifts
+  // on the air change, with a small card), and every 10-15 turns from turn 12 one turn is
+  // special: a gust shifts everything along, a single stubborn bud, or a butterfly turn. -----
+  const SEASON_TURNS = 25;
+  const SEASONS = [
+    { name: 'Spring', sub: 'a new year in the garden', air: null },
+    { name: 'Summer', sub: 'long, warm days', over: [255, 206, 120, 0.13], air: 'glint' },
+    { name: 'Autumn', sub: 'leaves on the breeze', over: [222, 140, 70, 0.15], mult: [248, 228, 205], air: 'leaf' },
+    { name: 'Evening', sub: 'the light turns golden', over: [240, 168, 140, 0.12], mult: [214, 196, 226], air: 'firefly' },
+    { name: 'Starlight', sub: 'fireflies over the lawn', over: [70, 82, 140, 0.16], mult: [150, 160, 206], air: 'firefly' },
+  ];
+  const seasonAt = (t) => Math.floor((Math.max(1, t) - 1) / SEASON_TURNS) % SEASONS.length;
+  const SPECIALS = {
+    gust: ['A gust of wind', 'everything shifts along one place'],
+    lone: ['A stubborn bud', 'just one this turn, and a tough one'],
+    flutter: ['Butterfly turn', 'every bloom this turn earns an extra pollen'],
+  };
+  let special = { next: 12, kind: null, last: null, bonus: 0 };
+  function nextSpecial(t) {
+    if (t < special.next) { special.kind = null; return; }
+    const kinds = Object.keys(SPECIALS).filter((k) => k !== special.last);
+    special.kind = special.last = kinds[Math.floor(Math.random() * kinds.length)];
+    special.next = t + 10 + Math.floor(Math.random() * 6);
+    special.bonus = 0;
+  }
   const bedStages = () => Object.fromEntries(garden.patches.map((p) => [p.id, p.flower ? p.flower + ':' + BloomBeds.stage(p) : '']));
   function spawnRing(t) {
     const free = [...Array(SECTORS).keys()].sort(() => Math.random() - 0.5);
@@ -907,16 +934,21 @@
       if (!free.length) return;
       items.push({ id: nextId++, sector: free.pop(), ring: RINGS, rf: RINGS, born: now, pulse: 0, spin: 0, ...o });
       if (INTRO[o.kind] && !seen[o.kind]) { seen[o.kind] = true; store.set('seen', seen); introQueue.push(o.kind); }
+      // players who met power-ups before they were medallions get the how-to once too
+      else if (POWERS.includes(o.kind) && !seen.powers) { seen.powers = true; store.set('seen', seen); introQueue.push('powers'); }
     };
-    for (let i = 0; i < n; i++) {
+    // a stubborn bud: one, as tough as three
+    if (special.kind === 'lone') {
+      const hp = Math.max(3, Math.round(hpFor(t) * 2.2));
+      add({ kind: 'shape', hp, maxHp: hp, pulse: 0, spin: 0, sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4) });
+    }
+    for (let i = 0; i < (special.kind === 'lone' ? 0 : n); i++) {
       const hp = hpFor(t);
       add({ kind: 'shape', hp, maxHp: hp, pulse: 0, spin: 0, sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4) });
     }
     add({ kind: 'orb' });
-    if (t >= 10 && Math.random() < Math.min(0.75, 0.35 + (t - 10) * 0.025)) {
-      add({ kind: 'mushroom' });
-      if (t >= 22 && Math.random() < Math.min(0.6, 0.35 + Math.max(0, t - 60) * 0.005)) add({ kind: 'mushroom' });
-    }
+    // at most one mushroom a turn: more crowded the board and blocked every line of aim
+    if (t >= 10 && Math.random() < Math.min(0.75, 0.35 + (t - 10) * 0.025)) add({ kind: 'mushroom' });
     if (t >= 8 && Math.random() < 0.2) add({ kind: 'ring' });
     if (t > 3 && Math.random() < 0.22) add({ kind: pick(POWERS) });
     if (t > 2 && Math.random() < 0.12) add({ kind: 'petal' });
@@ -934,7 +966,7 @@
     return {
       v: 3, turn, ballCount, petalNext, pawReady, charges: [...charges],
       items: items.filter((i) => !i.dead).map(({ kind, sector, ring, hp, maxHp, sp, ci, seed }) => ({ kind, sector, ring, hp, maxHp, sp, ci, ...(seed ? { seed } : {}) })),
-      ...(runSeed ? { seed: { ...runSeed } } : {}), log: runLog,
+      ...(runSeed ? { seed: { ...runSeed } } : {}), log: runLog, special: { next: special.next, kind: special.kind, last: special.last, bonus: special.bonus },
     };
   }
   function restore(run) {
@@ -944,6 +976,9 @@
     const now = performance.now() - 1000;
     items = run.items.map((i) => ({ ...i, id: nextId++, rf: i.ring, pulse: 0, spin: 0, born: now }));
     for (const i of items) if (i.seed && !BloomBeds.isRare(i.seed)) delete i.seed;
+    special = run.special && Number.isFinite(run.special.next) && (run.special.kind === null || SPECIALS[run.special.kind])
+      ? { next: run.special.next, kind: run.special.kind, last: run.special.last || null, bonus: run.special.bonus || 0 }
+      : { next: Math.max(12, run.turn + 6), kind: null, last: null, bonus: 0 };
     runSeed = run.seed && BloomBeds.isRare(run.seed.kind) && typeof run.seed.key === 'string' ? { ...run.seed } : null;
     runLog = run.log && run.log.beds && Array.isArray(run.log.seeds) ? run.log : { beds: bedStages(), seeds: [] };
     balls = []; particles = []; floats = []; tweens = []; blooms = [];
@@ -976,6 +1011,8 @@
     cat = freshCat();
     // Seed pacing is part of the garden, so it survives from run to run.
     runSeed = BloomBeds.planRun(garden); runLog = { beds: bedStages(), seeds: [] };
+    powersMissed = 0; powerTipShown = false;
+    special = { next: 12, kind: null, last: null, bonus: 0 };
     saveGarden();
     spawnRing(1);
     el.over.hidden = true;
@@ -2524,7 +2561,7 @@
         const q = itemPos(it);
         const a = Math.atan2(q.y, q.x);
         plant('mushroom', a + Math.PI, 0.45, 1.1, 2, { x: q.x, y: q.y });
-      } else it.dead = true;
+      } else { it.dead = true; if (POWERS.includes(it.kind)) powerMissed(); }
     }
     if (reached) {
       if (!pawReady) { items = items.filter((i) => !i.dead); return gameOver(); }
@@ -2540,8 +2577,31 @@
     }
     items = items.filter((i) => !i.dead);
     turn++;
+    nextSpecial(turn);
     spawnRing(turn);
+    if (special.kind) {
+      INTRO.special = SPECIALS[special.kind]; introQueue.unshift('special');
+      if (special.kind === 'gust') gust();
+      if (special.kind === 'flutter' && !reduced) for (let i = 0; i < 3; i++) { const a = Math.random() * TAU; addFly(Math.cos(a) * R * 1.1, Math.sin(a) * R * 1.1, true); }
+    }
+    if ((turn - 1) % SEASON_TURNS === 0) {
+      const se = SEASONS[seasonAt(turn)];
+      INTRO.season = [se.name, se.sub]; introQueue.unshift('season');
+    }
     markReady();
+  }
+  // The gust: every bud and pickup slides one place round the flower, and leaves blow across.
+  function gust() {
+    for (const it of items) { it.sector = (it.sector + 1) % SECTORS; it.sf = -1; }
+    tween(reduced ? 0.1 : 0.9, (p) => { const e = 1 - Math.pow(1 - p, 3); for (const it of items) it.sf = e - 1; },
+      () => { for (const it of items) delete it.sf; });
+    for (let i = 0; i < 14 && !reduced && particles.length < 400; i++) {
+      const y = (Math.random() - 0.5) * R * 2.2;
+      particles.push({ type: 'flutter', x: -R * 1.4 - Math.random() * R * 0.4, y, vx: R * (1.6 + Math.random()), vy: (Math.random() - 0.5) * R * 0.3,
+        rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 6, ph: Math.random() * TAU, fs: 5 + Math.random() * 5, life: 1, decay: 0.55,
+        size: R * 0.05, wid: 0.4, bend: 0.3, col: hexRgb(C.sage) });
+    }
+    tone(noteFreq(3), 0.03, 'sine', 0.8); tone(noteFreq(6), 0.02, 'sine', 0.8, 0.1);
   }
 
   // ---------- Garden presentation and inspection ----------
@@ -2556,7 +2616,8 @@
   const depthAt = (y) => !gardenScene ? 1 : 0.84 + 0.2 * Math.max(0, Math.min(1, (y + gardenScene.height / 2) / gardenScene.height));
   function erwuWorld() {
     if (!erwuPlaces && gardenScene) erwuPlaces = BloomErwu.places(gardenScene, BloomGardenLayout.geometry(gardenScene), BloomGardenLayout.landmarks(gardenScene));
-    return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.35 : 0.5) : 26,
+    return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, // one walk cycle: how far the painted paws travel back while planted (about 1.25 nests)
+      stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.25 : 0.5) : 26,
       beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
       objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 })) };
   }
@@ -2938,6 +2999,10 @@
       charges[k] = Math.min(1, charges[k] + 0.5);
       if (was < 1 && charges[k] >= 1) petalFilled(k);
       flowerFromBloom(itemAngle(it), { x: p.x, y: p.y - p.r * 0.3, col: budColor(it) });
+      if (special.kind === 'flutter' && special.bonus < 5) {
+        special.bonus++; pending++; addFloat(p.x, p.y - p.r * 1.2, '+1', 'honey');
+        if (!reduced) addFly(p.x, p.y, true);
+      }
       pop(it);
     }
   }
@@ -2995,8 +3060,24 @@
         rot: pt.a, vr: (Math.random() - 0.5) * 3, ph: Math.random() * TAU, fs: 5 + Math.random() * 6, life: 1, decay: 0.75, size: l * 0.5, wid: pt.w, bend: pt.bend, col });
     }
   }
+  // Power-ups that drift past unused: after three in a run, and until a few have been used,
+  // a gentle reminder of how they work (once a run).
+  function powerMissed() {
+    powersMissed++;
+    if (powersMissed >= 3 && !powerTipShown && (store.get('powersUsed', 0) < 5)) {
+      powerTipShown = true;
+      introQueue.push('powers');
+    }
+  }
+  // Each power-up has its own colour: its medallion's rim, and the burst when it is used.
+  const POWER_COL = { dew: '#6FA8D0', bee: '#E0A93A', sun: '#F0A640' };
+  function powerBurst(p, kind) {
+    bursts.push({ x: p.x, y: p.y, col: hexRgb(POWER_COL[kind]), t: 0 });
+    cat.happy = Math.max(cat.happy || 0, 0.8);
+  }
   function collect(it) {
     it.dead = true;
+    if (POWERS.includes(it.kind)) { store.set('powersUsed', store.get('powersUsed', 0) + 1); powerBurst(itemPos(it), it.kind); }
     const p = itemPos(it);
     if (it.kind === 'orb') { pending++; addFloat(p.x, p.y - p.r, '+1', 'honey'); tone(noteFreq(9), 0.04, 'sine', 0.3); }
     else if (it.kind === 'petal') { petalNext = true; addFloat(p.x, p.y - p.r, 'Petal', 'bud-deep'); tone(noteFreq(11), 0.04, 'sine', 0.4); }
@@ -3132,7 +3213,8 @@
               if (!b.gold && (b.x - p.x) ** 2 + (b.y - p.y) ** 2 < (p.r * 0.72) ** 2) goldify(b, it);
             } else {
               const p = itemPos(it);
-              if ((b.x - p.x) ** 2 + (b.y - p.y) ** 2 < (p.r * 0.7 + ballR) ** 2) collect(it);
+              const hit = POWERS.includes(it.kind) ? p.r * 1.0 : p.r * 0.7;
+              if ((b.x - p.x) ** 2 + (b.y - p.y) ** 2 < (hit + ballR) ** 2) collect(it);
             }
           }
         }
@@ -3173,6 +3255,12 @@
   // ---------- Update ----------
   function update(dt) {
     arenaReveal = Math.min(1, arenaReveal + dt / 0.25);
+    // the run's painted meadow comes back as the garden does (see paintBackground)
+    if (presentation === 'run' && (lushTimer -= dt) <= 0) {
+      lushTimer = 0.5;
+      const k = Math.round(lushness() * 20) / 20;
+      if (k !== bgLush || seasonAt(turn) !== bgSeason) { bgLush = k; bgCache = null; }
+    }
     // Visiting is enough to wake the garden. Hidden tabs never perform catch-up care.
     if (!document.hidden) {
       garden.lastSeen = Date.now();
@@ -3243,6 +3331,8 @@
     raysFx = Math.max(0, raysFx - dt * 0.55);
     for (const bm of beams) bm.t += dt;
     beams = beams.filter((bm) => bm.t < 0.8);
+    for (const bu of bursts) bu.t += dt;
+    bursts = bursts.filter((bu) => bu.t < 0.9);
     if (fbT >= 0) fbT += dt;
     launchFx = Math.max(0, launchFx - dt * 2.4);
     updateConfetti(dt);
@@ -3349,6 +3439,45 @@
       drift.push({ x: Math.random() * W, y: Math.random() * H, vx: 4 + Math.random() * 6, vy: 7 + Math.random() * 8, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.6, size: 6 + Math.random() * 7, leaf: i % 3 === 0 });
     }
   }
+  // How lush the garden is right now, 0 to 1: the grown plants that are awake (not resting).
+  // During a run the painted meadow behind the flower is washed back to a plain lawn by
+  // however much is missing, so the garden visibly fills in as you play.
+  let bgLush = -1, lushTimer = 0, bgSeason = -1;
+  function lushness() {
+    let sum = 0;
+    for (const p of garden.plants) if (!dormant(p, garden.rest)) sum += Math.min(1, p.g + 0.2);
+    return Math.max(0, Math.min(1, sum / 110));
+  }
+  // What drifts on the air in each season, behind the flower: motes of summer pollen,
+  // autumn leaves, and fireflies in the evening and starlight.
+  function drawSeasonAir(now) {
+    const air = SEASONS[seasonAt(turn)].air;
+    if (!air) return;
+    const t = reduced ? 0 : now / 1000, rnd = seeded(29);
+    ctx.save();
+    if (air === 'firefly') ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < (air === 'leaf' ? 12 : 16); i++) {
+      const sx = rnd(), sy = rnd(), sp = 0.5 + rnd(), ph = rnd() * TAU;
+      if (air === 'leaf') {
+        const y = ((sy * H + t * 26 * sp) % (H + 40)) - 20, x = sx * W + Math.sin(t * 0.8 * sp + ph) * 30, s = 5 + sp * 3;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(t * sp + ph);
+        ctx.fillStyle = rgb(mixA(hexRgb('#D9823F'), hexRgb('#B5462E'), rnd()), 0.75);
+        ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.45, 0, 0, TAU); ctx.fill();
+        ctx.restore();
+      } else if (air === 'glint') {
+        const y = H - ((sy * H + t * 14 * sp) % (H + 20)), x = sx * W + Math.sin(t * 0.6 + ph) * 18;
+        ctx.fillStyle = `rgba(255,236,170,${0.35 + 0.35 * Math.sin(t * 2 + ph) ** 2})`;
+        ctx.beginPath(); ctx.arc(x, y, 1.6 + sp, 0, TAU); ctx.fill();
+      } else {
+        const x = sx * W + Math.sin(t * 0.21 * sp + ph) * W * 0.12, y = sy * H + Math.cos(t * 0.17 * sp + ph * 1.7) * H * 0.06;
+        const glow = reduced ? 0.7 : Math.max(0, Math.sin(t * 0.9 * sp + ph * 3)) ** 2;
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, 10);
+        gr.addColorStop(0, `rgba(255,236,150,${0.8 * glow})`); gr.addColorStop(1, 'rgba(255,236,150,0)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, 10, 0, TAU); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
   function paintBackground() {
     const c = document.createElement('canvas');
     c.width = canvas.width; c.height = canvas.height;
@@ -3362,6 +3491,22 @@
     if (lawn) {
       g.drawImage(lawn, plate.x, plate.y, plate.w, plate.h);
       g.fillStyle = rgb(hexRgb(C.ground), presentation === 'run' ? 0.2 : 0.04); g.fillRect(0, 0, W, H);
+      if (presentation === 'run') {
+        // a plain lawn over the painted meadow, thinning as the garden grows
+        if (bgLush < 0) bgLush = Math.round(lushness() * 20) / 20;
+        const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.42);
+        g.fillStyle = rgb(lawnCol, 0.66 * bare); g.fillRect(plate.x, plate.y, plate.w, plate.h);
+        const tex = rgb(hexRgb(C.moss), 0.1 * bare), rnd = seeded(11);
+        g.strokeStyle = tex; g.lineCap = 'round'; g.lineWidth = 1;
+        for (let i = 0; i < Math.round(W * H / 2600 * bare); i++) {
+          const x = plate.x + rnd() * plate.w, y = plate.y + rnd() * plate.h, l = 3 + rnd() * 5;
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x - l * 0.3, y - l); g.stroke();
+        }
+        // the season's light
+        const se = SEASONS[bgSeason = seasonAt(turn)];
+        if (se.mult) { g.globalCompositeOperation = 'multiply'; g.fillStyle = rgb(se.mult); g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over'; }
+        if (se.over) { g.fillStyle = `rgba(${se.over.join(',')})`; g.fillRect(0, 0, W, H); }
+      }
       const paper = hexRgb(C.ground);
       for (const [y0, y1] of [[0, H * 0.18], [H, H * 0.84]]) {
         const zg = g.createLinearGradient(0, y0, 0, y1);
@@ -3801,6 +3946,31 @@
   // Buds grow upright on little stems, like the plants in the garden. There are
   // five kinds; hits make them wobble and lean away from the pollen, and they
   // loosen as they're coaxed open. Hits left read as pollen pips (or a number).
+  // The head of each painted bud: the top of its frame with the stem and lower leaves faded
+  // away, cut once into a small canvas. cx is where the head's middle sits across it.
+  const BUD_HEAD = { 'bud-tulip': 0.74, 'bud-rose': 0.6, 'bud-peony': 0.62, 'bud-poppy': 0.58, 'bud-bell': 0.7,
+    'open-tulip': 0.74, 'open-rose': 0.74, 'open-peony': 0.74, 'open-poppy': 0.72, 'open-bell': 0.74 };
+  const budHeads = {};
+  function budHead(name) {
+    if (budHeads[name] !== undefined) return budHeads[name];
+    const img = artImage('play'), f = ART.play.frames[name];
+    if (!img || !f || !BUD_HEAD[name]) return (budHeads[name] = null);
+    const [sx, sy, w, h] = f, ch = Math.round(h * BUD_HEAD[name]);
+    const c = document.createElement('canvas'); c.width = w; c.height = ch;
+    const g = c.getContext('2d');
+    g.drawImage(img, sx, sy, w, ch, 0, 0, w, ch);
+    // fade the bottom quarter and the outer edges, where stems and leaves were cut
+    g.globalCompositeOperation = 'destination-in';
+    const fade = g.createLinearGradient(0, 0, 0, ch);
+    fade.addColorStop(0, '#000'); fade.addColorStop(0.72, '#000'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = fade; g.fillRect(0, 0, w, ch);
+    // the middle of the head: the alpha-weighted centre of its top half
+    const d = g.getImageData(0, 0, w, Math.round(ch * 0.6)).data;
+    let sum = 0, sx2 = 0;
+    for (let i = 3; i < d.length; i += 4) { const a = d[i]; if (a > 60) { sum += a; sx2 += a * ((i >> 2) % w); } }
+    c.cx = sum ? sx2 / sum / w : 0.5;
+    return (budHeads[name] = c);
+  }
   function drawBud(it, now) {
     const p = itemPos(it);
     const born = Math.max(0, Math.min(1, (now - it.born) / 520));
@@ -3816,30 +3986,40 @@
     const ink = rgb(mixA(base, deep, 0.55), 0.5);
     // drawn a little larger than the hit shape, pivoting at the foot of the
     // stem so the bud's body sits over the spot the pollen actually hits
-    const S = 1.35 * grow;
+    // painted: just the head of the bud, about the size of the spot the pollen hits, so a
+    // crowded board stays readable (no stems or leaves reaching over the neighbours)
+    const headName = artImage('play') ? `${open > 0.6 || it.hp === 1 && it.maxHp > 1 ? 'open' : 'bud'}-${kind.k === 'bell' ? 'bell' : kind.k}` : null;
+    const head = headName && budHead(headName);
+    const S = (head ? 1 : 1.35) * grow;
     ctx.save();
-    ctx.translate(p.x, p.y + r * 1.3);
-    ctx.rotate(sway + (it.tilt || 0) * 0.3);
-    ctx.scale(S * (1 + wob * 0.14), S * (1 - wob * 0.14));
-    ctx.translate(0, -r * 0.84);
+    if (head) {
+      ctx.translate(p.x, p.y);
+      ctx.rotate(sway * 0.6 + (it.tilt || 0) * 0.3);
+      ctx.scale(S * (1 + wob * 0.14), S * (1 - wob * 0.14));
+    } else {
+      ctx.translate(p.x, p.y + r * 1.3);
+      ctx.rotate(sway + (it.tilt || 0) * 0.3);
+      ctx.scale(S * (1 + wob * 0.14), S * (1 - wob * 0.14));
+      ctx.translate(0, -r * 0.84);
+    }
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     // a bud with one hit left glows a little: it's ready to bloom
+    const gy = head ? 0 : -r * 0.3;
     if (it.hp === 1 && !reduced) {
       const k = 0.5 + 0.5 * Math.sin(now / 260 + it.id);
-      const hg = ctx.createRadialGradient(0, -r * 0.3, 0, 0, -r * 0.3, r * 1.1);
+      const hg = ctx.createRadialGradient(0, gy, 0, 0, gy, r * 1.25);
       hg.addColorStop(0, rgb(hexRgb(C.butter), 0.35 + 0.2 * k)); hg.addColorStop(1, rgb(hexRgb(C.butter), 0));
-      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, -r * 0.3, r * 1.1, 0, TAU); ctx.fill();
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, gy, r * 1.25, 0, TAU); ctx.fill();
     }
     const top = r * 0.14;
     let cy = -r * 0.3;
-    // painted: the bud of its kind, opening into the flower on its last hits
-    const bf = artImage('play') && ART.play.frames[`${open > 0.6 || it.hp === 1 && it.maxHp > 1 ? 'open' : 'bud'}-${kind.k === 'bell' ? 'bell' : kind.k}`];
-    if (bf) {
-      ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.13);
-      ctx.beginPath(); ctx.ellipse(r * 0.12, r * 0.84, r * 0.55, r * 0.15, 0, 0, TAU); ctx.fill();
-      const h = r * 2.15;
-      paintPiece(ctx, 'play', bf === ART.play.frames[`bud-${kind.k}`] ? `bud-${kind.k}` : `open-${kind.k}`, 0, r * 0.9, h * bf[2] / bf[3]);
-      cy = -r * 0.45;
+    if (head) {
+      // the bud of its kind, opening into the flower on its last hits
+      ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.12);
+      ctx.beginPath(); ctx.ellipse(r * 0.08, r * 0.86, r * 0.62, r * 0.16, 0, 0, TAU); ctx.fill();
+      const hh = r * 2.25, hw = hh * head.width / head.height;
+      ctx.drawImage(head, -hw * head.cx, -hh * 0.42, hw, hh);
+      cy = -r * 0.05;
     } else {
     ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.13);
     ctx.beginPath(); ctx.ellipse(r * 0.12, r * 0.84, r * 0.55, r * 0.15, 0, 0, TAU); ctx.fill();
@@ -3960,7 +4140,8 @@
     }
     if (it.hp > 4) {
       // the count on a small round badge above the flower, like a pressed-flower label
-      const br = Math.max(8, r * (it.hp > 99 ? 0.5 : 0.42)), bx = 0, byy = artImage('play') ? -r * 1.55 : -r * 0.98;
+      // painted, it sits at the foot of the head, inside the bud's own spot
+      const br = Math.max(8, r * (head ? (it.hp > 99 ? 0.44 : 0.38) : it.hp > 99 ? 0.5 : 0.42)), bx = 0, byy = head ? r * 0.72 : -r * 0.98;
       ctx.fillStyle = 'rgba(70,50,40,0.18)'; ctx.beginPath(); ctx.arc(bx + 0.8, byy + 1.4, br, 0, TAU); ctx.fill();
       ctx.fillStyle = rgb(mixA(mixA(base, deep, 0.55), hexRgb(C.walnut), 0.35)); ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(255,248,232,0.9)'; ctx.lineWidth = Math.max(1.2, br * 0.14); ctx.beginPath(); ctx.arc(bx, byy, br * 0.86, 0, TAU); ctx.stroke();
@@ -3972,8 +4153,9 @@
     } else if (it.hp > 1) {
       for (let i = 0; i < it.hp; i++) {
         const x = (i - (it.hp - 1) / 2) * r * 0.2;
-        ctx.fillStyle = rgb(hexRgb(C.honey)); ctx.beginPath(); ctx.arc(x, r * 0.93, Math.max(1.3, r * 0.075), 0, TAU); ctx.fill();
-        ctx.fillStyle = 'rgba(255,248,230,0.8)'; ctx.beginPath(); ctx.arc(x - r * 0.02, r * 0.91, Math.max(0.5, r * 0.028), 0, TAU); ctx.fill();
+        const py = head ? r * 0.98 : r * 0.93;
+        ctx.fillStyle = rgb(hexRgb(C.honey)); ctx.beginPath(); ctx.arc(x, py, Math.max(1.3, r * 0.075), 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(255,248,230,0.8)'; ctx.beginPath(); ctx.arc(x - r * 0.02, py - r * 0.02, Math.max(0.5, r * 0.028), 0, TAU); ctx.fill();
       }
     }
     ctx.restore();
@@ -4074,6 +4256,25 @@
     const honey = hexRgb(C.honey), soft = hexRgb(C['honey-soft']);
     ctx.save();
     ctx.translate(p.x, p.y); ctx.scale(s, s);
+    if (POWERS.includes(it.kind)) {
+      // a power-up sits on a glowing medallion, so it reads as something to hit, not scenery
+      const col = hexRgb(POWER_COL[it.kind]), mr = p.r * 1.05;
+      if (!reduced) {
+        const ph = ((now / 1600) + it.id * 0.37) % 1;
+        ctx.strokeStyle = rgb(col, 0.55 * (1 - ph)); ctx.lineWidth = Math.max(1.2, p.r * 0.1 * (1 - ph));
+        ctx.beginPath(); ctx.arc(0, 0, mr * (1 + ph * 0.6), 0, TAU); ctx.stroke();
+      }
+      const hg = ctx.createRadialGradient(0, 0, mr * 0.6, 0, 0, mr * 1.45);
+      hg.addColorStop(0, rgb(col, 0.35)); hg.addColorStop(1, rgb(col, 0));
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, mr * 1.45, 0, TAU); ctx.fill();
+      const dg = ctx.createRadialGradient(-mr * 0.3, -mr * 0.35, 0, 0, 0, mr);
+      dg.addColorStop(0, '#FFFDF6'); dg.addColorStop(1, rgb(mixA(col, WHITE, 0.72)));
+      ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(0, 0, mr, 0, TAU); ctx.fill();
+      ctx.strokeStyle = rgb(col); ctx.lineWidth = Math.max(1.5, p.r * 0.12); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(0.8, p.r * 0.05);
+      ctx.beginPath(); ctx.arc(0, 0, mr * 0.84, 0, TAU); ctx.stroke();
+      ctx.scale(0.8, 0.8);
+    }
     if (it.kind === 'orb' && artImage('play')) {
       // a painted golden seed head of pollen, turning
       ctx.rotate(reduced ? 0 : now / 2400 + it.id);
@@ -4119,7 +4320,7 @@
       ctx.beginPath(); ctx.ellipse(-r * 0.35, r * 0.05, r * 0.16, r * 0.3, -0.4, 0, TAU); ctx.fill();
     } else if (it.kind === 'bee') {
       ctx.translate(0, Math.sin(now / 160 + it.id) * p.r * 0.1);
-      drawBee(ctx, p.r * 0.62, now + it.id * 97, 0);
+      drawBee(ctx, p.r * 0.95, now + it.id * 97, 0);
     } else if (it.kind === 'sun' && artImage('play')) {
       // the painted sun, turning slowly
       ctx.rotate(reduced ? 0 : now / 3200);
@@ -4205,6 +4406,17 @@
     g.restore();
   }
   function drawBeesAndBeams() {
+    for (const bu of bursts) {
+      // a flash and a widening ring in the power-up's colour
+      const k = bu.t / 0.9, e = 1 - Math.pow(1 - k, 3), rad = R * (0.08 + 0.34 * e);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const fg = ctx.createRadialGradient(bu.x, bu.y, 0, bu.x, bu.y, rad);
+      fg.addColorStop(0, rgb(WHITE, 0.55 * (1 - k))); fg.addColorStop(0.5, rgb(bu.col, 0.4 * (1 - k))); fg.addColorStop(1, rgb(bu.col, 0));
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(bu.x, bu.y, rad, 0, TAU); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = rgb(bu.col, 0.8 * (1 - k)); ctx.lineWidth = Math.max(1.5, R * 0.014 * (1 - k));
+      ctx.beginPath(); ctx.arc(bu.x, bu.y, rad, 0, TAU); ctx.stroke();
+    }
     for (const bm of beams) {
       const k = 1 - bm.t / 0.8, len = R * 1.1, w = R * 0.07 * (0.6 + 0.4 * k);
       ctx.save(); ctx.rotate(bm.a); ctx.globalCompositeOperation = 'lighter';
@@ -4654,7 +4866,7 @@
       .sort((a, b) => Math.hypot(a.g.x - q.x, a.g.y - q.y) - Math.hypot(b.g.x - q.x, b.g.y - q.y));
     if (!rests.length || !BloomErwu.queue(erwu, rests[0].o.kind === 'cushion' ? 'cushion' : 'sun-stone', w, null, 'settling after the excitement')) BloomErwu.queue(erwu, 'nap', w);
   }
-  if (debugErwu) window.__erwu = { trigger: (name, arg) => BloomErwu.request(erwu, name, erwuWorld(), arg, 'debug'), info: () => BloomErwu.info(erwu), state: erwu, fly: (x, y) => { const f = addFly(x, y - 40, true); Object.assign(f, { tx: x, ty: y, hold: 20, life: 40 }); return f.id; } };
+  if (debugErwu) window.__erwu = { trigger: (name, arg) => BloomErwu.request(erwu, name, erwuWorld(), arg, 'debug'), world: () => erwuWorld(), info: () => BloomErwu.info(erwu), state: erwu, fly: (x, y) => { const f = addFly(x, y - 40, true); Object.assign(f, { tx: x, ty: y, hold: 20, life: 40 }); return f.id; } };
   // The hello button follows her around the garden.
   let touchAt = '';
   function placeErwuTouch() {
@@ -4709,6 +4921,7 @@
     ctx.drawImage(bgCache, 0, 0);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
+    if (presentation === 'run') drawSeasonAir(now);
     // drifting petals behind the flower; fewer while the garden rests
     const hush = presentation === 'garden' ? 1 - garden.rest * 0.75 : 1;
     ctx.globalAlpha = hush;

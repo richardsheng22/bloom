@@ -124,7 +124,9 @@ function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
     // 6. Back after hours away: she wakes, stretches, and comes to say hello.
     p = await open(gardenJSON({ hoursAway: 20 }));
     const greet = [];
-    for (let i = 0; i < 40; i++) { await p.waitForTimeout(250); const s = await info(p); if (greet[greet.length - 1] !== s.pose) greet.push(s.pose); if (s.pose === 'front') break; }
+    let waited = 0;
+    for (let i = 0; i < 80; i++) { await p.waitForTimeout(250); waited += 250; const s = await info(p); if (greet[greet.length - 1] !== s.pose) greet.push(s.pose); if (s.pose === 'front') break; }
+    console.log(`greeting reached after ${waited} ms`);
     for (const pose of ['yawn', 'stretch', 'walk', 'front']) assert.ok(greet.includes(pose), `${pose} in ${greet}`);
     await p.screenshot({ path: path.join(out, 'welcome.png') });
     await p.close();
