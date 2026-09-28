@@ -1,6 +1,6 @@
 # 08 — Bring Erwu's personality into play and make returns welcoming
 
-Status: implemented for v0.9; awaiting owner review. Priority: complete the core experience. Dependencies: 01, 02, 05, 06, 07.
+Status: implemented for v0.9 with painted in-round reactions and return poses. The web closeout fixes the run blink threshold (the timer is seconds remaining) and garden slow-blink rendering. Existing aim/pollen tracking retains priority over the idle blink. See [closeout evidence](v09-closeout/README.md). Physical-phone acceptance is deferred under ticket 10; subjective personality can be tuned later. Dependencies: 01, 02, 05, 06, 07.
 
 ## Outcome
 

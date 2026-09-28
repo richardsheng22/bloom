@@ -1,6 +1,6 @@
 # 11 — Find rare seeds in play and grow unique plants
 
-Status: implemented; pacing observed (see the v0.8 record). Release: v0.8. Priority: core for v0.8. Dependencies: 03 (beds), 04 (patch progress model).
+Status: implemented; pacing observed (see the v0.8 record). The 2026-09-28 web closeout restores clock-driven sunflower canopy movement and strawberry ripening in the painted path. Strawberry beds retain white flowers while fruit changes from pale green to red over growth 0.75–1; the source painting and stone rim remain intact. These traits also render under reduced motion, without continuous sway. See [closeout evidence](v09-closeout/README.md). Dependencies: 03 (beds), 04 (patch progress model).
 
 ## Outcome
 

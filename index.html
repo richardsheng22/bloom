@@ -1204,8 +1204,8 @@
       clear: { side: 18, up: 64, roseUp: sc.nest * 1.4 } };
   }
   // Draws a painted piece `width` wide with its ground anchor at (x, y). Returns false if it can't.
-  function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1) {
-    const img = artImage(key), f = img && ART[key].frames[name];
+  function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1, variant = null) {
+    const img = variant ? variant.image : artImage(key), f = variant ? variant.frame : img && ART[key].frames[name];
     if (!f) return false;
     const [sx, sy, w, h, ax, ay] = f, k = width / w;
     g.save(); g.translate(x, y); if (flip) g.scale(-1, 1); if (alpha < 1) g.globalAlpha *= alpha;
@@ -1217,10 +1217,10 @@
   // they are drawn in horizontal strips shifted more the higher they are, so stems bend and
   // roots stay put. Reduced motion draws them still, into the picture. -----
   let swaying = null, swayList = [];
-  function swayPiece(g, name, x, y, width, flip = false, alpha = 1, amp = 0.035) {
-    if (!swaying || reduced) return paintPiece(g, 'garden', name, x, y, width, flip, alpha);
+  function swayPiece(g, name, x, y, width, flip = false, alpha = 1, amp = 0.035, variant = null) {
+    if (!swaying || reduced) return paintPiece(g, 'garden', name, x, y, width, flip, alpha, variant);
     const t = g.getTransform();
-    swaying.push({ m: t, name, x, y, width, flip, alpha: alpha * g.globalAlpha, amp, ph: (x * 0.061 + y * 0.037) % TAU });
+    swaying.push({ m: t, name, x, y, width, flip, variant, alpha: alpha * g.globalAlpha, amp, ph: (x * 0.061 + y * 0.037) % TAU });
     return true;
   }
   function drawSwaying(now) {
@@ -1231,7 +1231,7 @@
     const gust = Math.max(0, Math.sin(t * 0.23)) ** 3 * 0.8;
     ctx.save();
     for (const it of swayList) {
-      const f = ART.garden.frames[it.name];
+      const f = it.variant ? it.variant.frame : ART.garden.frames[it.name];
       if (!f) continue;
       const [sx, sy, w, h, ax, ay] = f, k = it.width / w;
       const bend = it.amp * it.width * calm * (Math.sin(t * 1.25 + it.ph) * 0.65 + Math.sin(t * 2.7 + it.ph * 1.7) * 0.2 + gust * Math.sin(t * 0.9 + it.x * 0.01));
@@ -1239,7 +1239,7 @@
       ctx.globalAlpha = it.alpha;
       for (let i = 0; i < STRIPS; i++) {
         const u = 1 - (i + 0.5) / STRIPS, dx = bend * u ** 1.8 * (it.flip ? -1 : 1), y0 = h * i / STRIPS, sh = h / STRIPS;
-        ctx.drawImage(img, sx, sy + y0, w, Math.min(sh + 1, h - y0), -ax * k + dx, (-ay + y0) * k, w * k, Math.min(sh + 1, h - y0) * k);
+        ctx.drawImage(it.variant ? it.variant.image : img, sx, sy + y0, w, Math.min(sh + 1, h - y0), -ax * k + dx, (-ay + y0) * k, w * k, Math.min(sh + 1, h - y0) * k);
       }
     }
     ctx.restore();
@@ -1325,7 +1325,7 @@
     // she watches the aim, the pollen, a passing butterfly: a glance, or a turn of the head
     const look = o.bat > 0.2 ? o.batA : o.look;
     if (look != null && Math.abs(Math.cos(look)) > 0.3) return [o.bat > 0.2 || Math.abs(Math.cos(look)) > 0.75 ? 'peek-turn' : 'peek-glance', Math.cos(look) < 0];
-    if (o.blink > 0.5) return ['peek-sleepy', false];
+    if (o.blink > 0) return ['peek-sleepy', false];
     return ['peek', false];
   }
   function drawBasketCat(g, p, o, now) {
@@ -1450,6 +1450,44 @@
   }
   // ----- Flower beds: tilled soil, and whatever is growing in them -----
   const BED_SPOTS = [[-17, -3], [0, -5], [17, -3], [-9, 4], [9, 5]];
+  // Bounded, cached render variants keep the source painting's texture. Only the
+  // sunflower canopy bends; the bed rim stays planted. Only red strawberry fruit
+  // changes colour, leaving its white flowers, leaves and stones untouched.
+  const bedArtVariants = new Map();
+  function bedArtVariant(kind, growth, hour) {
+    if (kind !== 'sunflower' && kind !== 'strawberry') return null;
+    const stage = kind === 'sunflower' ? Math.round(BloomBeds.sunAngle(hour) * 10)
+      : Math.round(Math.max(0, Math.min(1, (growth - 0.75) / 0.25)) * 10);
+    const key = `${kind}:${stage}`;
+    if (bedArtVariants.has(key)) return bedArtVariants.get(key);
+    const img = artImage('garden'), f = img && ART.garden.frames[`bloom-${kind}`];
+    if (!f) return null;
+    const [sx, sy, w, h, ax, ay] = f, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    if (kind === 'sunflower') {
+      for (let y = 0; y < h; y++) {
+        const bend = Math.max(0, 1 - y / (h * 0.72));
+        g.drawImage(img, sx, sy + y, w, 1, stage / 10 * w * 0.075 * bend * bend, y, w, 1);
+      }
+    } else {
+      g.drawImage(img, sx, sy, w, h, 0, 0, w, h);
+      if (stage < 10) {
+        const pixels = g.getImageData(0, 0, w, h), p = pixels.data, ripe = stage / 10;
+        for (let i = 0; i < p.length; i += 4) {
+          const r = p[i], green = p[i + 1], b = p[i + 2];
+          if (!p[i + 3] || r < green * 1.2 || r < b * 1.3) continue;
+          const mask = Math.min(1, (r - green * 1.2) / 35), shade = (r + green + b) / 3;
+          const pale = [shade * 0.85 + 46, shade * 0.92 + 53, shade * 0.62 + 28];
+          for (let k = 0; k < 3; k++) p[i + k] += (pale[k] - p[i + k]) * (1 - ripe) * mask;
+        }
+        g.putImageData(pixels, 0, 0);
+      }
+    }
+    const variant = { image: c, frame: [0, 0, w, h, ax, ay] };
+    bedArtVariants.set(key, variant);
+    return variant;
+  }
   function bloomPiece(kind, bed) {
     if (kind === 'moonflower' && !BloomBeds.isNight(new Date().getHours())) return 'bed-young';
     if (kind === 'dandelion' && bed.puffed) return 'bed-young';
@@ -1467,7 +1505,11 @@
       const piece = f || 'bed-empty', q = ART.garden.frames[piece], w = 80 * q[2] / (q[8] || q[2]);
       groundShadow(g, 0, 17, 80);
       if (piece === 'bed-empty') paintPiece(g, 'garden', piece, 0, 17, w, false, preview ? 0.75 : 1);
-      else swayPiece(g, piece, 0, 17, w, false, preview ? 0.75 : 1, piece === 'bed-seedlings' ? 0.012 : 0.02);
+      else {
+        const clock = new Date(), variant = piece === `bloom-${flower}`
+          ? bedArtVariant(flower, preview ? 1 : growth, clock.getHours() + clock.getMinutes() / 60) : null;
+        swayPiece(g, piece, 0, 17, w, false, preview ? 0.75 : 1, piece === 'bed-seedlings' ? 0.012 : 0.02, variant);
+      }
       return;
     } else {
     // soil, with a rim of little stones
@@ -4503,10 +4545,18 @@
   }
   // Painted Erwu (assets/erwu.webp). The drawn Erwu below stands in while it loads or if a
   // browser cannot decode it. Side-on poses are painted facing right.
-  const ERWU_POSES = { front: 'sit-front', yawn: 'sit-content', curl: 'curl', sniff: 'sniff', crouch: 'stalk', pounce: 'pounce', stretch: 'stretch', loaf: 'loaf', sit: 'sit-side' };
+  const ERWU_POSES = { front: 'sit-front', yawn: 'stretch', curl: 'curl', sniff: 'sniff', crouch: 'stalk', pounce: 'pounce', stretch: 'stretch', loaf: 'loaf', sit: 'sit-side' };
   // In the basket its rim hides her lower half: she curls up, peeks out, and yawns there.
   const ERWU_BASKET = { curl: ['curl', 0.42], yawn: ['yawn', 0.56], stretch: ['stretch', 0.4] };
-  const ERWU_FACING_US = new Set(['front', 'yawn', 'curl', 'loaf']);
+  const ERWU_FACING_US = new Set(['front', 'curl', 'loaf']);
+  function paintedErwuPose(pose, nest) {
+    // Timers are seconds remaining, not normalized expression weights.
+    const blink = Math.max(erwu.blink, cat.blink) > 0;
+    if (nest) return (ERWU_BASKET[pose] || [blink ? 'peek-sleepy' : 'peek'])[0];
+    if (pose === 'front') return blink ? 'sit-drowsy' : catnipGlow > 0.5 ? 'sit-content'
+      : erwu.look && erwu.look.up ? 'look-up' : 'sit-front';
+    return ERWU_POSES[pose];
+  }
   const ERWU_LENGTH = 2.3;   // her length walking, in units of her size; sets the painted scale
   function drawPaintedErwu(pose, now, nestR, alpha) {
     const img = artImage('erwu');
@@ -4514,8 +4564,8 @@
     // walking out of the basket, she is already on her way rather than peeking
     const nest = inBasket() && pose !== 'walk', size = nestR * 0.78 * depthAt(erwu.at.y), unit = size * ERWU_LENGTH / ART.erwu.frames['walk-0'][2];
     const phase = ((erwu.phase / TAU) % 1 + 1) % 1 * 8;
-    let name = pose === 'walk' ? `walk-${reduced ? 0 : Math.floor(phase)}` : ERWU_POSES[pose], floor = erwu.at.y;
-    if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; name = b[0]; floor = size * b[1]; }
+    let name = pose === 'walk' ? `walk-${reduced ? 0 : Math.floor(phase)}` : paintedErwuPose(pose, nest), floor = erwu.at.y;
+    if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; floor = size * b[1]; }
     const f = name && ART.erwu.frames[name];
     if (!f) return false;
     const flip = !nest && !ERWU_FACING_US.has(pose) && erwu.facing < 0;

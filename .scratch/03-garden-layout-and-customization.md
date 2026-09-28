@@ -1,6 +1,6 @@
 # 03 — Give the player a small, personally arranged garden
 
-Status: implemented; see the v0.8 record. Priority: core. Dependencies: 01, 02.
+Status: superseded in part by owner review (`b461a28`, 2026-09-28). Fixed beds and persisted layout remain; Arrange, Put away, and furniture taps were deliberately retired. Do not rebuild those controls to satisfy the historical requirements below. The layout model remains for save compatibility and Erwu's destinations. Dependencies: 01, 02.
 
 ## Outcome
 

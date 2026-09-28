@@ -1,6 +1,6 @@
 # 06 — Give Erwu contextual intentions and gentle interaction
 
-Status: implemented for v0.9; awaiting owner review of pacing and personality. Priority: core. Dependencies: 02, 03, 05.
+Status: implemented for v0.9, with subsequent owner-review refinements on develop. Browser behavior checks remain part of [web closeout](v09-closeout/README.md); physical-phone acceptance is deferred under ticket 10. Arrange-related UI cases below are superseded by ticket 03's retirement; navigation and target invalidation remain tested at model level. Priority: core. Dependencies: 02, 03, 05.
 
 ## Outcome
 

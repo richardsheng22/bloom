@@ -1,6 +1,12 @@
 # 01 — Preserve the garden; let it rest while unattended
 
-Status: implemented; resting visuals strengthened for owner review (see the v0.8 record below). Priority: foundation. Dependencies: none.
+Status: implemented; updated by subsequent owner review. Priority: foundation. Dependencies: none.
+
+## Current behavior — 2026-09-28
+
+At the audited `develop` baseline `b461a28`, rest starts after four hours and deepens over the following 36 hours. Visiting restores half the liveliness; ordinary play lifts the remaining rest. Ownership and growth never decay. This supersedes the historical 12/72-hour timing and complete wake-by-visiting record below. Physical-phone acceptance is deferred under ticket 10.
+
+The newer feature-branch commit `5b4a1dd` changes rest presentation to draw plants back instead of removing colour, and adjusts garden positioning and the hint. It is not part of this closeout's develop baseline; do not describe it as integrated here.
 
 ## Outcome
 
