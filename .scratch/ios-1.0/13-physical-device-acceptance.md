@@ -11,7 +11,7 @@ Close the physical-device gap deliberately deferred during v0.9.
 ## Work
 
 1. Carry forward legacy ticket 10's save, interaction, accessibility, performance and owner-feel requirements. Retire Arrange cases; test fixed beds, planting/inspection, Erwu hello and immediate Play. Safari/Home Screen remain relevant to web regression only, not as substitutes for native tests.
-2. Use a written matrix with device/model/iOS/build: smallest/oldest supported device, representative newer device, minimum/current supported OS where hardware permits. Mark unavailable combinations untested and resolve support claims explicitly.
+2. Use a written matrix with device/model/iOS/build: smallest/oldest supported device, representative newer device, minimum/current supported OS where hardware permits. Mark unavailable combinations untested and resolve support claims explicitly. Include the owner's iPad running the iPhone app in its compatibility window: launch, aim, plant a bed, rotate the iPad and resume (App Review may test on iPad).
 3. Cover fresh install, native upgrade, sparse/mature/resting gardens, 170 plants, rare rewards, clock rollback, low storage, airplane mode, lifecycle interruptions and repeated launch. Check actual safe areas and system edge gestures.
 4. Run the audio/haptics and accessibility scenarios from 08–09. Replay a busy shot and long-session performance scenario from 10. Retain native captures and defect records.
 5. Give the owner a short play checklist: aiming feel, readability, pleasant rest/return, Erwu identity/pacing and first-bloom-to-rest sequence. Do not ask the owner to execute developer commands.
@@ -26,7 +26,7 @@ Close the physical-device gap deliberately deferred during v0.9.
 
 ## Required from you
 
-A short hands-on session on agreed iPhone(s), including sound/haptics and the garden sequences. This is the planned point for the previously deferred testing.
+A short hands-on session on agreed iPhone(s) and a quick check on the iPad, including sound/haptics and the garden sequences. This is the planned point for the previously deferred testing.
 
 ## Out of scope
 

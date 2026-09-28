@@ -39,8 +39,8 @@ Confirmed by the owner on 2026-09-28: public App Store after a TestFlight beta; 
 | Decision | Proposal | Needed before |
 |---|---|---|
 | Distribution | **Confirmed:** TestFlight, then public App Store | Production distribution setup |
-| Platforms | iPhone first; no dedicated iPad, Mac or Android work | Native project configuration |
-| Orientation | Portrait gameplay with safe handling of system transitions | Shell/UI work |
+| Platforms | **Chosen:** iPhone only for 1.0. iPad owners can install it and play in an iPhone-sized window; App Review may test on iPad, so that must work (checked in 13 on the owner's iPad). A native iPad layout is a possible 1.1. Opt out of Apple-silicon Mac availability unless the owner wants it; no Android | Native project configuration |
+| Orientation | **Chosen:** portrait only on iPhone (landscape shrinks the aiming space around the daisy) | Shell/UI work |
 | Content | Existing game, fixed beds and current art | All implementation |
 | Language | English | Store materials |
 | Business model | No ads, IAP, accounts or analytics added; price is an owner decision | Store configuration |
