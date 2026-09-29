@@ -125,3 +125,9 @@ The movement and rendering fixes that need no new art are done. The rig itself (
 `diagnose.cjs --assert` now passes. New unit tests in `tests/erwu-behavior.test.cjs` cover the ramps, the turning limit, no flip-flopping, straight directional walks, rounded corners staying out of the roses and on the lawn, and consistent results at 30, 60 and 120 Hz. `after-walk-sheet.png` is a browser capture every 0.2 s of a walk to the fountain and back to the basket.
 
 **Still open (needs art, as recommended above):** poses are still sparse (3.8 a second on the side walk, fewer on the 4-frame front/back walks); no authored start, stop or turn steps; paw contacts are not verified; no diagonal views, so a 45° stretch uses the side walk.
+
+## Follow-up — 2026-09-29 (owner feedback: still noticeable at direction changes and the sun stone)
+
+- **Hop onto the cushion or stone:** was a 0.45 s straight slide in the walking pose after an instant switch to side view. It is now a turn toward the target, a 0.22 s crouch, and a 0.4 s arc in the leap pose (`hop` in `erwu-behavior.js`). `after-hop-sheet.png` captures it every 0.1 s.
+- **Turning round side-on:** was a one-frame mirror. She now narrows to a sliver and widens facing the other way over 0.2 s (`TURN_MS` in `index.html`), a standard 2D stand-in for turn frames.
+- **Noted, needs art:** her poses on `erwu-sprite-v2.png` (loaf, sit, curl) are darker and more saturated than the walk frames, so she visibly changes colour when she stops. The front/back walks have 4 frames against 8 for the side walk, and there are no diagonal (three-quarter) views, so a change between side and front/back is a 0.22 s dissolve between two different drawings.

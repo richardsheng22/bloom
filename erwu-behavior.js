@@ -300,10 +300,16 @@
       return st;
     }
     if (s.do === 'hop') {
-      setPose(st, 'walk');
-      const k = Math.min(1, s.t / 0.45);
-      st.at = { x: s.from.x + (s.to.x - s.from.x) * k, y: s.from.y + (s.to.y - s.from.y) * k };
-      if (k >= 1) st.step = null;
+      // up onto the cushion or the stone: she turns to it, gathers herself, springs in a small
+      // arc and lands (not a slide in her walking pose)
+      if (s.t < dt * 1.5) st.facing = s.to.x >= s.from.x ? 1 : -1;
+      const CROUCH = 0.22, AIR = 0.4;
+      if (s.t < CROUCH) { setPose(st, 'crouch'); return st; }
+      setPose(st, 'pounce');
+      const k = Math.min(1, (s.t - CROUCH) / AIR), e = k * k * (3 - 2 * k);
+      st.at = { x: s.from.x + (s.to.x - s.from.x) * e, y: s.from.y + (s.to.y - s.from.y) * e };
+      st.jump = Math.sin(k * Math.PI) * 0.7;
+      if (k >= 1) { st.jump = 0; st.step = null; }
       return st;
     }
     if (s.do === 'pounce') {
