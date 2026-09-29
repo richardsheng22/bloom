@@ -5357,8 +5357,11 @@
   // one frame has fades with that frame, instead of lingering at full strength over the next.
   let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null, turnFacing = { facing: 1, since: -1e9 };
   const TURN_MS = 200;
-  const WALK_FRAMES = { side: 8, front: 4, back: 4 };
-  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${i}`;
+  // Toward and away from us, the sheets hold half a stride (four frames); the other half is the
+  // same frames mirrored, which swaps her left and right paws.
+  const WALK_FRAMES = { side: 8, front: 8, back: 8 }, WALK_HALF = { front: 4, back: 4 };
+  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${i % WALK_HALF[view]}`;
+  const walkLayer = (view, i, weight, flip) => ({ name: walkName(view, i), weight, flip: WALK_HALF[view] && i >= WALK_HALF[view] ? !flip : flip });
   function paintWalk(layers, x, y, h, alpha) {
     const parts = layers.filter((l) => l.weight > 0.01 && ART.erwu.frames[l.name]).map((l) => {
       const f = ART.erwu.frames[l.name], k = h / f[3], a = f[4] * k, b = (f[2] - f[4]) * k;
@@ -5392,11 +5395,11 @@
       if (view !== walkView.view) walkView = { view, from: walkView.view, since: now };
       const n = WALK_FRAMES[view], phase = ((erwu.phase / TAU) % 1 + 1) % 1 * n, i = reduced ? 0 : Math.floor(phase) % n;
       const flip = view === 'side' && erwu.facing < 0, u = Math.max(0, (phase % 1 - 0.5) / 0.5), m = reduced ? 0 : u * u * (3 - 2 * u);
-      let layers = [{ name: walkName(view, i), weight: 1 - m, flip }, { name: walkName(view, (i + 1) % n), weight: m, flip }];
+      let layers = [walkLayer(view, i, 1 - m, flip), walkLayer(view, (i + 1) % n, m, flip)];
       const k = reduced ? 1 : Math.min(1, (now - walkView.since) / 220);
       if (k < 1 && walkView.from) {
-        const fromFrame = walkName(walkView.from, Math.floor(((erwu.phase / TAU) % 1 + 1) % 1 * WALK_FRAMES[walkView.from]) % WALK_FRAMES[walkView.from]);
-        layers = [{ name: fromFrame, weight: 1 - k, flip: walkView.from === 'side' && erwu.facing < 0 }, { name: walkName(view, i), weight: k, flip }];
+        const from = walkView.from, fi = Math.floor(((erwu.phase / TAU) % 1 + 1) % 1 * WALK_FRAMES[from]) % WALK_FRAMES[from];
+        layers = [walkLayer(from, fi, 1 - k, from === 'side' && erwu.facing < 0), walkLayer(view, i, k, flip)];
       }
       // turning round side-on: she narrows to a sliver and widens again the other way, rather
       // than mirroring in a single frame
@@ -5409,7 +5412,7 @@
       ctx.save(); ctx.translate(erwu.at.x, 0); ctx.scale(sx, 1); ctx.translate(-erwu.at.x, 0);
       paintWalk(layers, erwu.at.x, erwu.at.y, walkH, alpha);
       ctx.restore();
-      lastWalk = view === 'side' ? null : { name: walkName(view, i), t: now };
+      lastWalk = view === 'side' ? null : { ...walkLayer(view, i, 1, false), t: now };
       return true;
     }
     let name = paintedErwuPose(pose, nest), floor = erwu.at.y;
@@ -5420,7 +5423,7 @@
     const lift = pose === 'pounce' ? (erwu.jump || 0) * size * 0.55 : 0;
     // just stopped after walking toward or away from us: that view fades into the new pose
     const settle = lastWalk && !nest && !reduced ? Math.min(1, (now - lastWalk.t) / 260) : 1;
-    if (settle < 1) paintWalk([{ name: lastWalk.name, weight: 1, flip: false }], erwu.at.x, erwu.at.y, walkH, alpha * (1 - settle));
+    if (settle < 1) paintWalk([{ name: lastWalk.name, weight: 1, flip: lastWalk.flip }], erwu.at.x, erwu.at.y, walkH, alpha * (1 - settle));
     else lastWalk = null;
     ctx.save(); ctx.globalAlpha *= alpha * settle;
     if (!nest) groundShadow(ctx, erwu.at.x, floor, f[2] * unit * 0.8 * (1 - Math.min(0.4, lift / size)), 0.2);

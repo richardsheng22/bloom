@@ -28,10 +28,12 @@ const ERWU = [
   { file: 'erwu-walk-v2.png', match: 'erwu', walk: true, regions: Object.fromEntries([
     [16, 156, 412, 236], [444, 152, 412, 240], [884, 152, 408, 240], [1320, 152, 420, 240],
     [20, 500, 412, 228], [448, 500, 412, 228], [884, 504, 412, 228], [1316, 500, 424, 232]].map((r, i) => [`walk-${i}`, r])) },
-  // walking toward us (top row) and away (bottom row), four frames each, processed like the side
-  // walk: coloured to match her poses, every frame scaled to one height and anchored on its torso
-  { file: 'erwu-walk-updown.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 2, names: [
-    'walk-front-0', 'walk-front-1', 'walk-front-2', 'walk-front-3', 'walk-back-0', 'walk-back-1', 'walk-back-2', 'walk-back-3'] } },
+  // walking toward us and away, four frames each: half a stride, one paw stepping while the other
+  // holds. The game mirrors them for the other half, so the tail is hidden or hangs centred and
+  // the light is even. Processed like the side walk: coloured to match her poses, every frame
+  // scaled to one height and anchored on its torso.
+  { file: 'erwu-walk-front-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-front-${i}`) } },
+  { file: 'erwu-walk-back-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-back-${i}`) } },
   // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
   // rim there, since her own basket's front is drawn over her
   { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },

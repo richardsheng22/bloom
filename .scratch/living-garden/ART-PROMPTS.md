@@ -203,13 +203,15 @@ Flat plain light grey background (#E6E6E6) everywhere, with no ground beyond the
 
 ## 8. Erwu's movement frames (optional: for a smoother walk)
 
+**Current state (2026-09-29):** the front and back walks are packed (`erwu-walk-front-4.png`, `erwu-walk-back-4.png`); what's still needed is in [8f](#8f-correction-batch-review-reference-check-and-whats-still-needed). The prompts 8a–8d below are kept for the record.
+
 Generation update: all four source candidates are saved under the filenames below. See [the movement generation handoff](ERWU-MOVEMENT-GENERATION.md) for the generation notes, and **[8e. Review of the 2026-09-29 candidates](#8e-review-of-the-2026-09-29-candidates)** for what's wrong with them and the correction prompts. **Not packed.** Only the transitions sheet (8d) is usable as it stands.
 
 These fill the gaps the walk review found (`.scratch/erwu-walk-review/README.md`): diagonal views so changes of direction don't swap between two very different drawings, twice as many front and back frames, and a few transition poses. Priority order: 8a and 8b first (biggest improvement), then 8c, then 8d.
 
 Generated frames tend to drift from each other. For each sheet, check before using it: the same cat in every frame, paws on one line, legs alternating (a paw on the ground stays in place while the body moves over it). If one frame is off, regenerate just that sheet.
 
-Attach to every image in this section: `assets/erwu-walk-v2.png` (the side walk: the master model), `assets/erwu-walk-updown.png` (front and back) and `assets/erwu-sprite-v2.png` (her poses). Their colours already match in the game, so match the side walk.
+Attach to every image in this section: `assets/erwu-walk-v2.png` (the side walk: the style master). **Superseded 2026-09-29:** don't attach `erwu-walk-updown.png` (retired) or the whole poses sheet. Name the legs explicitly. See [8f](#8f-correction-batch-review-reference-check-and-whats-still-needed) for the checked reference list and the current prompts.
 
 ### 8a. Walking diagonally toward us → `assets/erwu-walk-diag-front.png`
 Size: landscape, 2048 × 1024 or larger.
@@ -406,6 +408,100 @@ Flat plain light grey background (#E6E6E6), no floor, no shadow, no text, no gri
 ```
 
 **Checks before sending a sheet to me:** frames 1 and 4 (or 1 and 5) should show **different** legs forward. The tail should be centred in the front and back views. The cat should look the same size as in the side walk when the two are shown at the same height.
+
+### 8f. Correction batch review, reference check and what's still needed
+
+Reviewed 2026-09-29 (develop `5e354de`).
+
+#### Packed: the front and back walks
+
+`erwu-walk-front-4.png` and `erwu-walk-back-4.png` are in the game. The art build recolours them to her poses. The game mirrors each half-stride for the other half: frames 5–8 are frames 1–4 flipped. The legs alternate correctly now. They replace `erwu-walk-updown.png`, which is retired, so don't attach it any more.
+
+Still wrong with them, to fix by editing (below): the front face scowls (heavy, lowered brows), the light is flat and cool, and the back view's paw pads are dark red-brown blotches.
+
+#### Why the generator keeps getting the legs wrong: the reference check
+
+| Reference | Correct? | Finding |
+|---|---|---|
+| `walk-candidates-review/references/side-1/3/5/7.png` | **The crops are exact** | Pixel-identical to side-walk frames 1, 3, 5 and 7, the same regions the art build cuts. |
+| `assets/erwu-walk-v2.png`, as the source of **leg positions** | **No: this is the root cause** | Its frames 5–8 have the same outline as frames 1–4, and the near and far legs are painted the same colour, with no overlap to show depth. From the side, a cat's two half-strides really do look alike, which is fine in the game, where only the outline shows. But "keep the same leg positions as this frame" can't tell the generator **which** paw is the near one. Given frame 5, it reproduces frame 1, and that's why frames 5 and 7 needed hand-written leg swaps. **Every prompt must now name the near and far leg explicitly** (table below) and never rely on the crop for leg identity. |
+| `assets/erwu-walk-v2.png`, as the **style** reference | Yes | It's the look of the game's walk, scalloped fur included. |
+| `assets/erwu-walk-updown.png` | **No longer** | Retired. Its tail swept to one side and it repeated one leg, and attaching it passed both faults into the first 8c sheet. |
+| `assets/erwu-sprite-v2.png` (the whole poses sheet) | **Too broad** | Twenty poses, with a big fluffy tail and a darker coat. Attached whole, it drew the new cats heavier and fluffier. For the **face**, attach only a crop of her front-facing sit (below). |
+| "Match the side walk's colour" | **Wrong reason** | The game recolours every walk frame to her **poses** sheet, not to the side walk; the side walk source is paler than what's shown. Colour gets corrected automatically. What the build can't fix is **light direction and face**, so the prompts now pin those instead. |
+| "Pale charcoal-grey", "heavy-lidded", "muted neutral light" | **Misleading words** | "Charcoal" plus "neutral light" gave the cool dark relit sheets. "Heavy-lidded" became a frown in the front view. They are replaced below. |
+
+Crop to make once (in any image editor), saved next to the other references:
+- `walk-candidates-review/references/face-sit-front.png`: `assets/erwu-sprite-v2.png`, x 34, y 42, width 256, height 272. Her calm, front-facing sit: the face to copy.
+
+#### Leg identity for every side-walk frame
+
+"Near" is the side facing the camera. The painting doesn't show which leg is which, so this table **defines** it. When turning to a diagonal, the near legs stay the ones nearest us. From the side, frames 5–8 look like 1–4, but the legs are swapped:
+
+| Side frame | Front legs | Hind legs |
+|---|---|---|
+| 1 | **near** reaching forward, planted; far under the chest, planted | far forward, near back |
+| 2 | near planted under the shoulder; **far** lifting | far planted; near lifting |
+| 3 | **far** passing forward, bent, lifted; near planted | near passing forward |
+| 4 | **far** reaching, about to land; near back | near forward, far back |
+| 5 | **far** reaching forward, planted; near under the chest, planted | near forward, far back |
+| 6 | far planted under the shoulder; **near** lifting | near planted; far lifting |
+| 7 | **near** passing forward, bent, lifted; far planted | far passing forward |
+| 8 | **near** reaching, about to land; far back | far forward, near back |
+
+#### What's still needed, in priority order
+
+1. **The diagonals, as one set that matches (8a-2, 8b-2).** Keep diagonal toward frames 1, 5 and 7, and away frame 1. Redo toward frame 3, which is shorter and has a bigger head, and away frames 5 (wider and more golden) and 7 (head side-on, body thinner). Then add frames 2, 4, 6 and 8 in both views. Four frames per stride makes the dissolve show a double set of legs halfway through. Generate each frame on its own, attaching **the kept frame 1 of that view** as the anchor for size, head angle, tail and light.
+2. **A front/back touch-up (8c-3):** edit the two packed sheets for her face and light. Optional; they already work.
+3. **Transitions:** nothing new. Stopping while walking away uses the back walk's last frame (all paws down), so the "stopped, facing away" pose in `erwu-transitions-2.png` isn't needed. The turn-away, landing and mid-hop poses are good.
+
+Attach, for every prompt below:
+- `assets/erwu-walk-v2.png` (the style)
+- `references/face-sit-front.png` (the face)
+- the side crop for the frame (the pose)
+- for the diagonals, the anchor frame
+
+Crop the missing side frames 2, 4, 6 and 8 the same way as 1, 3, 5 and 7. The regions in `tools/build-art.cjs`, as x, y, width, height:
+- frame 2: 444, 152, 412, 240
+- frame 4: 1320, 152, 420, 240
+- frame 6: 448, 500, 412, 228
+- frame 8: 1316, 500, 424, 232
+
+**8a-2. Diagonal toward, one frame → `assets/erwu-diag-front-<n>.png`**
+```
+Draw ONE cat walking diagonally TOWARD the viewer and to the right, turned 45 degrees toward us: we see her face, her chest, her near shoulder and both front legs; her body shortens as it goes back; her hips and tail are partly behind her. Camera about 15 degrees above the ground.
+
+MATCH THE ANCHOR IMAGE (the attached three-quarter cat) exactly in size, body length, head size and angle, tail shape, fur and lighting: this frame goes in the same animation, so it must look like the same drawing with only the legs moved. Style of the attached side-view walk sheet: painted storybook look, soft layered grey fur, warm soft light from the upper left, a gentle warm edge (no orange outline, no jagged rim). Her face is the attached front-facing face: calm, round, soft relaxed brows, gentle amber eyes.
+
+LEGS, exactly as follows (near = the side toward us):
+[paste the two cells of the table row for frame n]
+Use the attached side-view frame only for how far each leg reaches and bends; the near and far legs are named above, not by the side frame.
+
+Every planted paw touches one flat ground line. One cat, centred, wide empty space around her, flat plain light grey background (#E6E6E6), no floor, no shadow, no text.
+```
+
+**8b-2. Diagonal away, one frame → `assets/erwu-diag-back-<n>.png`**
+
+Like 8a-2, but with the first paragraph:
+```
+Draw ONE cat walking diagonally AWAY from the viewer and to the right, turned 45 degrees away from us: we see her round hindquarters and the backs of her thighs nearest us, her back, the back of her head, one ear and a sliver of cheek; her tail low and relaxed, toward us. Camera about 15 degrees above the ground.
+```
+and without the face sentence (her face doesn't show).
+
+**8c-3. Front/back touch-up → edit `assets/erwu-walk-front-4.png` and `assets/erwu-walk-back-4.png` in place**
+```
+Edit this sprite sheet. Keep EVERY pose, leg position, size, position and the grey background exactly as they are; the legs are correct.
+Change only:
+- the light: warm, soft light from above and slightly in front of her, EQUAL on both sides (these frames are mirrored), giving the warm pale grey of the attached side-view walk with a faint warm glow on top of the head and back; not a cool or charcoal grey;
+- [front sheet] her face, to the attached front-facing face: calm and round, soft relaxed brows, gentle amber eyes, no frown;
+- [back sheet] the paw pads: small, soft dusty pink, barely showing, not dark red-brown.
+No orange outline, no other changes.
+```
+
+**Checks before sending:**
+- Laid over each other, the diagonal frames match in body length and head size, within about 5%.
+- Frame *n* and frame *n*+4 have **opposite** legs forward.
+- The front/back sheets still line up with their old frames, so their legs haven't moved.
 
 ## After generating
 
