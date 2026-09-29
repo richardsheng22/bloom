@@ -203,6 +203,8 @@ Flat plain light grey background (#E6E6E6) everywhere, with no ground beyond the
 
 ## 8. Erwu's movement frames (optional: for a smoother walk)
 
+Generation update: all four source candidates are now saved under the filenames below. See [the movement generation handoff](ERWU-MOVEMENT-GENERATION.md) for inspection notes and actual dimensions. **Not yet packed or approved:** the front/back eight-frame cycle still needs paw-sequence correction, and the generated fur retains more layering than requested.
+
 These fill the gaps the walk review found (`.scratch/erwu-walk-review/README.md`): diagonal views so changes of direction don't swap between two very different drawings, twice as many front and back frames, and a few transition poses. Priority order: 8a and 8b first (biggest improvement), then 8c, then 8d.
 
 Generated frames tend to drift from each other. For each sheet, check before using it: the same cat in every frame, paws on one line, legs alternating (a paw on the ground stays in place while the body moves over it). If one frame is off, regenerate just that sheet.
