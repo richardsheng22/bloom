@@ -1,5 +1,7 @@
 # Image prompts for the target style
 
+> The living-garden sheets (bare seasonal backdrops, seasonal clumps, visitors and keepsakes) are in [`../living-garden/ART-PROMPTS.md`](../living-garden/ART-PROMPTS.md).
+
 Every prompt is complete on its own. For each one, attach **`target-mockup.webp`** as the style reference, plus any files the prompt names. When the sheets are done, put them in `assets/` on `develop` under the names given; the build tool picks them up from there.
 
 ---

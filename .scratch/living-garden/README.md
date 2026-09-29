@@ -54,7 +54,7 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 ## Order
 
 1. **No art needed:** 07, then 01, 03 and 04 in code with existing art standing in, then the engine of 05. At the end of this step she sees a garden that changes daily and seasonally and differs by how she plays.
-2. **Art round (owner):** 08, 09 and 10 can be generated in parallel from the prompts in each ticket. Each sheet is packed by `tools/build-art.cjs`, whose regions are set by hand after the sheet arrives.
+2. **Art round (owner):** 08, 09 and 10 can be generated in parallel from the prompts in [ART-PROMPTS.md](ART-PROMPTS.md). Each sheet is packed by `tools/build-art.cjs`, whose regions are set by hand after the sheet arrives.
 3. **With the art:** finish 02, 03 and 04 visually, and show visitors (05, 06).
 4. **Optional:** 11.
 
@@ -69,7 +69,7 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | 05 | Engine and tests implemented; nothing is drawn until the visitor art (10) |
 | 06 | Cast data implemented; drawing and Erwu's reactions wait on 10. The robin is now a drawn blue jay |
 | 07 | Implemented and balanced against bot runs |
-| 08–10 | Waiting on the owner: prompts are in each ticket |
+| 08–10 | Waiting on the owner: prompts in [ART-PROMPTS.md](ART-PROMPTS.md) |
 | 11 | Not started (optional) |
 
 Update this table with the tickets.

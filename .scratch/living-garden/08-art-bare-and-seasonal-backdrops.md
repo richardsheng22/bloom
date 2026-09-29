@@ -18,28 +18,9 @@ Put them in `assets/` as:
 
 Then `tools/build-art.cjs` packs them (a follow-up adds them to the build and the manifest as `plate-bare-<season>`).
 
-## Prompt 1: bare summer backdrop
+## Prompts and reference material
 
-Attach: `.scratch/art-direction/target-mockup.webp` and `assets/garden-background-v2.png`.
-
-> Redraw the attached garden backdrop (the second image) in EXACTLY the same storybook illustration style, composition, size, viewpoint and paper edge: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, pastel palette (butter yellow, blush pink, lilac, cornflower blue, sage green, cream), warm afternoon light from the upper left, subtle paper grain. NOT photographic, NOT 3D.
->
-> Keep the three-tier stone fountain upper left and the fallen log upper right EXACTLY where they are and at the same size. Keep the overhanging leaves at the top and the cream deckled paper edge with rounded corners.
->
-> Change only this: remove all the flower borders. Where the borders were, there is now plain, soft lawn that fades into the paper edge, with only a few tufts of longer grass and a scattering of tiny white clover flowers. No flowers around the fountain or the log apart from a little moss. The garden looks young and simple, like a new garden waiting to be planted.
->
-> Portrait 9:16. No cat, no basket, no rose bed, no flower beds, no cushion, no stones or stepping stones, no path, no text, no buttons, no frame lines. Highest resolution.
-
-## Prompt 2: spring, autumn and winter versions
-
-Attach: the bare summer backdrop you just made. Run once per season.
-
-> Redraw the attached garden illustration EXACTLY: same composition, same fountain and log in exactly the same places and sizes, same viewpoint, same storybook watercolour style, same paper edge and rounded corners. Change only the season to **[SEASON]**:
-> - **Spring:** fresh pale green lawn, a few crocuses and snowdrops in the grass, soft blossom petals drifting from the overhanging branches at the top, cool clear morning light.
-> - **Autumn:** the lawn a warmer gold-green, fallen leaves in amber, rust and red scattered on the grass and around the log, the overhanging leaves at the top turning orange and yellow, low warm light.
-> - **Winter:** a light, soft layer of snow on the lawn, the fountain's bowls and the log, the grass showing through in places, the overhanging branches at the top bare with a little snow, pale cool light; the fountain is still, with a little ice.
->
-> Portrait 9:16. No cat, no basket, no rose bed, no flower beds, no cushion, no stones, no path, no text. Highest resolution.
+The complete, copy-ready prompts, the files to attach and why, and the output names are in [ART-PROMPTS.md](ART-PROMPTS.md) (images 1, 2a, 2b and 2c).
 
 ## Acceptance
 
