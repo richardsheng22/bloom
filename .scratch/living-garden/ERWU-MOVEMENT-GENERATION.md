@@ -31,3 +31,11 @@ Edit this sprite sheet, preserving the same Erwu cat, palette, light direction, 
 ## Next work
 
 Resume the separately requested side-walk rig prototype against current develop. Its authored foot contacts and stable character model are still necessary; this generation batch does not replace that work. The newer movement/renderer fixes already on develop must be preserved.
+
+## Review (2026-09-29)
+
+Reviewed in [ART-PROMPTS.md section 8e](ART-PROMPTS.md#8e-review-of-the-2026-09-29-candidates). Only the transitions sheet is usable:
+- Both diagonals are side views with the head turned, and frames 5–8 repeat 1–4.
+- The front/back walk never alternates its legs.
+
+Section 8e has correction prompts that avoid asking the generator for a sequence of alternating legs.

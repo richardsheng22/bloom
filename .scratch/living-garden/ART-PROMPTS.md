@@ -203,7 +203,7 @@ Flat plain light grey background (#E6E6E6) everywhere, with no ground beyond the
 
 ## 8. Erwu's movement frames (optional: for a smoother walk)
 
-Generation update: all four source candidates are now saved under the filenames below. See [the movement generation handoff](ERWU-MOVEMENT-GENERATION.md) for inspection notes and actual dimensions. **Not yet packed or approved:** the front/back eight-frame cycle still needs paw-sequence correction, and the generated fur retains more layering than requested.
+Generation update: all four source candidates are saved under the filenames below. See [the movement generation handoff](ERWU-MOVEMENT-GENERATION.md) for the generation notes, and **[8e. Review of the 2026-09-29 candidates](#8e-review-of-the-2026-09-29-candidates)** for what's wrong with them and the correction prompts. **Not packed.** Only the transitions sheet (8d) is usable as it stands.
 
 These fill the gaps the walk review found (`.scratch/erwu-walk-review/README.md`): diagonal views so changes of direction don't swap between two very different drawings, twice as many front and back frames, and a few transition poses. Priority order: 8a and 8b first (biggest improvement), then 8c, then 8d.
 
@@ -283,6 +283,127 @@ The cat is EXACTLY the same cat as in the attached side-view walk sheet: a round
 
 Flat plain light grey background (#E6E6E6) everywhere, with no floor, no shadows, no text, no grid lines, and wide empty space around every frame so nothing touches. Every frame at the same scale with the paws on one common baseline per row. Highest resolution.
 ```
+
+### 8e. Review of the 2026-09-29 candidates
+
+Reviewed 2026-09-29 against the side walk (`erwu-walk-v2.png`) and the current front/back sheet (`erwu-walk-updown.png`). Each figure was cut out of its sheet and measured. The legs of every cycle were cropped side by side on one baseline: see `walk-candidates-review/legs-*.jpg` next to this file.
+
+#### Summary
+
+| Sheet | Usable? | Main problem |
+|---|---|---|
+| 8a diagonal toward | **No** | Not a diagonal: a side view with the head turned to us. Frames 5–8 repeat 1–4 on the same legs. |
+| 8b diagonal away | **No** | Not a diagonal: a side view with the head turned slightly away. The phases are uneven. |
+| 8c front/back, 8 each | **No** | The same paw leads in all 16 frames. The figures are small and nearly touching. The tail never moves. |
+| 8d transitions | **Mostly** | Usable key poses. The last frame isn't a hop landing, and there's no turn toward the back. |
+
+#### Problems in all four sheets
+
+- **Too bright and warm.** The average fur colour is RGB 185–196 against 165–178 in the side walk. The build's colour matching (`match: 'erwu'`) can pull that back, so this isn't a blocker on its own.
+- **A heavier, fluffier cat.** The diagonal and transition cats are about 13% taller relative to their length than the side walk's cat. They also have a bigger head and a much bigger tail. Next to the side walk she would grow and shrink as she turns.
+- **An orange, saw-toothed rim along the outline.** It's drawn around the whole silhouette, so it survives the cut-out and reads as a jagged halo on the lawn. The side walk has only a soft warm edge.
+- **Fur.** The candidates keep the scalloped, layered fur. **The side walk has that fur too**: it's what the game shows now. The brief's "no scale-like fur" line fights the reference images, so the generator can't satisfy both. Consistency matters more than the brief, so the corrected prompts below ask to **match the side walk's fur** and drop the "no scallops" demand.
+- **1774 × 887, not 2048 × 1024.** The generator ignores the requested size. Accept it and ask for fewer frames per row instead, so each frame gets more pixels.
+
+#### 8a. Walking diagonally toward us
+
+- **The view is wrong.** The body is a side profile: it's horizontal, with its full length to us, and the tail straight out behind. Only the head turns toward the camera. A true three-quarter view shows her chest and near shoulder, with the body shortened as it goes back. As drawn, it can't bridge the side and front views, which is the whole point of the sheet.
+- **Frames 5–8 are frames 1–4 again.** The same paw is lifted in 2 and 6, and the same leg is planted in 1 and 5 (`legs-diagf.jpg`). Played as 8, it's a 4-frame cycle shown twice, and one side of her never steps.
+- **She floats.** Row 2 is about 3.5% smaller than row 1 (a height of 250 against 259). In frames 2 and 6, all four paws are 9 px above the baseline.
+
+#### 8b. Walking diagonally away from us
+
+- **The view is wrong here too:** a side profile with the flank to us and the head turned only slightly away. We don't see her hindquarters, which a three-quarter back view needs.
+- **Uneven phases.** The far hind paw lifts (pad showing) in frames 2, 3 and 5. That makes three of eight frames for one leg. Frame 5 should mirror frame 1.
+- The scale and baseline are fine: heights 253–260, feet within 3 px.
+
+#### 8c. Toward and away, 8 frames each
+
+- **No alternating legs.** In the front row, her left forepaw (the viewer's left) is planted in all 8 frames. Her right forepaw only moves up and down (`legs-front8.jpg`). In the back row, the viewer-left hind paw is planted in all 8, and the other one lifts (`legs-back8.jpg`). Played in the game, she would limp on one leg. This is the failure the generation notes describe; two correction edits didn't fix it.
+- **The tail is frozen.** It's in the same wide sweep to the viewer's left in every frame, and in the back row it hides one hind leg. Frame 1 of the front row has a stubby tail (the figure is 180 px wide, against 208–219 for the rest).
+- **Small and cramped.** The figures are about 230 px tall, with 60% of the area of the current front/back frames. The gaps between them shrink to 1–4 px from frame 4 on, so a tail tip can merge into its neighbour when the sheet is cut.
+- **The rows are at different scales.** The front row figures are 224–233 px tall and the back row 252 px.
+
+#### 8d. Starting, stopping and turning
+
+- **Usable** as key poses after colour matching: sit → rise → stand → first step → reach, then brake → stand → three-quarter front → front.
+- The **sitting pose (1)** is smaller than the rest, with a width of 281. It needs scaling to her standing height when packed.
+- **Frame 10** is a stretched play-bow: tail up, front legs down, hindquarters high. It isn't a hop landing. It's still usable as a pounce wind-up.
+- **Missing:** turning toward the back (away from us), and starting and stopping in the front and back views.
+- These are key poses, not in-betweens. The game dissolves between them, which is fine for starts, stops and turns.
+
+#### What to regenerate, and how
+
+The generator is good at **one convincing pose at a time**. It's poor at making a sequence of legs alternate. So each correction asks for fewer, simpler things, and the leg order comes from somewhere it can't get wrong:
+
+- **Front and back walks: 4 frames, not 8. I mirror them for the other half.** Seen straight on, a mirror image swaps her left and right legs, which is exactly the other half of the cycle. That only works if nothing else is lopsided, so the tail must be centred: hidden behind her in the front view, and hanging straight down the middle in the back view. The light must be even and frontal. One sheet each, 4 frames in a row, gives each frame about 440 px of width.
+- **Diagonals: one frame per image, turned from the matching side-walk frame.** Attach one frame of `erwu-walk-v2.png`, cropped, and ask for the same pose seen from 45° further round. The legs then come from the side walk, which already alternates correctly. Eight images for each diagonal, or four for a start: frames 1, 3, 5 and 7.
+- **Transitions:** only the missing poses, below.
+
+Attach to every correction: `assets/erwu-walk-v2.png` (the master), plus the crop or sheet named in the prompt.
+
+**8c-1. Front walk, 4 frames → `assets/erwu-walk-front-4.png`**
+```
+A game sprite sheet of one cat walking straight TOWARD the viewer, in EXACTLY the style of the attached side-view walk sheet: the same painted storybook look, the same soft layered grey fur, the same soft warm edge light (no orange outline, no jagged rim), subtle paper grain. Same colour and brightness as the attached side walk; do not make her lighter, warmer, fluffier or rounder.
+
+The cat is EXACTLY the attached cat: a plump, pale charcoal-grey British Shorthair with full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes, short sturdy legs.
+
+ONE row of 4 frames, evenly spaced, with wide empty gaps between them. Straight front view: face, chest and both front legs toward us, the camera about 15 degrees above the ground. Her TAIL IS HIDDEN directly behind her body; no tail shows on either side. Light is soft and even from the front, the same on both sides of her.
+1. Her right front paw (viewer's left) forward and planted, the other front paw back and planted.
+2. Passing: the viewer's-right front paw lifted a little and swinging forward, close under her chest.
+3. The viewer's-right front paw reaching forward, just above the ground.
+4. The viewer's-right front paw touching down; both paws level.
+Only the front paws move from frame to frame; her head, body and ears stay in the same place and size. Paws on one common baseline.
+
+Flat plain light grey background (#E6E6E6), no floor, no shadow, no text, no grid lines.
+```
+
+**8c-2. Back walk, 4 frames → `assets/erwu-walk-back-4.png`**
+```
+[Same first two paragraphs as 8c-1.]
+
+ONE row of 4 frames, evenly spaced, with wide empty gaps between them. Straight back view: her round hindquarters toward us, the back of her head and both ears above, the camera about 15 degrees above the ground. Her TAIL HANGS STRAIGHT DOWN THE MIDDLE, relaxed, its tip just above the ground between her hind legs, the same in every frame. Light is soft and even, the same on both sides.
+1. Her left hind paw (viewer's left) forward and planted, the other hind paw back, the pad just showing.
+2. Passing: the viewer's-right hind paw lifted a little, the pad showing.
+3. The viewer's-right hind paw swinging forward, just above the ground.
+4. The viewer's-right hind paw touching down; both paws level.
+Only the hind paws and hips move; her head, ears and size stay the same. Paws on one common baseline.
+
+Flat plain light grey background (#E6E6E6), no floor, no shadow, no text, no grid lines.
+```
+
+**8a-1. Diagonal toward, one frame at a time → `assets/erwu-diag-front-<n>.png` (n = 1, 3, 5, 7; later 2, 4, 6, 8)**
+
+Attach the side walk sheet, and a crop of frame *n* from it.
+```
+Redraw the cat in the attached single frame, keeping EXACTLY the same leg positions: which paws are on the ground, which paw is lifted and how far each leg reaches. Change only the viewing angle: she is now walking diagonally TOWARD the viewer and to the right, turned 45 degrees toward us. We see her face, her chest, her near shoulder and both front legs. Her body gets shorter as it goes back, and her hindquarters and tail are partly behind her. The camera is about 15 degrees above the ground.
+
+Same cat, same painted style, same fur, same colour and brightness as the attached side walk sheet; do not make her rounder, fluffier or lighter. No orange outline. Her head is the same size as in the side walk.
+
+One cat only, centred, with wide empty space around her, on a flat plain light grey background (#E6E6E6). No floor, no shadow, no text.
+```
+
+**8b-1. Diagonal away, one frame at a time → `assets/erwu-diag-back-<n>.png`**
+
+The same as 8a-1, but with the second sentence of the first paragraph replaced by:
+```
+she is now walking diagonally AWAY from the viewer and to the right, turned 45 degrees away from us. We see her round hindquarters and the back of her near hind leg, her back, the back of her head, one ear and a sliver of cheek. Her tail is low and relaxed behind her, toward us.
+```
+
+**8d-1. Missing transitions → `assets/erwu-transitions-2.png`**
+```
+[Same first two paragraphs as 8c-1, without the lines about the tail and light.]
+
+ONE row of 4 frames, evenly spaced, with wide empty gaps. Same scale and baseline:
+1. turning away: side view facing right, her head and shoulders already turned three-quarters AWAY from us, her hindquarters still side-on;
+2. walking away has stopped: straight back view, all four paws down, tail low in the middle;
+3. landing from a small hop, side view facing right: front paws touching down together, hind legs still tucked under her, tail level behind;
+4. a small hop at its highest point, side view facing right: all four paws off the ground and tucked, her body level, tail level.
+
+Flat plain light grey background (#E6E6E6), no floor, no shadow, no text, no grid lines.
+```
+
+**Checks before sending a sheet to me:** frames 1 and 4 (or 1 and 5) should show **different** legs forward. The tail should be centred in the front and back views. The cat should look the same size as in the side walk when the two are shown at the same height.
 
 ## After generating
 
