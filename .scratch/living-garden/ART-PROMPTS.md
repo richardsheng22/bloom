@@ -26,6 +26,8 @@ Image 2 (spring, autumn, winter) also attaches the **bare summer backdrop you ge
 
 Images 1, 2a, 2b and 2c are done (2026-09-29) and in the game.
 
+Images 3–7 now have generated source PNGs in `assets/` (2026-09-29), along with the front/back Erwu walk from the older prompt file. See [the generation handoff](GENERATED-ASSETS-2026-09-29.md) for dimensions, corrections and remaining packing/acceptance checks. These source files are not yet integrated into the game.
+
 Checks for every sheet: flat plain light grey background (#E6E6E6), wide gaps so nothing touches, no text, no shadows. If a generation adds a frame, text, or shadows, regenerate; the build tool cuts pieces out by the grey.
 
 ---
