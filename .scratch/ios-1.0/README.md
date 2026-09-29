@@ -2,6 +2,8 @@
 
 Status: planning only. Created 2026-09-28 on `develop`; reconciled with `d86c314` (final v0.9 feature-branch changes) before committing. Revised the same day after owner review: public App Store confirmed, no save transfer (06 dropped), shell merged into packaging (03 → 02), builds kept light at first (11), 15 → 13 active tickets. No native project, account setup, build, upload or release is performed by this map.
 
+**Update 2026-09-29:** the [living-garden series](../living-garden/README.md) is now part of 1.0 and comes before tickets 04 onward. It starts every player with a bare garden in save v4, which fits the no-transfer decision below.
+
 ## Goal
 
 Deliver Bloom as a reliable, offline-capable iPhone application that preserves the current game, owned garden and Erwu's storybook identity. The finish line is a tested TestFlight candidate followed by an approved, available App Store 1.0 release. **Public App Store distribution is confirmed by the owner (2026-09-28)**: store installs don't expire, update themselves, and show how the game is received beyond the family.
