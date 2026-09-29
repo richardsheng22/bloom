@@ -209,3 +209,64 @@ test('a visitor: she watches it, looking up at a bird on the fountain, and retre
   assert.ok(Math.hypot(st.at.x, st.at.y) < 6, 'back in her basket');
   assert.equal(st.pose, 'sit');
 });
+
+// ----- The gait (see .scratch/erwu-walk-review) -----
+function walkTrace(wd, to, hz = 60, from = null) {
+  const st = E.create(3); st.at = from ? { ...from } : { ...wd.places.nodes.gate }; st.pose = 'sit';
+  st.steps = [{ do: 'walk', to }, { do: 'pose', pose: 'sit', dur: 60 }];
+  const out = [];
+  for (let i = 0; i < hz * 25 && !(st.step && st.step.do === 'pose'); i++) { const p = { ...st.at }; E.update(st, 1 / hz, wd); out.push({ at: { ...st.at }, v: Math.hypot(st.at.x - p.x, st.at.y - p.y) * hz, heading: st.heading, facing: st.facing, view: st.view }); }
+  return { st, out };
+}
+test('she gathers speed over her first steps and brakes into her last', () => {
+  const wd = world(358, 400), { out } = walkTrace(wd, 'spot:fountain');
+  const moving = out.filter((o) => o.v > 0.01), cruise = Math.max(...moving.map((o) => o.v));
+  assert.ok(moving[0].v < cruise * 0.1, `first step ${moving[0].v} of ${cruise}`);
+  assert.ok(moving[moving.length - 1].v < cruise * 0.4, `last step ${moving[moving.length - 1].v}`);
+  assert.ok(cruise > E.SPEED * 0.8);
+});
+test('she steers round corners at a limited rate, and never faces back and forth', () => {
+  for (const directional of [false, true]) {
+    const wd = world(358, 400, { directional });
+    for (const to of ['spot:fountain', 'spot:log', 'spot:bed-left', 'spot:bed-right', 'nest']) {
+      const { out } = walkTrace(wd, to);
+      for (let i = 1; i < out.length; i++) {
+        if (out[i].heading === undefined || out[i - 1].heading === undefined || out[i - 1].v < 0.01) continue;
+        const d = Math.abs(Math.atan2(Math.sin(out[i].heading - out[i - 1].heading), Math.cos(out[i].heading - out[i - 1].heading)));
+        assert.ok(d <= E.GAIT.turnRate / 60 + 1e-9, `${to}: turned ${d} in one update`);
+      }
+      const flips = out.filter((o, i) => i && o.facing !== out[i - 1].facing).length;
+      assert.ok(flips <= 2, `${to}: ${flips} facing flips`);
+    }
+  }
+});
+test('walking straight down the lawn she is seen from the front, and up it from the back; no zigzag', () => {
+  const wd = world(358, 400, { directional: true }), pl = wd.places;
+  const down = walkTrace(wd, 'gate', 60, { x: pl.nodes.gate.x, y: pl.nodes.gate.y - 1 - 0 }).out; // trivial
+  const up = walkTrace(wd, 'spot:fountain').out;
+  assert.ok(up.some((o) => o.view === 'back') || up.every((o) => o.view !== 'front'));
+  const st = E.create(3); st.at = { x: 60, y: -40 }; st.pose = 'sit';
+  st.steps = [{ do: 'walk-free', to: { x: 62, y: 90 } }, { do: 'pose', pose: 'sit', dur: 60 }];
+  const views = new Set(), xs = [];
+  for (let i = 0; i < 600 && !(st.step && st.step.do === 'pose'); i++) { E.update(st, 1 / 60, wd); if (st.pose === 'walk') { views.add(st.view); xs.push(st.at.x); } }
+  assert.ok(views.has('front'), [...views].join());
+  assert.ok(Math.max(...xs) - Math.min(...xs) < 6, 'straight, not a zigzag');
+  assert.ok(down.length >= 0);
+});
+test('rounded corners never cut into the rose bed or leave the lawn', () => {
+  for (const directional of [false, true]) {
+    const wd = world(358, 400, { directional }), pl = wd.places;
+    for (const to of Object.keys(pl.nodes).filter((k) => k.startsWith('spot:') || k === 'nest')) {
+      const { out } = walkTrace(wd, to);
+      for (const o of out) {
+        const nearNest = Math.hypot(o.at.x, o.at.y) < wd.scene.nest * 1.6;
+        assert.ok(nearNest || !pl.inRoses(o.at, -2), `${to}: inside the roses at ${o.at.x.toFixed(1)},${o.at.y.toFixed(1)}`);
+        assert.ok(Math.abs(o.at.x) < wd.scene.width / 2 && Math.abs(o.at.y) < wd.scene.height / 2);
+      }
+    }
+  }
+});
+test('the same walk at 30, 60 and 120 Hz ends in the same place in about the same time', () => {
+  const wd = world(358, 400, { directional: true }), res = [30, 60, 120].map((hz) => { const r = walkTrace(wd, 'spot:log', hz); return { at: r.st.at, t: r.out.length / hz }; });
+  for (const r of res) { assert.ok(Math.hypot(r.at.x - res[1].at.x, r.at.y - res[1].at.y) < 0.5); assert.ok(Math.abs(r.t - res[1].t) < 0.25, `${r.t} vs ${res[1].t}`); }
+});

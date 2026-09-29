@@ -244,6 +244,12 @@
     return true;
   }
   const SPEED = 34; // px per second at full size, an unhurried stroll; the walk cycle is driven by distance, so feet don't slide
+  // How she moves (see .scratch/erwu-walk-review): she gathers speed over her first steps and
+  // brakes into her last, steers along her path with a limited turning rate instead of snapping
+  // at corners, slows through a sharp turn, and only swaps the way she faces when the new way
+  // is clearly established. Seen walking up or down the lawn she's drawn from the front or back.
+  const GAIT = Object.freeze({ accel: 0.55, brake: 0.5, turnRate: 4.2, lookAhead: 14, minSpeed: 6,
+    flipAt: 0.3, viewIn: 0.8, viewOut: 0.62 });
   // Add an action after whatever she's doing now (for short scripted sequences).
   function queue(st, name, w, arg, reason) {
     const steps = plan(st, name, w, arg);
@@ -268,14 +274,17 @@
       if (s.do === 'begin') { start(st, s.name, st.steps, s.reason); st.step = null; return st; }
       const v = s.visitor && w.visitors.find((x) => x.id === s.visitor);
       if (s.visitor && !v) { st.steps = st.steps.filter((x) => !x.visitor); st.step = null; st.reason = 'the butterfly left'; return st; }
-      if (s.do === 'walk') s.path = meander(w.places, st.at, route(w.places, st.at, s.to), st.facing);
-      if (s.do === 'walk-free') s.path = meander(w.places, st.at, [s.to], st.facing);
+      // with front and back views she can walk straight up or down the lawn; without, she zigzags
+      const bend = (path) => (w.directional ? path : meander(w.places, st.at, path, st.facing));
+      if (s.do === 'walk') s.path = bend(route(w.places, st.at, s.to));
+      if (s.do === 'walk-free') s.path = bend([s.to]);
       if (s.do === 'approach') {
         const side = v.x >= st.at.x ? -1 : 1, near = { x: v.x + side * s.gap, y: v.y + 14 };
         s.path = w.places.inRoses(near, 6) ? route(w.places, st.at, 'gate').concat([near]) : [near];
         s.do = 'walk-free';
       }
       if (s.do === 'pounce') { s.to = { x: v.x + (v.x >= st.at.x ? -8 : 8), y: v.y + 12 }; st.facing = v.x >= st.at.x ? 1 : -1; }
+      if (s.do !== 'walk' && s.do !== 'walk-free') { st.speed = 0; st.view = 'side'; }
       if (s.do === 'hop' || s.do === 'pounce') s.from = { ...st.at };
       if (s.do === 'pose') setPose(st, s.pose);
       if (s.blink) st.blink = 0.4;
@@ -283,14 +292,11 @@
     const s = st.step;
     s.t += dt;
     if (s.do === 'walk' || s.do === 'walk-free') {
-      if (!s.path.length) { st.step = null; return st; }
+      if (!s.path.length) { st.step = null; st.speed = 0; st.view = 'side'; return st; }
       setPose(st, 'walk');
-      const target = s.path[0], d = dist(st.at, target), step = SPEED * (s.slow ? 0.45 : 1) * w.scaleAt(st.at.y) * dt;
-      if (Math.abs(target.x - st.at.x) > 2) st.facing = target.x > st.at.x ? 1 : -1;
-      if (d <= step) { st.phase += d / (w.stride * w.scaleAt(st.at.y)) * TAU; st.at = { ...target }; s.path.shift(); }
-      else { st.at.x += (target.x - st.at.x) / d * step; st.at.y += (target.y - st.at.y) / d * step; st.phase += step / (w.stride * w.scaleAt(st.at.y)) * TAU; }
+      walkAlong(st, s, w, dt);
       st.look = null;
-      if (s.t > 30) st.step = null; // never wander forever
+      if (s.t > 30) { st.step = null; st.speed = 0; st.view = 'side'; } // never wander forever
       return st;
     }
     if (s.do === 'hop') {
@@ -320,6 +326,51 @@
     if (s.t >= s.dur) st.step = null;
     return st;
   }
+  // One step of walking along `s.path`: speed, steering, facing and view.
+  function walkAlong(st, s, w, dt) {
+    const scale = w.scaleAt(st.at.y), cruise = SPEED * (s.slow ? 0.45 : 1) * scale;
+    // what's left to walk, and the point a little way ahead on the path she steers for
+    let left = 0, prev = st.at;
+    for (const q of s.path) { left += dist(prev, q); prev = q; }
+    const ahead = pointAhead(st.at, s.path, GAIT.lookAhead * scale), last = s.path[s.path.length - 1];
+    const want = Math.atan2(ahead.y - st.at.y, ahead.x - st.at.x);
+    if (st.heading === undefined || !(st.speed > 0)) st.heading = want;
+    const off = Math.atan2(Math.sin(want - st.heading), Math.cos(want - st.heading)), turn = GAIT.turnRate * dt;
+    st.heading += Math.max(-turn, Math.min(turn, off));
+    // gather speed, brake into the end, and ease off while the body is still turning
+    const v0 = st.speed || 0, alignment = Math.max(0.25, Math.cos(Math.min(Math.PI / 2, Math.abs(off))));
+    const braking = Math.max(GAIT.minSpeed * scale, Math.sqrt(2 * (cruise / GAIT.brake) * left));
+    const v = Math.min(cruise * alignment, braking, v0 + cruise / GAIT.accel * dt);
+    st.speed = v;
+    let step = v * dt;
+    if (left <= step + 0.02) {
+      st.phase += left / (w.stride * scale) * TAU;
+      st.at = { ...last }; s.path = []; st.speed = 0;
+    } else {
+      st.at = { x: st.at.x + Math.cos(st.heading) * step, y: st.at.y + Math.sin(st.heading) * step };
+      st.phase += step / (w.stride * scale) * TAU;
+      // passing a waypoint: drop it once she's alongside or beyond it
+      while (s.path.length > 1 && dist(st.at, s.path[0]) < Math.max(3, GAIT.lookAhead * scale * 0.6)) s.path.shift();
+    }
+    // facing (left or right) only changes once she's clearly going the other way; the view
+    // (side, or from the front or back) has its own hysteresis so it doesn't flicker
+    const cx = Math.cos(st.heading), sy = Math.sin(st.heading);
+    if (Math.abs(cx) > GAIT.flipAt && Math.sign(cx) !== st.facing) st.facing = cx > 0 ? 1 : -1;
+    if (w.directional) {
+      if (st.view !== 'front' && st.view !== 'back') { if (Math.abs(sy) > GAIT.viewIn) st.view = sy > 0 ? 'front' : 'back'; }
+      else if (Math.abs(sy) < GAIT.viewOut) st.view = 'side';
+      else st.view = sy > 0 ? 'front' : 'back';
+    } else st.view = 'side';
+  }
+  function pointAhead(from, path, L) {
+    let a = from, need = L;
+    for (const b of path) {
+      const d = dist(a, b);
+      if (d >= need) return { x: a.x + (b.x - a.x) * need / d, y: a.y + (b.y - a.y) * need / d };
+      need -= d; a = b;
+    }
+    return path[path.length - 1];
+  }
   // A tap: she stops, turns to you with a slow blink, then carries on. Sleeping, she
   // wakes and sits up. Taps close together don't stack.
   function tap(st) {
@@ -343,7 +394,7 @@
   }
   // Put her somewhere definite (entering the garden, leaving for play).
   function reset(st, how = 'asleep') {
-    st.at = { x: 0, y: 0 }; st.facing = 1; st.steps = []; st.step = null; st.ackT = 0; st.jump = 0; st.paused = false; st.entered = st.clock;
+    st.at = { x: 0, y: 0 }; st.facing = 1; st.speed = 0; st.view = 'side'; st.steps = []; st.step = null; st.ackT = 0; st.jump = 0; st.paused = false; st.entered = st.clock;
     st.pose = st.prevPose = 'curl'; st.poseAge = 1;
     const doze = how === 'asleep' ? 6 + st.rnd() * 6 : 2;
     st.steps = [{ do: 'pose', pose: 'curl', dur: doze }];
@@ -354,5 +405,5 @@
     return { action: st.action, step: st.step ? (st.step.do === 'pose' ? st.step.pose : st.step.do) : '', pose: st.pose, reason: st.reason,
       at: `${Math.round(st.at.x)},${Math.round(st.at.y)}`, cooldowns: cds };
   }
-  return { places, route, meander, MAX_SLOPE, create, update, tap, request, queue, invalidate, reset, info, ACTIONS, SPEED };
+  return { places, route, meander, MAX_SLOPE, create, update, tap, request, queue, invalidate, reset, info, ACTIONS, SPEED, GAIT };
 });

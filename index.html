@@ -2997,6 +2997,8 @@
     if (!erwuPlaces && gardenScene) erwuPlaces = BloomErwu.places(gardenScene, BloomGardenLayout.geometry(gardenScene), BloomGardenLayout.landmarks(gardenScene));
     return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, // one walk cycle: how far the painted paws travel back while planted (about 1.25 nests)
       stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.25 : 0.5) : 26,
+      // with front and back walking frames she walks straight up and down the lawn
+      directional: !!(artImage('erwu') && ART.erwu.frames['walk-front-0'] && ART.erwu.frames['walk-back-0']),
       beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
       objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 }))
         .concat(visitorShown && !visitorShown.leaving && !visitorShown.high && VISITOR_LOOK[visitorShown.kind].ground ? [{ id: 'visitor', x: visitorShown.x, y: visitorShown.y, landed: true }] : []) };
@@ -5257,31 +5259,79 @@
     return ERWU_POSES[pose];
   }
   const ERWU_LENGTH = 2.3;   // her length walking, in units of her size; sets the painted scale
+  // Her walk (see .scratch/erwu-walk-review): side-on, or from the front or back when she walks
+  // up or down the lawn. Frames are blended with an exact cross-dissolve: each at its own
+  // weight, added together off screen, so where both frames agree she stays solid and a paw only
+  // one frame has fades with that frame, instead of lingering at full strength over the next.
+  let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null;
+  const WALK_FRAMES = { side: 8, front: 4, back: 4 };
+  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${i}`;
+  function paintWalk(layers, x, y, h, alpha) {
+    const parts = layers.filter((l) => l.weight > 0.01 && ART.erwu.frames[l.name]).map((l) => {
+      const f = ART.erwu.frames[l.name], k = h / f[3], a = f[4] * k, b = (f[2] - f[4]) * k;
+      return { ...l, f, w: f[2] * k, left: l.flip ? b : a, right: l.flip ? a : b };
+    });
+    if (!parts.length) return;
+    if (parts.length === 1) { paintPiece(ctx, 'erwu', parts[0].name, x, y, parts[0].w, parts[0].flip, alpha * Math.min(1, parts[0].weight)); return; }
+    const left = Math.max(...parts.map((p) => p.left)), right = Math.max(...parts.map((p) => p.right));
+    const cw = Math.ceil((left + right) * DPR) + 4, ch = Math.ceil(h * DPR) + 4;
+    walkCanvas = walkCanvas || document.createElement('canvas');
+    if (walkCanvas.width < cw || walkCanvas.height < ch) { walkCanvas.width = Math.max(walkCanvas.width, cw); walkCanvas.height = Math.max(walkCanvas.height, ch); }
+    const g = walkCanvas.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cw, ch);
+    g.globalCompositeOperation = 'lighter';
+    g.setTransform(DPR, 0, 0, DPR, left * DPR + 2, h * DPR + 2);
+    for (const p of parts) paintPiece(g, 'erwu', p.name, 0, 0, p.w, p.flip, p.weight);
+    g.globalCompositeOperation = 'source-over';
+    ctx.save(); ctx.globalAlpha *= alpha;
+    ctx.drawImage(walkCanvas, 0, 0, cw, ch, x - left - 2 / DPR, y - h - 2 / DPR, cw / DPR, ch / DPR);
+    ctx.restore();
+  }
   function drawPaintedErwu(pose, now, nestR, alpha) {
     const img = artImage('erwu');
     if (!img || !paintedGarden()) return false;
     // walking out of the basket, she is already on her way rather than peeking
-    const nest = inBasket() && pose !== 'walk', size = nestR * 0.78 * depthAt(erwu.at.y), unit = size * ERWU_LENGTH / ART.erwu.frames['walk-0'][2];
-    const phase = ((erwu.phase / TAU) % 1 + 1) % 1 * 8;
-    let name = pose === 'walk' ? `walk-${reduced ? 0 : Math.floor(phase)}` : paintedErwuPose(pose, nest), floor = erwu.at.y;
+    const nest = inBasket() && pose !== 'walk', size = nestR * 0.78 * depthAt(erwu.at.y), side = ART.erwu.frames['walk-0'];
+    const unit = size * ERWU_LENGTH / side[2], walkH = side[3] * unit;
+    if (pose === 'walk') {
+      // which view, and a short dissolve when it changes
+      const view = erwu.view && ART.erwu.frames[walkName(erwu.view, 0)] ? erwu.view : 'side';
+      if (view !== walkView.view) walkView = { view, from: walkView.view, since: now };
+      const n = WALK_FRAMES[view], phase = ((erwu.phase / TAU) % 1 + 1) % 1 * n, i = reduced ? 0 : Math.floor(phase) % n;
+      const flip = view === 'side' && erwu.facing < 0, u = Math.max(0, (phase % 1 - 0.5) / 0.5), m = reduced ? 0 : u * u * (3 - 2 * u);
+      let layers = [{ name: walkName(view, i), weight: 1 - m, flip }, { name: walkName(view, (i + 1) % n), weight: m, flip }];
+      const k = reduced ? 1 : Math.min(1, (now - walkView.since) / 220);
+      if (k < 1 && walkView.from) {
+        const fromFrame = walkName(walkView.from, Math.floor(((erwu.phase / TAU) % 1 + 1) % 1 * WALK_FRAMES[walkView.from]) % WALK_FRAMES[walkView.from]);
+        layers = [{ name: fromFrame, weight: 1 - k, flip: walkView.from === 'side' && erwu.facing < 0 }, { name: walkName(view, i), weight: k, flip }];
+      }
+      ctx.save(); ctx.globalAlpha *= alpha;
+      groundShadow(ctx, erwu.at.x, erwu.at.y, (view === 'side' ? side[2] * unit * 0.8 : walkH * 0.75), 0.2);
+      ctx.restore();
+      paintWalk(layers, erwu.at.x, erwu.at.y, walkH, alpha);
+      lastWalk = view === 'side' ? null : { name: walkName(view, i), t: now };
+      return true;
+    }
+    let name = paintedErwuPose(pose, nest), floor = erwu.at.y;
     if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; floor = size * b[1]; }
     const f = name && ART.erwu.frames[name];
     if (!f) return false;
     const flip = nest ? name === 'peek-glance' && erwu.look && erwu.look.x < erwu.at.x : !ERWU_FACING_US.has(pose) && erwu.facing < 0;
     const lift = pose === 'pounce' ? (erwu.jump || 0) * size * 0.55 : 0;
-    ctx.save(); ctx.globalAlpha *= alpha;
+    // just stopped after walking toward or away from us: that view fades into the new pose
+    const settle = lastWalk && !nest && !reduced ? Math.min(1, (now - lastWalk.t) / 260) : 1;
+    if (settle < 1) paintWalk([{ name: lastWalk.name, weight: 1, flip: false }], erwu.at.x, erwu.at.y, walkH, alpha * (1 - settle));
+    else lastWalk = null;
+    ctx.save(); ctx.globalAlpha *= alpha * settle;
     if (!nest) groundShadow(ctx, erwu.at.x, floor, f[2] * unit * 0.8 * (1 - Math.min(0.4, lift / size)), 0.2);
     ctx.translate(erwu.at.x, floor - lift);
     if (pose === 'curl' && !reduced) ctx.scale(1, 1 + Math.sin(now / 1300) * 0.012);
     paintPiece(ctx, 'erwu', name, 0, 0, f[2] * unit, flip);
-    // an eased dissolve into the next walk frame over an opaque one, across the latter part of
-    // each frame, so the legs flow rather than snap; she never turns see-through
-    const u = Math.max(0, (phase % 1 - 0.35) / 0.65), mix = pose === 'walk' && !reduced ? u * u * (3 - 2 * u) : 0, next = `walk-${(Math.floor(phase) + 1) % 8}`;
-    if (mix) paintPiece(ctx, 'erwu', next, 0, 0, ART.erwu.frames[next][2] * unit, flip, mix);
     ctx.restore();
     if (nest) drawBasketFront(ctx);
     return true;
   }
+
   function drawErwuAs(pose, now, nestR, alpha) {
     if (drawPaintedErwu(pose,now,nestR,alpha)) return;
     const at = erwu.at, nest = inBasket(), d = depthAt(at.y), blink = Math.max(erwu.blink, cat.blink), happy = catnipGlow > 0.5 ? catnipGlow : 0;

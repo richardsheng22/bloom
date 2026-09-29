@@ -96,3 +96,32 @@ Files:
 - `asset-prompt.md`: exact generation brief for the selected source refinement.
 
 The existing browser rendering suite passed with no page errors during this review. Its blink, greeting, pose and reduced-motion checks establish a baseline; they do not establish natural walking. No runtime repair is claimed by this asset/diagnosis change.
+
+## Follow-up — 2026-09-29: the code half of chunks 2 and 3
+
+The movement and rendering fixes that need no new art are done. The rig itself (chunk 1 and the art in chunk 3) is still open.
+
+**Movement (`erwu-behavior.js`, `walkAlong` and `GAIT`)**
+- She gathers speed over about half a second and brakes into her stop (braking from the distance left on her path).
+- She steers for a point a little way ahead on her path at a limited turning rate (4.2 rad/s), so corners are rounded, not snapped, and she slows while her body is still turning.
+- Left/right facing changes only once the new direction is clearly established.
+- With front and back frames available (`w.directional`), steep stretches are walked straight; `meander` remains only as the fallback without them.
+
+**Rendering (`index.html`, `drawPaintedErwu` and `paintWalk`)**
+- Frames are blended by an exact cross-dissolve: each frame at its weight, added off screen (`lighter`), so a paw only one frame has fades with that frame. The old overlay kept the outgoing frame at full strength (the ghost paws above).
+- `erwu-walk-updown.png` is now packed (`walk-front-0..3`, `walk-back-0..3`, colour-matched and torso-anchored like the side walk). She is drawn from the front walking down the lawn and from the back walking up it, with a 0.22 s dissolve when her view changes and a 0.26 s settle from a front/back walk into the next pose.
+
+**Measured with `diagnose.cjs` (same fixture as above)**
+
+| Measurement | Before | After (zigzag fallback) | After (directional, as in the game) |
+|---|---:|---:|---:|
+| First frame speed, share of cruise | 100% | 3% | 3% |
+| Last moving frame speed | 12 | 5 | 5 |
+| Largest direction change in one update | 111.4° | 4.0° | 4.0° |
+| Direction changes over 30° | 6 | 0 | 0 |
+| Instantaneous facing flips | 5 | 3 | 0 |
+| Distance for the same route | 414.9 | 369.5 | 279.6 |
+
+`diagnose.cjs --assert` now passes. New unit tests in `tests/erwu-behavior.test.cjs` cover the ramps, the turning limit, no flip-flopping, straight directional walks, rounded corners staying out of the roses and on the lawn, and consistent results at 30, 60 and 120 Hz. `after-walk-sheet.png` is a browser capture every 0.2 s of a walk to the fountain and back to the basket.
+
+**Still open (needs art, as recommended above):** poses are still sparse (3.8 a second on the side walk, fewer on the 4-frame front/back walks); no authored start, stop or turn steps; paw contacts are not verified; no diagonal views, so a 45° stretch uses the side walk.
