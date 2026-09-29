@@ -20,6 +20,8 @@ The leaf button brings you back to the garden without resetting your run. During
 - **Buds** are drawn as compact flower heads with their count at their foot, so a crowded board stays readable.
 - **Times of day:** every 25 turns the time of day moves on: morning, afternoon, golden evening and starlight, then a new morning. The light changes, and the run takes the real season's light and air (spring petals, summer pollen, autumn leaves, winter snow).
 - **Special turns:** from turn 12, every 10-15 turns one turn is different: **a gust of wind** shifts everything one place round the flower, **a stubborn bud** comes alone but tough, or **a butterfly turn** gives an extra pollen for each bloom (up to five).
+- **Bank shots:** bloom a bud with pollen that got there only by bouncing off the rim, past no other bud, and it earns a pollen (twice a turn at most).
+- **Chains:** the 7th, 11th, 15th… bloom of one launch bursts into golden seeds that plant a flower in the garden. A count under the flower shows the blooms as they come.
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
 

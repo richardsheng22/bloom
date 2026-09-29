@@ -72,5 +72,6 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | 08 | Done: seasonal backdrops and rose beds |
 | 09–10 | Done. Erwu's toward/away walk sheet is held back (style mismatch; see 10) |
 | 11 | Synthesised soundscape implemented; bird calls would need recordings |
+| [12](12-skill-shots-and-celebrations.md) | Bank shots, chain blooms, and celebrations on existing moments |
 
 Update this table with the tickets.
