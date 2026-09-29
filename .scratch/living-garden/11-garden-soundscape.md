@@ -1,6 +1,6 @@
 # 11 — Optional: a quiet garden soundscape
 
-Status: optional, not started. Dependencies: 03. Coordinate with iOS ticket 08 (audio and haptics).
+Status: synthesised version implemented (2026-09-29); bird calls wait on recordings. Dependencies: 03. Coordinate with iOS ticket 08 (audio and haptics).
 
 ## Outcome
 
@@ -38,3 +38,11 @@ Either way it stays off by default, respects the silent switch (iOS ticket 08), 
 ## Required from the owner
 
 Whether to do this for 1.0, and a source for the recordings.
+
+## Implementation record — 2026-09-29 (owner chose the synthesised version)
+
+- `garden-sound.js` (`BloomSound.mix`, with `tests/garden-sound.test.cjs`) decides the levels: a fountain trickle with droplets (silent in winter, when the painted fountain is iced), a breeze that swells and eases (gustier in autumn and winter), and crickets on summer evenings and nights (fewer in autumn). A run plays the same garden at 40%, under the notes.
+- Synthesis in `index.html` (`makeAmbience`, `updateAmbience`): looped noise through filters for the fountain and breeze, short oscillator voices for droplets and chirps. Nothing is downloaded or bundled.
+- It follows the one sound preference, which the garden screen can now set too (a sound button in its top-left corner); it's silenced at once when the game goes to the background.
+- Measured in Chromium: steady signal in every season; the crickets' band is about 20 dB above winter's on a summer night; near silence within a moment of switching off. Levels are a first guess and need tuning by ear on a phone (iOS ticket 08 covers the silent switch and interruptions).
+- Bird calls for visitors (blue jay, cardinal) are left for recordings, as above.

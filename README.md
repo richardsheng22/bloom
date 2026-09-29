@@ -66,6 +66,7 @@ The leaf button brings you back to the garden without resetting your run. During
 - Your plants and their growth stay yours, however long you are away, and being away never dims or hides anything. Each garden day (4:00 to 4:00) the first 25 turns count fully and later ones a quarter, and play adds only a few new wild plants a day, so no single sitting can finish the garden.
 - The garden follows the real northern seasons: its backdrop, the rose bed around Erwu's basket and the borders change with the year (bulbs in spring, asters and seedheads in autumn, snow, holly and hellebores in winter), and flowers come and go in their months. On summer evenings there are fireflies.
 - When you come back, something may have happened: a visitor still in the garden (a blue jay, cardinal, junco, goldfinch, hummingbird, cottontail, squirrel, chipmunk, frog, bumblebee, luna moth, or now and then a fox), the traces earlier ones left, a bed that opened, or a present from Erwu by her basket. Rare visitors come every two or three weeks. Tap a visitor to see who it is; Erwu may stalk the ones on the ground (she never catches them).
+- With sound on (the button in the garden's top-left corner, or in a run's header), the garden has its own quiet sounds, all made in code: the fountain trickling, a breeze, and crickets on summer evenings. The fountain is silent in winter, when it's iced over.
 
 ## Files
 
@@ -73,6 +74,7 @@ The leaf button brings you back to the garden without resetting your run. During
 - `garden-state.js`: garden ownership and saves (version 4, a fresh start in 1.0)
 - `garden-time.js`: garden days and their budget, growth on its own, the real seasons and what flowers when
 - `garden-visits.js`: while you were away: visitors, their traces and Erwu's presents
+- `garden-sound.js`: what the garden sounds like by season and time of day (synthesised in `index.html`)
 - `garden-layout.js`: persisted bed/furnishing positions and Erwu's destinations; legacy arrangement operations remain for compatibility
 - `garden-beds.js`: what grows in the beds, rare seeds and the seed tin
 - `garden-view.js`: garden projection and return-request rules

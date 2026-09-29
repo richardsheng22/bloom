@@ -540,6 +540,8 @@
   /* Beds and the seed tin. Choices are chips in the scene's own style, not a form. */
   .tin-button { position: absolute; right: 2px; top: 4px; min-width: 48px; height: 48px; display: grid; place-items: center; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
   .tin-button[hidden] { display: none; }
+  /* the garden's own sound switch (the run's is in its header); both set the same preference */
+  .t-sound { position: fixed; left: calc(env(safe-area-inset-left, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 3; }
   .tin-button svg { width: 34px; height: 34px; filter: drop-shadow(0 2px 2px rgba(110,80,50,.18)); }
   .tin-button b { position: absolute; right: 4px; top: 4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--bud-deep); color: #fff; font: 600 11px/17px var(--font); }
   .tin-button.pulse svg { animation: bump 700ms var(--spring) 2; }
@@ -635,6 +637,7 @@
   <div id="garden-scene" aria-label="Erwu's garden">
     <div id="arrangement-targets"></div>
     <button id="erwu-touch" aria-label="Say hello to Erwu" title="Say hello to Erwu"></button>
+    <button id="t-sound" class="icon-btn t-sound" aria-label="Garden sounds" aria-pressed="false" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.5 4.5 0 0 1 0 6"/><path class="on" d="M18.5 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
     <button id="seed-tin" class="tin-button" aria-label="Seed tin" title="Seed tin" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="16" rx="3" fill="#C7A27A" stroke="#8A6444" stroke-width="1.4"/><rect x="5" y="7" width="22" height="5" rx="2" fill="#E3C79C" stroke="#8A6444" stroke-width="1.4"/><path d="M16 14.5c2.2 1.9 3.1 3.7 3.1 5.4a3.1 3.1 0 0 1-6.2 0c0-1.7.9-3.5 3.1-5.4Z" fill="#6E8A4A"/></svg><b id="tin-count"></b></button>
     <p class="sr-only">Tap a flower bed to plant it. Wild plants grow on their own as you play.</p>
   </div>
@@ -677,6 +680,7 @@
 <script src="garden-beds.js"></script>
 <script src="garden-time.js"></script>
 <script src="garden-visits.js"></script>
+<script src="garden-sound.js"></script>
 <script src="garden-state.js"></script>
 <script src="garden-view.js"></script>
 <script src="erwu-behavior.js"></script>
@@ -690,7 +694,7 @@
   const stage = $('#stage'), canvas = $('#c'), ctx = canvas.getContext('2d');
   const el = {
     turn: $('#turn'), best: $('#best'), balls: $('#balls'), ballChip: $('#ball-chip'), hint: $('#hint'), paw: $('#paw'),
-    ff: $('#ff'), sound: $('#sound'), restart: $('#restart'),
+    ff: $('#ff'), sound: $('#sound'), tSound: $('#t-sound'), restart: $('#restart'),
     over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
     garden: $('#garden'), banner: $('#banner'),
     title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
@@ -846,9 +850,12 @@
   function setSound(on) {
     soundOn = on;
     store.set('sound', on);
-    el.sound.setAttribute('aria-pressed', String(on));
-    el.sound.querySelectorAll('.on').forEach((p) => (p.style.display = on ? '' : 'none'));
-    el.sound.querySelectorAll('.off').forEach((p) => (p.style.display = on ? 'none' : ''));
+    for (const b of [el.sound, el.tSound]) {
+      if (!b) continue;
+      b.setAttribute('aria-pressed', String(on));
+      b.querySelectorAll('.on').forEach((p) => (p.style.display = on ? '' : 'none'));
+      b.querySelectorAll('.off').forEach((p) => (p.style.display = on ? 'none' : ''));
+    }
     if (on && !audio) { try { makeAudio(); } catch {} }
     if (on && audio && audio.state === 'suspended') audio.resume();
   }
@@ -856,6 +863,73 @@
   function haptic(n = 1) {
     if (navigator.vibrate) { try { navigator.vibrate(n === 1 ? 8 : Array.from({ length: n * 2 - 1 }, (_, i) => (i % 2 ? 60 : 12))); } catch {} return; }
     for (let i = 0; i < n; i++) setTimeout(() => { try { el.haptic.click(); } catch {} }, i * 90);
+  }
+
+  // ----- The garden's soundscape (living-garden ticket 11), all synthesised, no recordings: the
+  // fountain trickling with the odd droplet, a breeze that swells and eases, and crickets on
+  // summer evenings. garden-sound.js decides what plays and how loudly; off with the sound. -----
+  let amb = null, ambTimer = 0;
+  function makeAmbience() {
+    const a = audio, out = a.createGain(), len = a.sampleRate * 2, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    out.connect(a.destination);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const noise = () => { const n = a.createBufferSource(); n.buffer = buf; n.loop = true; n.start(0, Math.random() * 2); return n; };
+    const filter = (type, f, q = 0.7) => { const b = a.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
+    const gain = (v) => { const g = a.createGain(); g.gain.value = v; return g; };
+    // the fountain: a bright band of noise, bubbling at two slow, unrelated rates
+    const fg = gain(0), bubble = gain(0.6);
+    for (const [rate, depth] of [[5.3, 0.22], [7.9, 0.18]]) { const o = a.createOscillator(), g = gain(depth); o.frequency.value = rate; o.connect(g).connect(bubble.gain); o.start(); }
+    noise().connect(filter('bandpass', 1500, 0.8)).connect(filter('highpass', 500)).connect(bubble).connect(fg).connect(out);
+    // the breeze: low noise whose level and brightness drift
+    const bg = gain(0), swell = gain(0.5), blp = filter('lowpass', 700, 0.5);
+    noise().connect(blp).connect(swell).connect(bg).connect(out);
+    // droplets and crickets are short voices, scheduled as they come
+    const dg = gain(0), cg = gain(0);
+    dg.connect(out); cg.connect(out);
+    amb = { out, fg, bg, swell, blp, dg, cg, nextDrop: 0, nextChirp: 0, nextGust: 0 };
+  }
+  function blip(bus, at, f, peak, len, rise = 1) {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.setValueAtTime(f, at); if (rise !== 1) o.frequency.exponentialRampToValueAtTime(f * rise, at + len * 0.7);
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+    o.connect(g).connect(bus); o.start(at); o.stop(at + len + 0.02);
+  }
+  function silenceAmbience() {
+    if (!amb || !audio) return;
+    for (const g of [amb.fg, amb.bg, amb.dg, amb.cg]) { g.gain.cancelScheduledValues(0); g.gain.setValueAtTime(0, audio.currentTime); }
+  }
+  function updateAmbience(dt) {
+    if ((ambTimer -= dt) > 0) return;
+    ambTimer = 0.2;
+    if (!audio || audio.state !== 'running') return;
+    if (!amb) { if (!soundOn) return; try { makeAmbience(); } catch { return; } }
+    const clock = seasonClock(), t = audio.currentTime;
+    const m = BloomSound.mix({ season: BloomTime.season(clock).name, part: BloomTime.dayPart(clock), view: presentation, on: soundOn, hidden: document.hidden });
+    amb.fg.gain.setTargetAtTime(m.fountain, t, 1.2);
+    amb.bg.gain.setTargetAtTime(m.breeze, t, 1.5);
+    amb.dg.gain.setTargetAtTime(m.drops ? 1 : 0, t, 0.8);
+    amb.cg.gain.setTargetAtTime(m.crickets ? 1 : 0, t, 1.5);
+    // the breeze swells and eases, gustier in autumn and winter
+    if (t >= amb.nextGust) {
+      const g = 0.35 + Math.random() * m.gust;
+      amb.swell.gain.setTargetAtTime(g, t, 1.5 + Math.random() * 2);
+      amb.blp.frequency.setTargetAtTime(420 + g * 650, t, 2);
+      amb.nextGust = t + 3 + Math.random() * 5;
+    }
+    // a soft plink in the fountain's basin now and then
+    if (!m.drops) amb.nextDrop = t;
+    while (m.drops && amb.nextDrop < t + 0.3) {
+      const at = Math.max(t, amb.nextDrop);
+      blip(amb.dg, at, 900 + Math.random() * 1600, m.drops * (0.35 + Math.random() * 0.65), 0.07, 1.6);
+      amb.nextDrop = at - Math.log(1 - Math.random()) / m.dropRate;
+    }
+    // crickets: short trains of three chirps
+    if (!m.crickets) amb.nextChirp = t;
+    while (m.crickets && amb.nextChirp < t + 0.3) {
+      const at = Math.max(t, amb.nextChirp), f = 4200 + Math.random() * 500;
+      for (let i = 0; i < 3; i++) blip(amb.cg, at + i * 0.045, f, m.crickets, 0.025);
+      amb.nextChirp = at + 0.7 + Math.random() * 0.6;
+    }
   }
 
   // ---------- Game state ----------
@@ -3621,6 +3695,7 @@
 
   // ---------- Update ----------
   function update(dt) {
+    updateAmbience(dt);
     arenaReveal = Math.min(1, arenaReveal + dt / 0.25);
     // the run's painted meadow comes back as the garden does (see paintBackground)
     if ((lushTimer -= dt) <= 0) {
@@ -5701,6 +5776,7 @@
 
   el.ff.addEventListener('click', () => { timeScale = timeScale > 1 ? 1 : 3; updateHud(); });
   el.sound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
+  el.tSound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
   el.again.addEventListener('click', () => { el.app.inert = false; newGame(); stage.focus({ preventScroll: true }); });
   el.toGarden.addEventListener('click', showTitle);
   el.visitGarden.addEventListener('click', requestGarden);
@@ -5747,7 +5823,7 @@
       saveGarden();
     }
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { clearAim(); garden.lastSeen = Date.now(); saveGarden(); }
+      if (document.hidden) { clearAim(); silenceAmbience(); garden.lastSeen = Date.now(); saveGarden(); }
       else { welcomeBack(); saveGarden(); updateHud(); if (presentation === 'garden' && greetPending) erwuEnter(); }
     });
     window.addEventListener('pagehide', saveGarden);

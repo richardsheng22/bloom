@@ -71,6 +71,6 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | 07 | Implemented and balanced against bot runs |
 | 08 | Done: seasonal backdrops and rose beds |
 | 09–10 | Done. Erwu's toward/away walk sheet is held back (style mismatch; see 10) |
-| 11 | Not started (optional) |
+| 11 | Synthesised soundscape implemented; bird calls would need recordings |
 
 Update this table with the tickets.

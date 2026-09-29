@@ -47,6 +47,6 @@ jobs:
           APP=build/ios/Build/Products/Release-iphonesimulator/App.app
           /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist"
           /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist"
-          test -f "$APP/public/index.html" && test -f "$APP/public/fonts/fraunces.woff2" && test -f "$APP/public/assets/garden-plate.webp"
+          test -f "$APP/public/index.html" && test -f "$APP/public/fonts/fraunces.woff2" && test -f "$APP/public/assets/garden-plate-summer.webp" && test -f "$APP/public/assets/visitors.webp"
           test ! -e "$APP/public/.scratch" && test ! -e "$APP/public/tests"
           du -sh "$APP"
