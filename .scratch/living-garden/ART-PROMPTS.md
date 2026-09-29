@@ -15,6 +15,7 @@ All of these are already in the repository. Attach them from these paths.
 | `assets/garden-clumps.png` (1254 × 1254) | The 16 flower clumps the garden grows from play | The scale, view, grass tuft and grid the new clumps must match, so old and new sit side by side. |
 | `assets/erwu-sprite-v2.png` (1122 × 1402) | Erwu's 20 painted poses | The size of the visitors next to Erwu, and the same drawing style for animals. |
 | `.scratch/living-garden/rose-bed-reference.png` | The rose bed with Erwu's basket, cut from the garden pieces sheet | For image 7: the seasonal rose beds must keep this exact shape, size and basket position. |
+| `assets/erwu-walk-v2.png`, `assets/erwu-walk-updown.png` | Erwu's side walk and her front/back walk | For image 8: the side walk is the master model; the front/back sheet shows the views. |
 | Your photo of the cottontail (optional) | The rabbit that visits your garden | So it looks like yours. Reference only: it is not stored in the repository. |
 
 Image 2 (spring, autumn, winter) also attaches the **bare summer backdrop you generate in image 1**, so all four seasons share one composition.
@@ -200,8 +201,90 @@ Flat plain light grey background (#E6E6E6) everywhere, with no ground beyond the
 
 ---
 
+## 8. Erwu's movement frames (optional: for a smoother walk)
+
+These fill the gaps the walk review found (`.scratch/erwu-walk-review/README.md`): diagonal views so changes of direction don't swap between two very different drawings, twice as many front and back frames, and a few transition poses. Priority order: 8a and 8b first (biggest improvement), then 8c, then 8d.
+
+Generated frames tend to drift from each other. For each sheet, check before using it: the same cat in every frame, paws on one line, legs alternating (a paw on the ground stays in place while the body moves over it). If one frame is off, regenerate just that sheet.
+
+Attach to every image in this section: `assets/erwu-walk-v2.png` (the side walk: the master model), `assets/erwu-walk-updown.png` (front and back) and `assets/erwu-sprite-v2.png` (her poses). Their colours already match in the game, so match the side walk.
+
+### 8a. Walking diagonally toward us → `assets/erwu-walk-diag-front.png`
+Size: landscape, 2048 × 1024 or larger.
+
+```
+A game sprite sheet of one cat walking, in EXACTLY the storybook illustration style of the attached cat sheets: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, soft grey fur suggested by a few gentle strokes (NO scale-like or plate-like fur, NO pointed tufts), warm light from the upper left, subtle paper grain. NOT photographic, NOT 3D.
+
+The cat is EXACTLY the same cat as in the attached side-view walk sheet: a round, plump, pale charcoal-grey British Shorthair with a long soft barrel body, short sturdy legs, full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes, and a big fluffy tail carried low. Same size, same proportions, same colour and brightness as the attached side walk in every frame; do not make her darker, more saturated or fluffier.
+
+2 rows of 4 frames, one walk cycle of 8 frames in order, left to right then the second row. The cat walks DIAGONALLY toward the viewer and to the viewer's right: a three-quarter front view, her face and chest turned about 45 degrees toward us, her body and tail trailing back to the left. The camera is the same shallow angle as the side walk, about 15 degrees above the ground; do not look down on her back.
+
+A natural, unhurried cat walk: at any moment two or three paws are on the ground and the body is carried over them; a lifted paw is only slightly raised. The frames step through the cycle evenly:
+1. left front paw forward and planted, right hind paw forward and planted
+2. passing: left front paw under the shoulder, right front paw lifting
+3. right front paw reaching forward
+4. right front paw planted, left hind paw forward
+5. to 8. the same four phases on the opposite legs, so frame 8 leads smoothly back into frame 1.
+Her head stays level and steady; her body rises and falls only very slightly; her tail sways gently.
+
+Flat plain light grey background (#E6E6E6) everywhere, with no floor, no shadows, no text, no grid lines, and wide empty space around every frame so nothing touches. Every frame at the same scale with the paws on one common baseline per row. Highest resolution.
+```
+
+### 8b. Walking diagonally away from us → `assets/erwu-walk-diag-back.png`
+Size: landscape, 2048 × 1024 or larger.
+
+```
+A game sprite sheet of one cat walking, in EXACTLY the storybook illustration style of the attached cat sheets: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, soft grey fur suggested by a few gentle strokes (NO scale-like or plate-like fur, NO pointed tufts), warm light from the upper left, subtle paper grain. NOT photographic, NOT 3D.
+
+The cat is EXACTLY the same cat as in the attached side-view walk sheet: a round, plump, pale charcoal-grey British Shorthair with a long soft barrel body, short sturdy legs, full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes, and a big fluffy tail carried low. Same size, same proportions, same colour and brightness as the attached side walk in every frame; do not make her darker, more saturated or fluffier.
+
+2 rows of 4 frames, one walk cycle of 8 frames in order, left to right then the second row. The cat walks DIAGONALLY away from the viewer and to the viewer's right: a three-quarter back view, her hindquarters and the back of her head toward us, her head turned about 45 degrees away so one ear, one cheek and a sliver of eye show; her tail low and relaxed behind her. The camera is the same shallow angle as the side walk, about 15 degrees above the ground.
+
+A natural, unhurried cat walk: at any moment two or three paws are on the ground and the body is carried over them; a lifted paw is only slightly raised, the pad just showing. The frames step through the cycle evenly:
+1. left hind paw forward and planted, right front paw forward and planted
+2. passing: left hind paw under the hip, right hind paw lifting
+3. right hind paw reaching forward
+4. right hind paw planted, left front paw forward
+5. to 8. the same four phases on the opposite legs, so frame 8 leads smoothly back into frame 1.
+Her head stays level; her hips shift gently side to side with each step.
+
+Flat plain light grey background (#E6E6E6) everywhere, with no floor, no shadows, no text, no grid lines, and wide empty space around every frame so nothing touches. Every frame at the same scale with the paws on one common baseline per row. Highest resolution.
+```
+
+### 8c. Walking toward and away from us, 8 frames each → `assets/erwu-walk-updown-8.png`
+Size: landscape, 2048 × 1024 or larger.
+
+```
+A game sprite sheet of one cat walking, in EXACTLY the storybook illustration style of the attached cat sheets: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, soft grey fur suggested by a few gentle strokes (NO scale-like or plate-like fur, NO pointed tufts), warm light from the upper left, subtle paper grain. NOT photographic, NOT 3D.
+
+The cat is EXACTLY the same cat as in the attached side-view walk sheet: a round, plump, pale charcoal-grey British Shorthair with a long soft barrel body, short sturdy legs, full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes, and a big fluffy tail carried low. Same size, same proportions, same colour and brightness as the attached side walk in every frame; do not make her darker, more saturated or fluffier. The attached front and back walking sheet shows the views wanted; keep those views but match the side walk's colour and fur exactly.
+
+2 rows of 8 frames.
+- Row 1: walking straight TOWARD the viewer, one walk cycle of 8 frames: face, chest and front paws toward us, a little of her back above her shoulders, tail low behind her and to one side. Frame 1 her right front paw (viewer's left) forward and planted; frames 2 to 4 that paw passing under her as the other lifts and reaches; frame 5 her left front paw forward and planted; frames 6 to 8 back toward frame 1. The hind paws move opposite the front paws on the same side.
+- Row 2: walking straight AWAY from the viewer, one walk cycle of 8 frames: rounded hindquarters, the back of her head and ears ahead, tail low and relaxed. Frame 1 her left hind paw forward and planted; frames 2 to 4 passing and reaching; frame 5 her right hind paw planted; frames 6 to 8 back toward frame 1. Her hips shift gently with each step.
+The camera is the same shallow angle as the side walk, about 15 degrees above the ground. Lifted paws are only slightly raised. Her head stays level.
+
+Flat plain light grey background (#E6E6E6) everywhere, with no floor, no shadows, no text, no grid lines, and wide empty space around every frame so nothing touches. Every frame at the same scale with the paws on one common baseline per row. Highest resolution.
+```
+
+### 8d. Starting, stopping and turning → `assets/erwu-transitions.png`
+Size: landscape, 2048 × 1024 or larger.
+
+```
+A game sprite sheet of one cat, in EXACTLY the storybook illustration style of the attached cat sheets: simplified, gentle forms with soft warm-brown outlines, light airy watercolour and gouache washes, soft grey fur suggested by a few gentle strokes (NO scale-like or plate-like fur, NO pointed tufts), warm light from the upper left, subtle paper grain. NOT photographic, NOT 3D.
+
+The cat is EXACTLY the same cat as in the attached side-view walk sheet: a round, plump, pale charcoal-grey British Shorthair with a long soft barrel body, short sturdy legs, full cheeks, small ears set wide apart, heavy-lidded amber-gold eyes, and a big fluffy tail carried low. Same size, same proportions, same colour and brightness as the attached side walk in every frame; do not make her darker, more saturated or fluffier.
+
+2 rows of 5 frames, all side views facing right unless stated, same scale and baseline:
+- Row 1, getting up and setting off: 1. sitting upright; 2. rising, hindquarters lifting, front legs straight; 3. standing on all four paws, weight settling; 4. first step, right front paw lifting; 5. first step, right front paw reaching forward, body starting to move.
+- Row 2, stopping and turning: 1. braking step, front paw planted ahead, body leaning back slightly; 2. standing still, all four paws down; 3. turning round, seen three-quarters from the front, head and shoulders already turned toward the viewer, hindquarters still facing right; 4. turning round, facing the viewer head-on, body curving; 5. landing from a small hop, front paws touching down first, hind legs still tucked.
+
+Flat plain light grey background (#E6E6E6) everywhere, with no floor, no shadows, no text, no grid lines, and wide empty space around every frame so nothing touches. Every frame at the same scale with the paws on one common baseline per row. Highest resolution.
+```
+
 ## After generating
 
 - Check the four backdrops line up: laid over each other, the fountain and log should match within a few pixels. If one drifts, regenerate that one from image 1.
 - Look at the cottontail and the blue jay on your phone next to Erwu: do they look like the ones in your garden?
-- Put the files in `assets/` with the names above and tell me; I'll pack them, set their regions, and finish tickets 02, 03, 05 and 06 with them.
+- Put the files in `assets/` with the names above and tell me; I'll pack them, set their regions, and wire them in.
+- For Erwu's frames (image 8), I'll check each sheet's paws and proportions against the side walk before using it, and show you a looping preview.
