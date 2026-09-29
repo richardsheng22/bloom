@@ -675,6 +675,8 @@
 
 <script src="garden-layout.js"></script>
 <script src="garden-beds.js"></script>
+<script src="garden-time.js"></script>
+<script src="garden-visits.js"></script>
 <script src="garden-state.js"></script>
 <script src="garden-view.js"></script>
 <script src="erwu-behavior.js"></script>
@@ -890,27 +892,46 @@
     mushroom: ['Mushrooms', "bouncy, and they can't be picked"],
     ring: ['Flower rings', 'pollen through a ring turns golden and hits twice'],
     powers: ['Power-ups', 'hit a glowing medallion with pollen to use it'],
-    dew: ['Dewdrop', 'hit it with pollen to splash every bud around it'],
-    bee: ['Bee', 'hit it with pollen to set a bee loose on the buds'],
-    sun: ['Sunbeam', 'hit it with pollen: a beam of light strikes every bud in its line'],
+    dew: ['Dewdrop', 'hit it with pollen for a summer shower: buds around it are soaked and washed back'],
+    bee: ['Bee', 'hit it with pollen to set a swarm loose on the buds nearest Erwu'],
+    sun: ['Sunbeam', 'hit it with pollen: a beam sweeps half the flower'],
     seedbud: ['A seed bud', 'open it to find a rare seed for your garden'],
   };
   let seen = store.get('seen', {}), introQueue = [];
   // This run's rare seed (a turn and a kind, or null) and what changed in the garden during it.
   let runSeed = null, runLog = null;
   let powersMissed = 0, powerTipShown = false;
-  // ----- Variety in a long run. Every 25 turns the season turns (the light and what drifts
-  // on the air change, with a small card), and every 10-15 turns from turn 12 one turn is
-  // special: a gust shifts everything along, a single stubborn bud, or a butterfly turn. -----
-  const SEASON_TURNS = 25;
-  const SEASONS = [
-    { name: 'Spring', sub: 'a new year in the garden', air: null },
-    { name: 'Summer', sub: 'long, warm days', over: [255, 206, 120, 0.13], air: 'glint' },
-    { name: 'Autumn', sub: 'leaves on the breeze', over: [222, 140, 70, 0.15], mult: [248, 228, 205], air: 'leaf' },
-    { name: 'Evening', sub: 'the light turns golden', over: [240, 168, 140, 0.12], mult: [214, 196, 226], air: 'firefly' },
+  // ----- Variety in a long run. The light follows the real season (garden-time.js); every 25
+  // turns the time of day moves on (morning, afternoon, golden evening, starlight, then a new
+  // morning), with a small card. From turn 12, every 10-15 turns one turn is special: a gust
+  // shifts everything along, a single stubborn bud, or a butterfly turn. -----
+  const TIME_TURNS = 25;
+  const TIMES = [
+    { name: 'Morning', sub: 'a fresh start in the garden' },
+    { name: 'Afternoon', sub: 'long, warm light', over: [255, 206, 120, 0.1] },
+    { name: 'Golden evening', sub: 'the light turns golden', over: [240, 168, 140, 0.12], mult: [214, 196, 226] },
     { name: 'Starlight', sub: 'fireflies over the lawn', over: [70, 82, 140, 0.16], mult: [150, 160, 206], air: 'firefly' },
   ];
-  const seasonAt = (t) => Math.floor((Math.max(1, t) - 1) / SEASON_TURNS) % SEASONS.length;
+  const timeAt = (t) => Math.floor((Math.max(1, t) - 1) / TIME_TURNS) % TIMES.length;
+  // The real season's light (northern hemisphere), and the real time of day's in the garden.
+  const SEASON_LIGHT = {
+    spring: { over: [236, 248, 226, 0.08] }, summer: { over: [255, 214, 140, 0.07] },
+    autumn: { over: [222, 140, 70, 0.13], mult: [248, 228, 205] }, winter: { over: [228, 236, 250, 0.26], mult: [224, 229, 240] },
+  };
+  const DAY_LIGHT = { dawn: { over: [255, 214, 190, 0.08] }, day: {}, dusk: { over: [240, 168, 140, 0.1], mult: [236, 224, 236] },
+    night: { over: [60, 74, 130, 0.1], mult: [196, 202, 230] } };
+  const SEASON_AIR = { spring: 'petal', summer: 'glint', autumn: 'leaf', winter: 'snow' };
+  function gradeLight(g, light, k = 1) {
+    if (!light || k <= 0) return;
+    if (light.mult) {
+      g.globalCompositeOperation = 'multiply';
+      g.fillStyle = rgb(light.mult.map((c) => Math.round(c + (255 - c) * (1 - k)))); g.fillRect(0, 0, W, H);
+      g.globalCompositeOperation = 'source-over';
+    }
+    if (light.over) { g.fillStyle = `rgba(${light.over.slice(0, 3).join(',')},${light.over[3] * k})`; g.fillRect(0, 0, W, H); }
+  }
+  const calendar = () => BloomTime.season(seasonClock());
+  const lightKey = () => { const c = calendar(); return `${presentation}:${c.name}:${Math.round(c.blend * 4)}:${presentation === 'run' ? timeAt(turn) : BloomTime.dayPart(seasonClock())}`; };
   const SPECIALS = {
     gust: ['A gust of wind', 'everything shifts along one place'],
     lone: ['A stubborn bud', 'just one this turn, and a tough one'],
@@ -981,7 +1002,7 @@
       : { next: Math.max(12, run.turn + 6), kind: null, last: null, bonus: 0 };
     runSeed = run.seed && BloomBeds.isRare(run.seed.kind) && typeof run.seed.key === 'string' ? { ...run.seed } : null;
     runLog = run.log && run.log.beds && Array.isArray(run.log.seeds) ? run.log : { beds: bedStages(), seeds: [] };
-    balls = []; particles = []; floats = []; tweens = []; blooms = [];
+    balls = []; particles = []; floats = []; tweens = []; blooms = []; bees = []; beams = []; showers.length = 0;
     shot = null; cat = freshCat();
   }
   let readySnapshot = null;
@@ -1005,7 +1026,7 @@
   }
   function newGame() {
     gardenRequested = false; clearTimeout(overTimer); clearAim();
-    items = []; balls = []; particles = []; floats = []; tweens = []; blooms = [];
+    items = []; balls = []; particles = []; floats = []; tweens = []; blooms = []; bees = []; beams = []; showers.length = 0;
     turn = 1; ballCount = START_BALLS; pending = 0; petalNext = false; pawReady = true;
     charges = new Array(SECTORS).fill(0); shownCharges = new Array(SECTORS).fill(0);
     cat = freshCat();
@@ -1022,9 +1043,19 @@
   // ---------- The garden (kept between runs) ----------
   // Every shot leaves something behind: pollen that bounces off the rim drops
   // seeds, every bud that blooms plants a flower, and each turn tends the bed.
-  // Growth is owned permanently; only the garden's appearance rests while away.
+  // Growth is owned permanently and paced by days (see garden-time.js): play grows the garden
+  // faster, a little growth comes on its own, and being away never takes anything away.
   const MAX_PLANTS = 170;
-  const GARDEN_TIERS = [3, 10, 24, 45, 75];
+  // How grown the garden is (the five buds under Best): the top tier takes three or four weeks.
+  const GARDEN_TIERS = [4, 15, 40, 75, 120];
+  // Development only: ?month=1 and ?hour=21 show another season or time of day for review.
+  const clockOverride = { month: Number((location.search.match(/[?&]month=(\d+)/) || [])[1]), hour: Number((location.search.match(/[?&]hour=(\d+)/) || [])[1]) };
+  function seasonClock() {
+    const d = new Date();
+    if (clockOverride.month >= 1 && clockOverride.month <= 12) d.setMonth(clockOverride.month - 1, 15);
+    if (clockOverride.hour >= 0 && clockOverride.hour <= 23) d.setHours(clockOverride.hour);
+    return d.getTime();
+  }
   const SEED_KINDS = ['grass', 'grass', 'clover', 'clover', 'fern', 'forget'];
   const FLOWER_KINDS = ['daisy', 'daisy', 'cosmos', 'cosmos', 'lavender', 'forget', 'buttercup'];
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1061,24 +1092,67 @@
   const plantXY = (p) => presentation === 'garden' && gardenScene ? BloomGardenLayout.projectPlant(p, gardenScene) : plantWorld(p);
   const sceneOrigin = () => presentation === 'garden' && gardenScene ? { x: gardenScene.cx, y: gardenScene.cy } : { x: CX, y: CY };
 
-  let greetPending = false, runChangedBeds = [], restFloor = 0, shownRest = null;
+  let greetPending = false, runChangedBeds = [], shownRest = null, visitNews = null;
+  // What the garden world offers visitors: the kinds flowering now, in plants or beds.
+  function visitWorld() {
+    const t = seasonClock(), kinds = new Set();
+    for (const p of garden.plants) if (p.g > 0.3 && BloomTime.plantPhase(p.k, t) === 'flower') kinds.add(p.k);
+    if (BloomTime.bedsFlowering(t)) for (const b of garden.patches) if (b.flower && b.growth >= 0.55) kinds.add(b.flower);
+    return { has: (k) => kinds.has(k), character: garden.character };
+  }
+  // Growth on its own for each garden day that passed (at most a week): every planted bed a
+  // little, a couple of new wild plants, and a little growth for the rest. Returns a line of
+  // news when a bed opened or settled in overnight.
+  function growOnItsOwn(days) {
+    let news = '';
+    for (let d = 0; d < days; d++) {
+      for (const bed of garden.patches) {
+        if (!bed.flower || bed.anchor === null || bed.growth >= 1) continue;
+        const before = BloomBeds.stage(bed);
+        bed.growth = Math.min(1, bed.growth + BloomTime.OWN.bed * (BloomBeds.isRare(bed.flower) ? BloomBeds.GROW.rare : 1));
+        const after = BloomBeds.stage(bed);
+        if (after !== before && (after === 'flowering' || after === 'established'))
+          news = `${bedName(bed).replace(/^the /, 'The ')} ${after === 'flowering' ? 'opened while you were away' : 'has settled in for good'}.`;
+      }
+      for (let i = 0; i < BloomTime.OWN.plants; i++) plant(chooseKind(pick(Math.random() < 0.5 ? SEED_KINDS : FLOWER_KINDS), null), null, 0.2, 1.06, 2.6, null, true);
+      for (const p of garden.plants) p.g = Math.min(1, p.g + BloomTime.OWN.growth);
+    }
+    if (days) { BloomBeds.noteFlowering(garden, BloomGarden.allocateId); gardenDirty = true; }
+    return news;
+  }
   function welcomeBack() {
-    const away = Math.max(0, Date.now() - garden.lastSeen);
-    BloomGarden.arrive(garden);
-    // a visit wakes the garden only part way; the rest comes back as you play
-    restFloor = garden.rest * (1 - BloomGarden.REST.visitWake);
+    const now = Date.now(), away = Math.max(0, now - garden.lastSeen);
+    BloomGarden.arrive(garden, now);
+    const news = growOnItsOwn(BloomTime.arrive(garden, now));
+    // who came by (living-garden ticket 05); drawn once the visitor art is in (ticket 10)
+    visitNews = BloomVisits.arrive(garden, now, visitWorld(), BloomGarden.allocateId);
     // after real time away, Erwu comes to say hello when you next see the garden
-    if (garden.rest > 0.2 || away > 3 * 3.6e6) greetPending = true;
+    if (away > 3 * 3.6e6) greetPending = true;
     gardenDirty = true;
-    gardenNote = garden.rest > 0.05 ? 'The garden is resting. A few turns will wake it.'
-      : away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '';
+    gardenNote = news || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
     el.tNote.textContent = gardenMessage();
   }
+  // Tier milestones, each told once on the garden's label (living-garden ticket 02).
+  const MILESTONES = ['', 'The first flowers are coming up.', 'The borders are starting to fill in.', 'Ivy has found the fountain.',
+    'Moss is softening the stepping stones.', 'The garden has really settled in.'];
+  function noteMilestones() {
+    const tier = gardenTier();
+    let told = '';
+    for (let t = 1; t <= tier; t++) {
+      if (garden.discoveries.some((d) => d.type === 'milestone' && d.tier === t)) continue;
+      garden.discoveries.push({ id: BloomGarden.allocateId(garden, 'discovery'), type: 'milestone', tier: t, at: Date.now() });
+      told = MILESTONES[t];
+    }
+    if (told) { gardenNote = told; el.tNote.textContent = gardenMessage(); saveGarden(); }
+  }
   function tendGarden() {
-    BloomGarden.tend(garden);
-    bedGrew(BloomBeds.tendTurn(garden));
+    const w = BloomTime.tendTurn(garden), hour = new Date(seasonClock()).getHours();
+    BloomGarden.tend(garden, Date.now(), BloomGarden.TEND * w);
+    bedGrew(BloomBeds.tendTurn(garden, w));
+    if (hour < 10) BloomTime.note(garden, 'morning', 0.2);
+    else if (hour >= 18) BloomTime.note(garden, 'evening', 0.2);
     gardenDirty = true;
-    if (garden.rest < 0.05) gardenNote = '';
+    gardenNote = '';
   }
   // ----- Cultivation: ordinary play grows the chosen bed -----
   const bedName = (bed) => bed.flower ? `the ${BloomBeds.NAMES[bed.flower].toLowerCase()} in ${BloomGardenLayout.placeName(bed.anchor)}` : BloomGardenLayout.placeName(bed.anchor);
@@ -1115,6 +1189,31 @@
   // landed into the next thing along — grass into clover, clover and fern into flowers, and
   // common flowers into the rarer wildflowers (foxglove, bluebell, sweet pea, cornflower, a
   // little rose bush, a wild tuft), which are as far as it goes.
+  // ----- What grows (living-garden ticket 04). The bud decides half the flowers; a new plant
+  // copies its nearest flowering neighbour four times in ten, so drifts form; evening play
+  // favours pale flowers and morning play buttercups and forget-me-nots. -----
+  const BUD_FLOWERS = { tulip: 'tulip', rose: 'rose', peony: 'peony', poppy: 'poppy', bell: 'bluebell' };
+  const NON_FLOWERS = new Set(['grass', 'clover', 'fern', 'mushroom']);
+  function nearestFlowering(a, within = 0.45) {
+    let best = null, bd = within;
+    if (a == null) return null;
+    for (const p of garden.plants) {
+      if (NON_FLOWERS.has(p.k) || p.g < 0.3) continue;
+      const d = Math.abs(angleDiff(p.a, a));
+      if (d < bd) { bd = d; best = p; }
+    }
+    return best;
+  }
+  function chooseKind(base, a) {
+    const near = nearestFlowering(a);
+    if (near && !NON_FLOWERS.has(base) && Math.random() < 0.4) return near.k;
+    if (FLOWER_KINDS.includes(base)) {
+      const hour = new Date(seasonClock()).getHours();
+      if (hour >= 18 && Math.random() < 0.35) return 'daisy';
+      if (hour < 10 && Math.random() < 0.35) return pick(['buttercup', 'forget']);
+    }
+    return base;
+  }
   const WILDFLOWERS = ['foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild'];
   const WILD_NAMES = { foxglove: 'Foxgloves', bluebell: 'Bluebells', sweetpea: 'Sweet peas', cornflower: 'Cornflowers', rose: 'A rose bush', wild: 'Wildflowers' };
   const matured = (k) => k === 'grass' ? 'clover' : k === 'clover' || k === 'fern' ? pick(FLOWER_KINDS) : FLOWER_KINDS.includes(k) ? pick(WILDFLOWERS) : null;
@@ -1126,19 +1225,26 @@
       if (d < bd) { bd = d; best = p; }
     }
     if (!best) return false;
-    best.k = matured(best.k); best.g = Math.max(0.45, best.g * 0.6); best.s = Math.floor(Math.random() * 1e9);
+    // it becomes what grows around it, if that's a step on; otherwise the next thing along
+    const counts = {};
+    for (const p of garden.plants) if (p !== best && !NON_FLOWERS.has(p.k) && Math.abs(angleDiff(p.a, best.a)) < 0.5) counts[p.k] = (counts[p.k] || 0) + 1;
+    const common = Object.keys(counts).sort((x, y) => counts[y] - counts[x])[0];
+    best.k = common && common !== best.k && (NON_FLOWERS.has(best.k) || FLOWER_KINDS.includes(best.k)) ? common : matured(best.k); best.g = Math.max(0.45, best.g * 0.6); best.s = Math.floor(Math.random() * 1e9);
     gardenDirty = true;
     const q = plantXY(best);
     glint(q.x, q.y - R * 0.05, 1.4);
     if (WILDFLOWERS.includes(best.k) && presentation === 'run') addFloat(q.x, q.y - R * 0.1, WILD_NAMES[best.k], 'moss', 0.75);
     return true;
   }
-  function plant(kind, pref, g, dmin = 1.06, dmax = 2.6, from = null) {
-    if (garden.plants.length >= MAX_PLANTS) return mature(pref, from);
+  // Play adds only a few wild plants a day (BloomTime.mayPlant); growth on its own (`own`) doesn't count.
+  function plant(kind, pref, g, dmin = 1.06, dmax = 2.6, from = null, own = false) {
+    if (!own && !BloomTime.mayPlant(garden)) return false;
+    if (garden.plants.length >= MAX_PLANTS) { const ok = mature(pref, from); if (ok && !own) BloomTime.notePlanted(garden); return ok; }
     const spot = findSpot(pref, dmin, dmax);
     if (!spot) return false;
     const p = { id: BloomGarden.allocateId(garden), a: spot.a, d: spot.d, k: kind, g, s: Math.floor(Math.random() * 1e9) };
     garden.plants.push(p);
+    if (!own) BloomTime.notePlanted(garden);
     if (from && !reduced) {
       p.live = -1;
       const q = plantXY(p), dist = Math.hypot(q.x - from.x, q.y - from.y);
@@ -1162,25 +1268,52 @@
     gardenDirty = true;
     return true;
   }
-  function seedFromMiss(a, from) {
-    bedGrew(BloomBeds.grow(garden, BloomBeds.GROW.miss, 'miss'));
-    if (shot && shot.seeds < 5 && Math.random() < 0.3 && plant(pick(SEED_KINDS), a, 0.1, 1.06, 1.6, from)) shot.seeds++;
-    else nurture(a, 0.012);
+  // A seed that finds no new ground of its own today still flies out, to feed the nearest plant.
+  function feedFlight(a, amount, from) {
+    let best = null, bd = Infinity;
+    for (const p of garden.plants) { const d = Math.abs(angleDiff(p.a, a)) + (p.d - 1) * 0.4; if (d < bd) { bd = d; best = p; } }
+    if (!best || bd > 0.9) return;
+    best.g = Math.min(1, best.g + amount); gardenDirty = true;
+    if (from && !reduced) { const q = plantXY(best); flights.push({ x0: from.x, y0: from.y, to: { x: q.x, y: q.y - R * 0.04 }, t: 0, dur: 0.5 + Math.hypot(q.x - from.x, q.y - from.y) / (R * 2.4), col: from.col || hexRgb(C.honey), trail: [] }); }
   }
-  function flowerFromBloom(a, from) {
-    const room = BloomBeds.GROW.bloomPerShot - (shot ? shot.bedGrowth || 0 : 0);
+  function seedFromMiss(a, from) {
+    // misses share each shot's cap on bed growth with blooms: a late shot bounces dozens of times
+    const w = BloomTime.turnWeight(garden), room = BloomBeds.GROW.bloomPerShot * w - (shot ? shot.bedGrowth || 0 : 0);
     if (room > 0) {
-      const amount = Math.min(BloomBeds.GROW.bloom, room);
+      const amount = Math.min(BloomBeds.GROW.miss * w, room);
+      if (shot) shot.bedGrowth = (shot.bedGrowth || 0) + amount;
+      bedGrew(BloomBeds.grow(garden, amount, 'miss'));
+    }
+    BloomTime.note(garden, 'misses', 0.02);
+    if (shot && shot.seeds < 2 && Math.random() < 0.06 * w && plant(chooseKind(pick(SEED_KINDS), a), a, 0.1, 1.06, 1.6, from)) shot.seeds++;
+    else nurture(a, 0.004 * w);
+  }
+  function flowerFromBloom(a, from, bud) {
+    const w = BloomTime.turnWeight(garden), room = BloomBeds.GROW.bloomPerShot * w - (shot ? shot.bedGrowth || 0 : 0);
+    if (room > 0) {
+      const amount = Math.min(BloomBeds.GROW.bloom * w, room);
       if (shot) shot.bedGrowth = (shot.bedGrowth || 0) + amount;
       bedGrew(BloomBeds.grow(garden, amount, 'bloom'));
     }
-    if (shot && shot.flowers < 8 && plant(pick(FLOWER_KINDS), a, 0.3, 1.06, 2.6, from)) shot.flowers++;
-    else nurture(a, 0.06);
+    BloomTime.note(garden, 'blooms', 0.1);
+    const kind = bud && Math.random() < 0.5 ? BUD_FLOWERS[bud] : chooseKind(pick(FLOWER_KINDS), a);
+    if (shot && shot.flowers < 3 && Math.random() < 0.25 * w && plant(kind, a, 0.3, 1.06, 2.6, from)) shot.flowers++;
+    else feedFlight(a, 0.02 * w, from);
+  }
+  // Power-ups leave a mark in the garden: ferns and forget-me-nots where the dew fell,
+  // lavender and clover thriving after the bees, buttercups along the sunbeam.
+  function powerMark(kind, a) {
+    BloomTime.note(garden, kind);
+    if (kind === 'dew') for (let i = 0; i < 2; i++) plant(pick(['fern', 'forget']), a, 0.3);
+    else if (kind === 'sun') plant('buttercup', a + (Math.random() - 0.5), 0.3);
+    else for (const p of garden.plants) if (p.k === 'lavender' || p.k === 'clover') p.g = Math.min(1, p.g + 0.1);
+    gardenDirty = true;
   }
   function feedGarden() {
-    bedGrew(BloomBeds.grow(garden, BloomBeds.GROW.fullBloom, 'full'));
-    for (const p of garden.plants) p.g = Math.min(1, p.g + 0.2);
-    for (let i = 0; i < 4; i++) plant(pick(FLOWER_KINDS), null, 0.45);
+    const w = BloomTime.turnWeight(garden);
+    bedGrew(BloomBeds.grow(garden, BloomBeds.GROW.fullBloom * w, 'full'));
+    for (const p of garden.plants) p.g = Math.min(1, p.g + 0.05 * w);
+    for (let i = 0; i < 2; i++) plant(chooseKind(pick(FLOWER_KINDS), null), null, 0.45);
     if (garden.plants.filter((p) => p.k === 'mushroom').length < 3) plant('mushroom', null, 0.5, 1.1, 2);
     gardenDirty = true;
   }
@@ -1387,8 +1520,11 @@
     // In the painted garden, what play grows comes up as a painted clump of its kind; while
     // it is young, a low leafy tuft. A few daisies and grasses grow up wilder than the rest.
     if (artImage('garden')) {
-      const v = rnd(), name = p.g < 0.25 && p.k !== 'grass' && p.k !== 'mushroom' ? 'clump-leafy'
+      const v = rnd(), phase = BloomTime.plantPhase(p.k, seasonClock());
+      let name = (p.g < 0.25 || phase === 'leaves') && p.k !== 'grass' && p.k !== 'mushroom' && p.k !== 'fern' ? 'clump-leafy'
         : p.k === 'daisy' && v < 0.3 ? 'clump-wild' : p.k === 'grass' && v < 0.35 ? 'clump-leafy' : `clump-${p.k}`;
+      // tulips, peonies and poppies until their own clumps are painted (living-garden ticket 09)
+      if (!ART.garden.frames[name]) name = { 'clump-tulip': 'clump-sweetpea', 'clump-peony': 'clump-rose', 'clump-poppy': 'clump-wild' }[name] || name;
       if (ART.garden.frames[name]) {
         const w = h * (p.k === 'mushroom' ? 1.2 : 1.45) + u * 0.5;
         if (p.k === 'mushroom') paintPiece(g, 'garden', name, x, y + u * 0.15, w, rnd() < 0.5);
@@ -1452,7 +1588,8 @@
     if (gr < 0.4) return;
     // Resting flowers keep their colour, just a little softer, as if in evening light.
     const base = { daisy: '#FFFDF5', cosmos: C['petal-bloom'], buttercup: C.butter, forget: C.sky, lavender: C.lavender,
-      foxglove: '#E6A3C4', bluebell: '#8FA3DC', sweetpea: '#F4C3D6', cornflower: '#6F8FD9', rose: '#EE9DB0', wild: '#F2D478' }[p.k] || C['petal-bloom'];
+      foxglove: '#E6A3C4', bluebell: '#8FA3DC', sweetpea: '#F4C3D6', cornflower: '#6F8FD9', rose: '#EE9DB0', wild: '#F2D478',
+      tulip: '#F2A0B0', peony: '#F0B2C4', poppy: '#EC8468' }[p.k] || C['petal-bloom'];
     const col = rgb(mix(base, C.ground, rest * 0.25));
     if (p.k === 'lavender') {
       const n = 3 + Math.floor(gr * 6);
@@ -1536,7 +1673,8 @@
       // Painted stages, then each kind's own bed in flower (daisies share lavender's). A
       // planting preview shows the bed in flower. Moonflowers open only in the evening, and a
       // dandelion that has just been blown is leafy again for a few turns.
-      const f = !flower ? null : preview || growth >= 0.55 ? bloomPiece(flower, bed) : growth < 0.2 ? 'bed-seedlings' : 'bed-young';
+      const inSeason = preview || BloomTime.bedsFlowering(seasonClock());
+      const f = !flower ? null : growth >= 0.55 && inSeason ? bloomPiece(flower, bed) : growth < 0.2 ? 'bed-seedlings' : 'bed-young';
       const piece = f || 'bed-empty', q = ART.garden.frames[piece], w = 80 * q[2] / (q[8] || q[2]);
       groundShadow(g, 0, 17, 80);
       if (piece === 'bed-empty') paintPiece(g, 'garden', piece, 0, 17, w, false, preview ? 0.75 : 1);
@@ -2142,15 +2280,17 @@
     }
     ctx.restore();
   }
-  // Small lives in the garden, drawn live: fireflies in the evening light of a resting
-  // garden, a snail inching across a stepping stone, and later a robin at the fountain.
+  // Small lives in the garden, drawn live: fireflies on summer evenings, a snail inching across
+  // a stepping stone in spring and autumn, and once the garden is growing a blue jay at the
+  // fountain (drawn here until the painted visitors arrive, living-garden ticket 10).
   function drawGardenLife(now) {
     if (!gardenScene) return;
     const sc = gardenScene, m = BloomGardenLayout.landmarks(sc), rest = garden.rest, tier = gardenTier(), k = Math.max(0.6, Math.min(1.15, sc.height / 400));
     ctx.save(); ctx.translate(sc.cx, sc.cy);
-    const t = reduced ? 0 : now / 1000;
-    if (rest > 0.2) {
-      const n = Math.round(rest * 8);
+    const t = reduced ? 0 : now / 1000, clock = seasonClock(), season = BloomTime.season(clock).name, part = BloomTime.dayPart(clock);
+    const glow = season === 'summer' && (part === 'dusk' || part === 'night') ? 0.8 : 0;
+    if (glow > 0) {
+      const n = 7, rest = glow;
       ctx.globalCompositeOperation = 'lighter';
       for (let i = 0; i < n; i++) {
         const ph = i * 2.3, x = Math.sin(t * 0.13 + ph) * sc.width * 0.42, y = Math.cos(t * 0.11 + ph * 1.7) * sc.height * 0.38 - 10;
@@ -2162,7 +2302,7 @@
       }
       ctx.globalCompositeOperation = 'source-over';
     }
-    if (rest > 0.45) {
+    if ((season === 'spring' || season === 'autumn') && (part === 'dawn' || part === 'day') && tier >= 1) {
       // a snail taking its time: once across the second stone every minute or so
       const st = pathStones(m, sc.height / 2, k)[1], p = reduced ? 0.4 : (t / 70) % 1, sx = st.x - st.w + p * st.w * 2, sy = st.y - 1;
       ctx.fillStyle = '#B9A58C'; ctx.beginPath(); ctx.ellipse(sx + 2.5 * k, sy + 1, 5 * k, 1.6 * k, 0, 0, TAU); ctx.fill();
@@ -2171,18 +2311,21 @@
       ctx.beginPath(); ctx.arc(sx, sy - 2 * k, 3.4 * k, 0, TAU); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.arc(sx + 0.4, sy - 2 * k, 1.8 * k, 0, TAU * 0.8); ctx.stroke();
     }
-    if (tier >= 3 && rest < 0.6) {
-      // a robin drops by the fountain's top bowl every so often, dips to drink, and goes
+    if (tier >= 2 && part !== 'night') {
+      // a blue jay drops by the fountain's top bowl every so often, dips to drink, and goes
       const cyc = reduced ? 3 : t % 26, f = m.fountain;
       if (cyc < 9) {
-        const bx = f.x + f.width * 0.14, by = f.y - f.height * 0.87, dip = !reduced && cyc > 3 && cyc < 5 ? Math.sin((cyc - 3) * Math.PI * 2) * 0.35 : 0, s = 3.2 * k;
+        const bx = f.x + f.width * 0.14, by = f.y - f.height * 0.87, dip = !reduced && cyc > 3 && cyc < 5 ? Math.sin((cyc - 3) * Math.PI * 2) * 0.35 : 0, s = 3.4 * k;
         ctx.save(); ctx.translate(bx, by); ctx.rotate(dip);
-        ctx.fillStyle = '#7A6250'; ctx.beginPath(); ctx.ellipse(0, -s, s * 1.3, s, -0.2, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#E07A4A'; ctx.beginPath(); ctx.ellipse(-s * 0.55, -s * 0.8, s * 0.7, s * 0.65, 0, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#7A6250'; ctx.beginPath(); ctx.arc(-s * 1.05, -s * 1.7, s * 0.62, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#4F7FC4'; ctx.beginPath(); ctx.ellipse(0, -s, s * 1.35, s, -0.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#EEF1F4'; ctx.beginPath(); ctx.ellipse(-s * 0.55, -s * 0.75, s * 0.72, s * 0.62, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#4F7FC4'; ctx.beginPath(); ctx.arc(-s * 1.05, -s * 1.7, s * 0.62, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-s * 0.8, -s * 2.1); ctx.lineTo(-s * 0.45, -s * 2.75); ctx.lineTo(-s * 0.55, -s * 1.9); ctx.fill();
+        ctx.strokeStyle = '#2B2420'; ctx.lineWidth = Math.max(0.6, s * 0.18); ctx.beginPath(); ctx.arc(-s * 0.95, -s * 1.35, s * 0.55, 0.6, 2.4); ctx.stroke();
         ctx.fillStyle = '#2B2420'; ctx.beginPath(); ctx.arc(-s * 1.25, -s * 1.8, 0.6, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#D9A13E'; ctx.beginPath(); ctx.moveTo(-s * 1.6, -s * 1.7); ctx.lineTo(-s * 2.1, -s * 1.6); ctx.lineTo(-s * 1.6, -s * 1.5); ctx.fill();
-        ctx.fillStyle = '#6A5242'; ctx.beginPath(); ctx.moveTo(s * 1.1, -s * 1.2); ctx.lineTo(s * 2.1, -s * 1.7); ctx.lineTo(s * 1.2, -s * 0.6); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-s * 1.6, -s * 1.72); ctx.lineTo(-s * 2.15, -s * 1.62); ctx.lineTo(-s * 1.6, -s * 1.5); ctx.fill();
+        ctx.fillStyle = '#3D6BAF'; ctx.beginPath(); ctx.moveTo(s * 1.1, -s * 1.2); ctx.lineTo(s * 2.3, -s * 1.7); ctx.lineTo(s * 1.2, -s * 0.6); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(s * 0.1, -s * 1.35, s * 0.5, s * 0.14);
         ctx.restore();
       }
     }
@@ -2209,7 +2352,8 @@
     // soft moss that spreads under whatever grows
     if (presentation === 'garden' && gardenScene) drawYard(g);
     // plants that have just woken pop up in the live layer before joining the painted garden
-    const visible = new Set(garden.plants.filter((p) => !dormant(p, paintedRest)).map((p) => p.id));
+    const clockNow = seasonClock();
+    const visible = new Set(garden.plants.filter((p) => !dormant(p, paintedRest) && BloomTime.plantPhase(p.k, clockNow) !== 'rest').map((p) => p.id));
     if (lastVisible && !reduced) for (const id of visible) if (!lastVisible.has(id) && !waking.has(id)) waking.set(id, performance.now());
     lastVisible = visible;
     const settled = garden.plants.filter((p) => p.live == null && visible.has(p.id) && !waking.has(p.id));
@@ -2584,9 +2728,9 @@
       if (special.kind === 'gust') gust();
       if (special.kind === 'flutter' && !reduced) for (let i = 0; i < 3; i++) { const a = Math.random() * TAU; addFly(Math.cos(a) * R * 1.1, Math.sin(a) * R * 1.1, true); }
     }
-    if ((turn - 1) % SEASON_TURNS === 0) {
-      const se = SEASONS[seasonAt(turn)];
-      INTRO.season = [se.name, se.sub]; introQueue.unshift('season');
+    if ((turn - 1) % TIME_TURNS === 0) {
+      const se = TIMES[timeAt(turn)];
+      INTRO.season = [se.name, timeAt(turn) === 0 ? 'a new day in the garden' : se.sub]; introQueue.unshift('season');
     }
     markReady();
   }
@@ -2832,6 +2976,7 @@
     document.body.classList.add('titling');
     el.app.inert = true; el.app.setAttribute('aria-hidden', 'true');
     el.play.textContent = state === 'over' ? 'Play again' : readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
+    noteMilestones();
     el.tNote.textContent = gardenMessage();
     el.title.hidden = false; el.title.classList.remove('enter', 'leaving');
     el.over.hidden = true;
@@ -2998,7 +3143,7 @@
       const was = charges[k];
       charges[k] = Math.min(1, charges[k] + 0.5);
       if (was < 1 && charges[k] >= 1) petalFilled(k);
-      flowerFromBloom(itemAngle(it), { x: p.x, y: p.y - p.r * 0.3, col: budColor(it) });
+      flowerFromBloom(itemAngle(it), { x: p.x, y: p.y - p.r * 0.3, col: budColor(it) }, budKind(it).k);
       if (special.kind === 'flutter' && special.bonus < 5) {
         special.bonus++; pending++; addFloat(p.x, p.y - p.r * 1.2, '+1', 'honey');
         if (!reduced) addFly(p.x, p.y, true);
@@ -3084,6 +3229,7 @@
     else if (it.kind === 'dew') dewSplash(p);
     else if (it.kind === 'bee') releaseBee(p);
     else if (it.kind === 'sun') sunbeam(p);
+    if (POWERS.includes(it.kind)) powerMark(it.kind, Math.atan2(p.y, p.x));
     updateHud();
   }
 
@@ -3112,52 +3258,92 @@
     glint(b.x, b.y, 1.1);
   }
   const leanFrom = (x, it) => (x < itemPos(it).x ? 1 : -1);
-  // Dewdrop: a splash that nudges every bud nearby.
-  function dewSplash(p) {
-    const rad = R * 0.36;
-    particles.push({ type: 'ripple', x: p.x, y: p.y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.6, size: rad });
-    particles.push({ type: 'ripple', x: p.x, y: p.y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.6, size: rad * 0.7, delay: 0.08 });
-    for (let i = 0; i < 10 && !reduced; i++) {
-      const a = Math.random() * TAU, sp = R * (0.3 + Math.random() * 0.4);
-      particles.push({ type: 'drop', x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R * 0.2, rot: 0, vr: 0, life: 1, decay: 1.6, size: ballR * (0.35 + Math.random() * 0.3) });
-    }
-    for (const it of items) {
-      if (it.kind !== 'shape' || it.dead) continue;
-      const q = itemPos(it);
-      if (Math.hypot(q.x - p.x, q.y - p.y) < rad + q.r * 0.5) hurt(it, 1, leanFrom(p.x, it));
-    }
-    addFloat(p.x, p.y - p.r, 'Splash', 'sky');
-    [9, 12, 14].forEach((n, i) => tone(noteFreq(n), 0.025, 'sine', 0.3, i * 0.04));
-    haptic();
+  // Power-ups grow with the run, so they matter as much at turn 80 as at turn 5: bud
+  // toughness follows the turn and the pollen count (hpFor), and so does this.
+  const powerNow = () => Math.max(3, Math.ceil(ballCount * 0.35));
+  // A power-up's hits count toward the turn's total, so a big sweep can earn "Gorgeous".
+  function powerHit(it, dmg, lean) {
+    if (it.dead) return;
+    const n = Math.min(dmg, it.hp);
+    hurt(it, dmg, lean);
+    if (shot && n > 1) shot.hits += n - 1;
   }
-  // Bee: buzzes from bud to bud for a few seconds, then heads home to Erwu.
+  // Washed back: a bud slides one ring out, if that place in its sector is free.
+  function washBack(it) {
+    if (it.dead || it.ring >= RINGS) return false;
+    if (items.some((o) => o !== it && !o.dead && o.sector === it.sector && o.ring === it.ring + 1)) return false;
+    const from = it.rf;
+    it.ring += 1;
+    tween(reduced ? 0.05 : 0.55, (k) => { const e = 1 - Math.pow(1 - k, 3); it.rf = from + (it.ring - from) * e; }, () => { it.rf = it.ring; });
+    return true;
+  }
+  // Dewdrop: a summer shower over a wide circle. Every bud in it is soaked (a quarter of its
+  // hits, at least two) and washed back a ring, away from Erwu.
+  const showers = [];
+  function dewSplash(p) {
+    const rad = R * 0.5, dur = reduced ? 0 : 0.9;
+    showers.push({ x: p.x, y: p.y, rad, t: 0, dur, landed: false });
+    for (let i = 0; i < 46 && !reduced; i++) {
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * rad, x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
+      const delay = Math.random() * 0.6, fall = R * (0.18 + Math.random() * 0.08);
+      particles.push({ type: 'rain', x, y: y - fall, vx: 0, vy: fall / 0.3, rot: 0, vr: 0, life: 1, decay: 1 / 0.3, size: ballR * 1.4, delay, until: y });
+      if (i % 3 === 0) particles.push({ type: 'ripple', x, y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.8, size: R * (0.04 + Math.random() * 0.03), delay: delay + 0.3 });
+    }
+    particles.push({ type: 'ripple', x: p.x, y: p.y, vx: 0, vy: 0, rot: 0, vr: 0, life: 1, decay: 1.2, size: rad, delay: 0.2 });
+    addFloat(p.x, p.y - p.r, 'Summer shower', 'sky', 1.15);
+    [9, 12, 14, 11].forEach((n, i) => tone(noteFreq(n), 0.028, 'sine', 0.4, i * 0.09));
+    haptic(2);
+    if (reduced) updateShowers(0);
+  }
+  function updateShowers(dt) {
+    for (const sh of showers) {
+      sh.t += dt;
+      if (sh.landed || sh.t < sh.dur * 0.4) continue;
+      sh.landed = true;
+      // nearest to Erwu first, so an inner bud can move into a place an outer one just left
+      const soaked = items.filter((it) => it.kind === 'shape' && !it.dead && Math.hypot(itemPos(it).x - sh.x, itemPos(it).y - sh.y) < sh.rad + itemPos(it).r * 0.5)
+        .sort((a, b) => b.ring - a.ring);
+      for (const it of soaked) {
+        powerHit(it, Math.max(2, Math.ceil(it.hp / 4)), leanFrom(sh.x, it));
+        if (!it.dead) washBack(it);
+      }
+      haptic();
+    }
+    // held until washed-back buds have finished sliding, so the turn never ends mid-slide
+    for (let i = showers.length - 1; i >= 0; i--) if (showers[i].landed && showers[i].t >= showers[i].dur + (reduced ? 0.1 : 0.6)) showers.splice(i, 1);
+  }
+  // Bee: a swarm (three bees, five from turn 30) that buzzes between the buds nearest Erwu.
   function releaseBee(p) {
-    bees.push({ x: p.x, y: p.y, vx: 0, vy: -R, life: 4.2, cd: 0, ph: Math.random() * TAU, trail: [] });
-    addFloat(p.x, p.y - p.r, 'Bee!', 'honey');
-    tone(noteFreq(4), 0.03, 'sawtooth', 0.12); tone(noteFreq(5), 0.02, 'sawtooth', 0.12, 0.08);
+    const n = turn >= 30 ? 5 : 3, sting = Math.ceil(powerNow() / 6);
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.7;
+      bees.push({ x: p.x, y: p.y, vx: Math.cos(a) * R, vy: Math.sin(a) * R, life: 5 + i * 0.15, cd: 0.15 * i, ph: Math.random() * TAU, trail: [], sting, pick: i });
+    }
+    addFloat(p.x, p.y - p.r, 'Bees!', 'honey', 1.15);
+    tone(noteFreq(4), 0.03, 'sawtooth', 0.12); tone(noteFreq(5), 0.02, 'sawtooth', 0.12, 0.08); tone(noteFreq(6), 0.02, 'sawtooth', 0.12, 0.16);
+    haptic(2);
   }
   function updateBees(dt) {
+    // the buds closest to Erwu, the nearest of them first; each bee keeps to one of the first few
+    const targets = items.filter((it) => it.kind === 'shape' && !it.dead).sort((a, b) => a.ring - b.ring || a.hp - b.hp).slice(0, 4);
     for (const bee of bees) {
       bee.life -= dt; bee.cd -= dt; bee.ph += dt * 50;
-      let tx = 0, ty = 0;
+      let tx = 0, ty = 0, bd = Infinity;
       if (bee.life > 0) {
-        let best = null, bd = Infinity;
-        for (const it of items) {
-          if (it.kind !== 'shape' || it.dead) continue;
-          const q = itemPos(it), d = Math.hypot(q.x - bee.x, q.y - bee.y);
-          if (d < bd) { bd = d; best = { it, q }; }
-        }
-        if (best) {
-          tx = best.q.x; ty = best.q.y;
-          if (bd < best.q.r + R * 0.03 && bee.cd <= 0) {
-            hurt(best.it, 1, leanFrom(bee.x, best.it));
-            bee.cd = 0.32;
+        const it = targets.length ? targets[bee.pick % targets.length] : null;
+        if (it) {
+          const q = itemPos(it);
+          tx = q.x; ty = q.y; bd = Math.hypot(q.x - bee.x, q.y - bee.y);
+          if (bd < q.r + R * 0.03 && bee.cd <= 0) {
+            powerHit(it, bee.sting || 1, leanFrom(bee.x, it));
+            bee.cd = 0.28;
+            if (it.dead) bee.pick++;
             const a = Math.atan2(bee.y - ty, bee.x - tx) + (Math.random() - 0.5) * 1.2;
             bee.vx = Math.cos(a) * R * 1.3; bee.vy = Math.sin(a) * R * 1.3;
           }
         } else bee.life = Math.min(bee.life, 0);
       }
-      const dx = tx - bee.x, dy = ty - bee.y, d = Math.hypot(dx, dy) || 1, sp = R * (bee.life > 0 ? 1.4 : 1.8);
+      const dx = tx - bee.x, dy = ty - bee.y, d = Math.hypot(dx, dy) || 1, sp = R * (bee.life > 0 ? 1.5 : 1.8);
       const k = Math.min(1, dt * (bee.cd > 0.15 ? 1.2 : 4));
       bee.vx += (dx / d * sp - bee.vx) * k + (Math.random() - 0.5) * R * 4 * dt;
       bee.vy += (dy / d * sp - bee.vy) * k + (Math.random() - 0.5) * R * 4 * dt;
@@ -3169,19 +3355,38 @@
     }
     bees = bees.filter((b) => !b.done);
   }
-  // Sunbeam: a line of light straight out from Erwu through the pickup.
+  // Sunbeam: a beam from Erwu sweeps half the flower, starting at the medallion and turning
+  // toward whichever side holds more buds. Every bud it passes takes the run's power, once.
+  const BEAM_FADE = 0.5;
   function sunbeam(p) {
-    const a = Math.atan2(p.y, p.x), ca = Math.cos(a), sa = Math.sin(a);
-    beams.push({ a, t: 0 });
-    for (const it of items) {
-      if (it.kind !== 'shape' || it.dead) continue;
-      const q = itemPos(it), along = q.x * ca + q.y * sa, across = Math.abs(-q.x * sa + q.y * ca);
-      if (along > 0 && across < q.r + R * 0.05) hurt(it, 2, across > 0 ? 1 : -1);
-    }
-    addFloat(p.x, p.y - p.r, 'Sunbeam', 'honey');
-    [7, 11, 14].forEach((n, i) => tone(noteFreq(n), 0.03, 'sine', 0.6, i * 0.03));
-    haptic(2);
+    const a0 = Math.atan2(p.y, p.x);
+    let side = 0;
+    for (const it of items) if (it.kind === 'shape' && !it.dead) side += Math.sign(angleDiff(itemAngle(it), a0));
+    const bm = { a0, a: a0, dir: side >= 0 ? 1 : -1, t: 0, dur: reduced ? 0 : 1.1, power: powerNow(), hit: new Set() };
+    beams.push(bm);
+    addFloat(p.x, p.y - p.r, 'Sunbeam', 'honey', 1.15);
+    [7, 9, 11, 12, 14].forEach((n, i) => tone(noteFreq(n), 0.03, 'sine', 0.7, i * 0.2));
+    haptic(3);
+    if (reduced) sweepBeam(bm, 1);
   }
+  function sweepBeam(bm, k) {
+    bm.a = bm.a0 + bm.dir * Math.PI * k;
+    for (const it of items) {
+      if (it.kind !== 'shape' || it.dead || bm.hit.has(it.id)) continue;
+      const q = itemPos(it), w = Math.asin(Math.min(1, q.r / Math.max(q.r, Math.hypot(q.x, q.y))));
+      const d = angleDiff(itemAngle(it), bm.a0) * bm.dir;
+      if (d >= -w && d <= Math.PI * k + w) { bm.hit.add(it.id); powerHit(it, bm.power, bm.dir); }
+    }
+  }
+  function updateBeams(dt) {
+    for (const bm of beams) {
+      bm.t += dt;
+      if (bm.dur > 0 && bm.t <= bm.dur + dt) sweepBeam(bm, Math.min(1, bm.t / bm.dur));
+    }
+    beams = beams.filter((bm) => bm.t < bm.dur + BEAM_FADE);
+  }
+  // The turn waits for a sweep or a shower to finish.
+  const powersBusy = () => bees.length > 0 || showers.length > 0 || beams.some((bm) => bm.t < bm.dur);
 
   const speedNow = () => R * 2.3;
   function stepBalls(dt) {
@@ -3256,19 +3461,14 @@
   function update(dt) {
     arenaReveal = Math.min(1, arenaReveal + dt / 0.25);
     // the run's painted meadow comes back as the garden does (see paintBackground)
-    if (presentation === 'run' && (lushTimer -= dt) <= 0) {
+    if ((lushTimer -= dt) <= 0) {
       lushTimer = 0.5;
       const k = Math.round(lushness() * 20) / 20;
-      if (k !== bgLush || seasonAt(turn) !== bgSeason) { bgLush = k; bgCache = null; }
+      if (k !== bgLush || lightKey() !== bgSeason) { bgLush = k; bgCache = null; }
     }
     // Visiting is enough to wake the garden. Hidden tabs never perform catch-up care.
     if (!document.hidden) {
       garden.lastSeen = Date.now();
-      if (BloomGarden.wake(garden, dt, restFloor)) gardenDirty = true;
-      if (garden.rest < 0.05 && gardenNote.startsWith('The garden is resting')) {
-        gardenNote = ''; el.tNote.textContent = gardenMessage(); refreshInspection();
-        if (state === 'ready') updateHud();
-      }
       gardenSaveTimer += dt;
       if (gardenSaveTimer >= 15) { gardenSaveTimer = 0; saveGarden(); }
     }
@@ -3299,10 +3499,10 @@
       }
       let left = sdt;
       while (left > 0) { const d = Math.min(left, 1 / 90); stepBalls(d); left -= d; }
-      updateBees(sdt);
+      updateBees(sdt); updateBeams(sdt); updateShowers(sdt);
       if (shot.t > 22) { balls.forEach((b) => (b.homing = true)); bees.forEach((b) => (b.life = Math.min(b.life, 0))); }
       if (shot.t > 2.5 && el.ff.hidden) updateHud();
-      if (shot.launched >= shot.toLaunch && balls.length === 0 && bees.length === 0) endTurn();
+      if (shot.launched >= shot.toLaunch && balls.length === 0 && !powersBusy()) endTurn();
       else if (shot && shot.hits !== shot.shownHits) { shot.shownHits = shot.hits; updateHud(); }
     }
 
@@ -3329,8 +3529,7 @@
     for (const pl of growing) { pl.live += dt / 0.75; if (pl.live >= 1) { delete pl.live; gardenDirty = true; } }
     growing = growing.filter((pl) => pl.live != null);
     raysFx = Math.max(0, raysFx - dt * 0.55);
-    for (const bm of beams) bm.t += dt;
-    beams = beams.filter((bm) => bm.t < 0.8);
+    if (state !== 'flying') updateBeams(dt);
     for (const bu of bursts) bu.t += dt;
     bursts = bursts.filter((bu) => bu.t < 0.9);
     if (fbT >= 0) fbT += dt;
@@ -3358,6 +3557,8 @@
         p.ph += p.fs * dt; p.vx = p.vx * 0.96 + Math.cos(p.ph) * R * 0.3 * dt; p.vy = p.vy * 0.96 + R * 0.1 * dt;
       } else if (p.type === 'heart') {
         p.ph += dt * 3; p.vx = Math.sin(p.ph) * R * 0.08; p.vy *= 0.99;
+      } else if (p.type === 'rain') {
+        if (p.y >= p.until) p.life = 0;
       } else if (p.type === 'fluff') {
         // dandelion seeds drift up and away on the breeze
         p.ph += dt * 2.2; p.vx = p.vx * 0.99 + Math.sin(p.ph) * R * 0.04 * dt * 10; p.vy = p.vy * 0.99 - R * 0.004;
@@ -3442,26 +3643,32 @@
   // How lush the garden is right now, 0 to 1: the grown plants that are awake (not resting).
   // During a run the painted meadow behind the flower is washed back to a plain lawn by
   // however much is missing, so the garden visibly fills in as you play.
-  let bgLush = -1, lushTimer = 0, bgSeason = -1;
+  let bgLush = -1, lushTimer = 0, bgSeason = '';
   function lushness() {
     let sum = 0;
     for (const p of garden.plants) if (!dormant(p, garden.rest)) sum += Math.min(1, p.g + 0.2);
-    return Math.max(0, Math.min(1, sum / 110));
+    return Math.max(0, Math.min(1, sum / GARDEN_TIERS[GARDEN_TIERS.length - 1]));
   }
   // What drifts on the air in each season, behind the flower: motes of summer pollen,
   // autumn leaves, and fireflies in the evening and starlight.
   function drawSeasonAir(now) {
-    const air = SEASONS[seasonAt(turn)].air;
+    const part = BloomTime.dayPart(seasonClock()), season = calendar().name;
+    const air = presentation === 'run' ? TIMES[timeAt(turn)].air || SEASON_AIR[season]
+      : season === 'summer' && (part === 'dusk' || part === 'night') ? 'firefly' : SEASON_AIR[season];
     if (!air) return;
     const t = reduced ? 0 : now / 1000, rnd = seeded(29);
     ctx.save();
     if (air === 'firefly') ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < (air === 'leaf' ? 12 : 16); i++) {
+    for (let i = 0; i < (air === 'leaf' || air === 'petal' ? 12 : air === 'snow' ? 40 : 16); i++) {
       const sx = rnd(), sy = rnd(), sp = 0.5 + rnd(), ph = rnd() * TAU;
-      if (air === 'leaf') {
-        const y = ((sy * H + t * 26 * sp) % (H + 40)) - 20, x = sx * W + Math.sin(t * 0.8 * sp + ph) * 30, s = 5 + sp * 3;
+      if (air === 'snow') {
+        const y = ((sy * H + t * 18 * sp) % (H + 20)) - 10, x = sx * W + Math.sin(t * 0.7 * sp + ph) * 16;
+        ctx.fillStyle = `rgba(255,255,255,${0.55 + 0.3 * sp / 1.5})`;
+        ctx.beginPath(); ctx.arc(x, y, 1.4 + sp * 1.2, 0, TAU); ctx.fill();
+      } else if (air === 'leaf' || air === 'petal') {
+        const y = ((sy * H + t * 26 * sp) % (H + 40)) - 20, x = sx * W + Math.sin(t * 0.8 * sp + ph) * 30, s = (air === 'petal' ? 3.5 : 5) + sp * 3;
         ctx.save(); ctx.translate(x, y); ctx.rotate(t * sp + ph);
-        ctx.fillStyle = rgb(mixA(hexRgb('#D9823F'), hexRgb('#B5462E'), rnd()), 0.75);
+        ctx.fillStyle = air === 'petal' ? rgb(mixA(hexRgb('#F6D2DA'), hexRgb('#FFFFFF'), rnd()), 0.8) : rgb(mixA(hexRgb('#D9823F'), hexRgb('#B5462E'), rnd()), 0.75);
         ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.45, 0, 0, TAU); ctx.fill();
         ctx.restore();
       } else if (air === 'glint') {
@@ -3491,9 +3698,35 @@
     if (lawn) {
       g.drawImage(lawn, plate.x, plate.y, plate.w, plate.h);
       g.fillStyle = rgb(hexRgb(C.ground), presentation === 'run' ? 0.2 : 0.04); g.fillRect(0, 0, W, H);
+      if (bgLush < 0) bgLush = Math.round(lushness() * 20) / 20;
+      if (presentation === 'garden' && !artImage('bare')) {
+        // Until the bare backdrop (living-garden ticket 08) arrives, the painted borders along
+        // the sides and the foot give way to plain lawn, and fill back in as the garden grows.
+        const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.5);
+        if (bare > 0.01) {
+          const m = document.createElement('canvas'); m.width = c.width; m.height = c.height;
+          const mg = m.getContext('2d'); mg.setTransform(DPR, 0, 0, DPR, 0, 0);
+          const edge = (x0, y0, x1, y1) => {
+            const gr = mg.createLinearGradient(x0, y0, x1, y1);
+            gr.addColorStop(0, rgb(lawnCol, 0.85)); gr.addColorStop(0.55, rgb(lawnCol, 0.6)); gr.addColorStop(1, rgb(lawnCol, 0));
+            mg.fillStyle = gr; mg.fillRect(plate.x, plate.y, plate.w, plate.h);
+          };
+          edge(plate.x, 0, plate.x + plate.w * 0.3, 0);
+          edge(plate.x + plate.w, 0, plate.x + plate.w * 0.7, 0);
+          edge(0, plate.y + plate.h, 0, plate.y + plate.h * 0.72);
+          // clear of the fountain and the log at the back, easing in below them
+          const fade = mg.createLinearGradient(0, plate.y + plate.h * 0.3, 0, plate.y + plate.h * 0.46);
+          fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)');
+          mg.globalCompositeOperation = 'destination-in'; mg.fillStyle = fade; mg.fillRect(0, 0, W, H);
+          g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = bare; g.drawImage(m, 0, 0); g.restore();
+        }
+      }
+      const cal = calendar();
+      gradeLight(g, SEASON_LIGHT[cal.name], 1 - cal.blend); gradeLight(g, SEASON_LIGHT[cal.next], cal.blend);
+      if (presentation === 'garden') gradeLight(g, DAY_LIGHT[BloomTime.dayPart(seasonClock())]);
+      bgSeason = lightKey();
       if (presentation === 'run') {
         // a plain lawn over the painted meadow, thinning as the garden grows
-        if (bgLush < 0) bgLush = Math.round(lushness() * 20) / 20;
         const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.42);
         g.fillStyle = rgb(lawnCol, 0.66 * bare); g.fillRect(plate.x, plate.y, plate.w, plate.h);
         const tex = rgb(hexRgb(C.moss), 0.1 * bare), rnd = seeded(11);
@@ -3502,10 +3735,8 @@
           const x = plate.x + rnd() * plate.w, y = plate.y + rnd() * plate.h, l = 3 + rnd() * 5;
           g.beginPath(); g.moveTo(x, y); g.lineTo(x - l * 0.3, y - l); g.stroke();
         }
-        // the season's light
-        const se = SEASONS[bgSeason = seasonAt(turn)];
-        if (se.mult) { g.globalCompositeOperation = 'multiply'; g.fillStyle = rgb(se.mult); g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over'; }
-        if (se.over) { g.fillStyle = `rgba(${se.over.join(',')})`; g.fillRect(0, 0, W, H); }
+        // the time of day's light
+        gradeLight(g, TIMES[timeAt(turn)]);
       }
       const paper = hexRgb(C.ground);
       for (const [y0, y1] of [[0, H * 0.18], [H, H * 0.84]]) {
@@ -4406,6 +4637,13 @@
     g.restore();
   }
   function drawBeesAndBeams() {
+    for (const sh of showers) {
+      // a cool, soft wash where the shower falls
+      const k = Math.sin(Math.min(1, sh.t / Math.max(0.01, sh.dur)) * Math.PI);
+      const wg = ctx.createRadialGradient(sh.x, sh.y, 0, sh.x, sh.y, sh.rad);
+      wg.addColorStop(0, rgb(hexRgb(C.sky), 0.3 * k)); wg.addColorStop(0.75, rgb(hexRgb(C.sky), 0.18 * k)); wg.addColorStop(1, rgb(hexRgb(C.sky), 0));
+      ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(sh.x, sh.y, sh.rad, 0, TAU); ctx.fill();
+    }
     for (const bu of bursts) {
       // a flash and a widening ring in the power-up's colour
       const k = bu.t / 0.9, e = 1 - Math.pow(1 - k, 3), rad = R * (0.08 + 0.34 * e);
@@ -4418,12 +4656,18 @@
       ctx.beginPath(); ctx.arc(bu.x, bu.y, rad, 0, TAU); ctx.stroke();
     }
     for (const bm of beams) {
-      const k = 1 - bm.t / 0.8, len = R * 1.1, w = R * 0.07 * (0.6 + 0.4 * k);
-      ctx.save(); ctx.rotate(bm.a); ctx.globalCompositeOperation = 'lighter';
+      // the swept half glows softly behind the beam, then both fade
+      const k = bm.t <= bm.dur ? 1 : Math.max(0, 1 - (bm.t - bm.dur) / BEAM_FADE), len = R * 1.1, w = R * 0.08 * (0.6 + 0.4 * k);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const wedge = ctx.createRadialGradient(0, 0, coreR, 0, 0, R);
+      wedge.addColorStop(0, rgb(hexRgb(C.butter), 0.42 * k)); wedge.addColorStop(0.7, rgb(hexRgb(C.butter), 0.2 * k)); wedge.addColorStop(1, rgb(hexRgb(C.butter), 0.06 * k));
+      ctx.fillStyle = wedge; ctx.beginPath(); ctx.moveTo(0, 0);
+      ctx.arc(0, 0, R * 0.98, bm.dir > 0 ? bm.a0 : bm.a, bm.dir > 0 ? bm.a : bm.a0); ctx.closePath(); ctx.fill();
+      ctx.rotate(bm.a);
       const bg = ctx.createLinearGradient(0, -w, 0, w);
-      bg.addColorStop(0, rgb(hexRgb(C.butter), 0)); bg.addColorStop(0.5, rgb(hexRgb(C.butter), 0.85 * k)); bg.addColorStop(1, rgb(hexRgb(C.butter), 0));
+      bg.addColorStop(0, rgb(hexRgb(C.butter), 0)); bg.addColorStop(0.5, rgb(hexRgb(C.butter), 0.9 * k)); bg.addColorStop(1, rgb(hexRgb(C.butter), 0));
       ctx.fillStyle = bg; ctx.fillRect(coreR, -w, len, w * 2);
-      ctx.fillStyle = rgb(WHITE, 0.6 * k); ctx.fillRect(coreR, -w * 0.18, len, w * 0.36);
+      ctx.fillStyle = rgb(WHITE, 0.7 * k); ctx.fillRect(coreR, -w * 0.18, len, w * 0.36);
       ctx.restore();
     }
     for (const bee of bees) {
@@ -4952,7 +5196,7 @@
     // the garden, repainted at most a few times a second as it changes
     if (gardenDirty && (!gardenCache || now - gardenPainted > 180)) paintGarden();
     if (gardenCache) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(gardenCache, 0, 0); drawSwaying(now); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
-    if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); }
+    if (presentation === 'garden') { drawFountainFx(now); drawGardenLife(now); drawSeasonAir(now); }
     // A resting garden also loses a little colour (its plants mostly rest out of sight). Erwu, the
     // flower you play on and everything play brings stay in full colour above it, and the
     // colour eases back turn by turn as the garden wakes, so play visibly brings it to life.
@@ -5038,6 +5282,11 @@
       if (p.type === 'ripple') {
         ctx.strokeStyle = rgb(hexRgb(C.sky), p.life * 0.9); ctx.lineWidth = 1 + p.life * 2.5;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - p.life * 0.85), 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (p.type === 'rain') {
+        ctx.strokeStyle = rgb(mix('#FFFFFF', C.sky, 0.75), 0.95); ctx.lineWidth = Math.max(1.4, ballR * 0.45); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(p.x, p.y - p.size * 2.4); ctx.lineTo(p.x, p.y); ctx.stroke();
         continue;
       }
       if (p.type === 'drop') {
@@ -5319,9 +5568,11 @@
     setSound(soundOn);
     welcomeBack();
     if (garden.fresh) {
-      // a brand-new garden: a few sprouts around the bed to start from
+      // a brand-new, bare garden (living-garden ticket 02): a few tufts of grass by the rose
+      // bed, and any run from an older garden set aside, since it can't feed this one
       delete garden.fresh;
-      for (let i = 0; i < 6; i++) plant(i % 2 ? 'grass' : pick(['clover', 'daisy', 'cosmos']), null, 0.12 + Math.random() * 0.15, 1.06, 1.4);
+      for (let i = 0; i < 3; i++) plant('grass', null, 0.15 + Math.random() * 0.1, 1.06, 1.3, null, true);
+      store.del('run3');
       saveGarden();
     }
     document.addEventListener('visibilitychange', () => {
