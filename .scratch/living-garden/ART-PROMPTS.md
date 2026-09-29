@@ -334,6 +334,8 @@ Reviewed 2026-09-29 against the side walk (`erwu-walk-v2.png`) and the current f
 
 #### What to regenerate, and how
 
+Correction batch: the new filenames below (including diagonal key poses 1, 3, 5 and 7) are now available. See [correction results and looping preview instructions](walk-candidates-review/CORRECTIONS.md). The earlier full-cycle candidates remain rejected. New sources still require packing and gait acceptance; they are not a finished rigged animation.
+
 The generator is good at **one convincing pose at a time**. It's poor at making a sequence of legs alternate. So each correction asks for fewer, simpler things, and the leg order comes from somewhere it can't get wrong:
 
 - **Front and back walks: 4 frames, not 8. I mirror them for the other half.** Seen straight on, a mirror image swaps her left and right legs, which is exactly the other half of the cycle. That only works if nothing else is lopsided, so the tail must be centred: hidden behind her in the front view, and hanging straight down the middle in the back view. The light must be even and frontal. One sheet each, 4 frames in a row, gives each frame about 440 px of width.

@@ -39,3 +39,7 @@ Reviewed in [ART-PROMPTS.md section 8e](ART-PROMPTS.md#8e-review-of-the-2026-09-
 - The front/back walk never alternates its legs.
 
 Section 8e has correction prompts that avoid asking the generator for a sequence of alternating legs.
+
+## Correction batch
+
+The revised source filenames from section 8e are now generated: front/back four-frame half-cycles, diagonal key poses 1/3/5/7 in both views, and missing transition poses. See [correction notes and interactive review](walk-candidates-review/CORRECTIONS.md). This supersedes the original candidates for further review, not the live atlas. Exact gait acceptance remains open.
