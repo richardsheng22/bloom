@@ -6,14 +6,16 @@ const path = require('node:path');
 const http = require('node:http');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
 const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2)|[\w-]+\.js)$/;
-const fixture = require('./fixtures/garden-v1.json');
-const G = require('../garden-state.js');
+const { KEY, gardenV4, plants: fixturePlants } = require('./fixtures/garden-v4.cjs');
+const legacy = require('./fixtures/garden-v1.json');
 const root = path.resolve(__dirname, '..');
 const output = process.env.BLOOM_EVIDENCE || '/tmp/bloom-ticket01';
-const NOW = fixture.tended;
+const NOW = legacy.tended;
+const HOUR = 3600000;
 const run = { v: 3, turn: 8, ballCount: 7, petalNext: true, pawReady: false, charges: [1,0,0,1,0,0,0,0,0,0],
   items: [{ kind: 'shape', sector: 2, ring: 5, hp: 3, maxHp: 3, sp: 0, ci: 0 }, { kind: 'orb', sector: 6, ring: 7 }] };
-const clone = x => JSON.parse(JSON.stringify(x));
+// What v0.9 left behind; 1.0 leaves it exactly as it is (living-garden ticket 02).
+const oldSaves = { 'bloom.garden1': JSON.stringify(legacy), 'bloom.garden2': JSON.stringify({ v: 3, plants: legacy.plants.map((p, i) => ({ id: `plant-${i + 1}`, ...p })), rest: 0.5 }) };
 (async () => {
   fs.mkdirSync(output, { recursive: true });
   const server = http.createServer((req, res) => {
@@ -28,61 +30,74 @@ const clone = x => JSON.parse(JSON.stringify(x));
   const errors = [];
   try {
     browser = await chromium.launch({ headless: true, executablePath: process.env.BLOOM_CHROMIUM, args: ['--no-sandbox'] });
+    // `hours` away from a garden last seen at NOW; `seed` is what's in storage beforehand.
     async function pageFor(hours, opts = {}) {
       const page = await browser.newPage({ viewport: opts.small ? {width:320,height:568} : {width:390,height:844}, deviceScaleFactor:1,
         isMobile:true, hasTouch:true, reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
       page.on('pageerror', e => errors.push(e.message));
       // No network dependency: use the existing system font fallbacks for this suite.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
-      await page.addInitScript(({fixture,run,hours,NOW,opts}) => {
+      const seed = opts.seed || { ...oldSaves, [KEY]: gardenV4({ now: NOW, bed: 'daisy', growth: 0.6 }), 'bloom.run3': JSON.stringify(run) };
+      await page.addInitScript(({seed,hours,NOW,opts}) => {
         Date.now = () => NOW + hours * 3600000;
         if (!sessionStorage.getItem('fixture')) {
           sessionStorage.setItem('fixture','1');
-          localStorage.setItem('bloom.garden1',JSON.stringify(fixture));
-          localStorage.setItem('bloom.run3',JSON.stringify(run));
-          if (opts.malformed) localStorage.setItem('bloom.garden2','{broken');
+          for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
         }
         if (opts.failWrites) Storage.prototype.setItem = function() { throw new DOMException('Quota exceeded','QuotaExceededError'); };
-      }, {fixture,run,hours,NOW,opts});
+      }, {seed,hours,NOW,opts});
       await page.goto(`http://127.0.0.1:${server.address().port}`,{waitUntil:'load'});
       await page.waitForTimeout(1800);
       return page;
     }
-    const data = page => page.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden2')));
-    const strip = plants => plants.map(({id,...p})=>p);
+    const data = page => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), KEY);
+    const stored = (page, k) => page.evaluate((k) => localStorage.getItem(k), k);
+
+    // A first launch of 1.0: a new, bare garden; v0.9's saves and run are left alone or set aside.
+    const first = await pageFor(0, { seed: { ...oldSaves, 'bloom.run3': JSON.stringify(run) } });
+    const bare = await data(first);
+    assert.equal(bare.v, 4);
+    assert.ok(bare.plants.length <= 3 && bare.plants.every((p) => p.k === 'grass'), 'a bare garden: a few tufts of grass');
+    for (const [k, v] of Object.entries(oldSaves)) assert.equal(await stored(first, k), v, `${k} untouched`);
+    assert.equal(JSON.parse(await stored(first, 'bloom.run3')).turn, 1, 'the old run is set aside for a new one');
+    assert.equal(await first.locator('#play').innerText(), 'Play');
+    await first.screenshot({path:path.join(output,'bare-start.png')});
+    await first.close();
+    console.log('PASS 1.0 starts bare and leaves older saves untouched');
+
     for (const hours of [0,12,72,168,720]) {
       const page = await pageFor(hours);
       const g = await data(page);
-      assert.deepEqual(strip(g.plants),fixture.plants);
-      assert.equal(g.rest,Math.min(1,Math.max(0,hours-G.REST.graceHours)/G.REST.settleHours));
-      assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden1'))),fixture);
+      // everything owned is still there, undimmed, in the same place and order; it only grows
+      const kept = g.plants.slice(0, fixturePlants.length);
+      assert.deepEqual(kept.map(({ a, d, k, s }) => ({ a, d, k, s })), fixturePlants.map(({ a, d, k, s }) => ({ a, d, k, s })));
+      assert.ok(kept.every((p, i) => p.g >= fixturePlants[i].g));
+      assert.equal(g.rest, 0);
+      for (const [k, v] of Object.entries(oldSaves)) assert.equal(await stored(page, k), v);
       assert.equal(await page.locator('#play').innerText(),'Continue · turn 8');
-      // The run's own fields are unchanged; v0.8 adds a garden log alongside them, and the
-      // special-turn schedule starts a few turns after an older save's current turn.
+      // The run's own fields are unchanged; the garden log and special-turn schedule sit beside them.
       const {log,special,...saved}=await page.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3')));
       assert.deepEqual(saved,run); assert.deepEqual(log.seeds,[]);
       assert.deepEqual(special,{next:Math.max(12,run.turn+6),kind:null,last:null,bonus:0});
-      assert.doesNotMatch(await page.locator('#t-note').innerText(),/missed|kept what|lost/i);
-      if (hours===0||hours===168) await page.screenshot({path:path.join(output,hours===0?'awake.png':'resting.png')});
+      assert.doesNotMatch(await page.locator('#t-note').innerText(),/missed|kept what|lost|resting/i);
+      // growth on its own: one day's worth per garden day away, at most a week (ticket 01)
+      const days = Math.min(7, Math.floor(hours / 24));
+      const bed = g.patches.find((b) => b.flower === 'daisy');
+      assert.ok(Math.abs(bed.growth - Math.min(1, 0.6 + 0.03 * days)) < 1e-9, `bed growth after ${hours}h: ${bed.growth}`);
+      assert.ok(g.plants.length >= fixturePlants.length && g.plants.length <= fixturePlants.length + days);
+      if (hours===0||hours===168) await page.screenshot({path:path.join(output,hours===0?'awake.png':'a-week-away.png')});
       if (hours===168) {
-        await page.waitForTimeout(16000);
-        const waking = await data(page);
-        assert.ok(waking.rest<1 && waking.rest>0.5);
-        assert.deepEqual(waking.plants,g.plants);
-        await page.screenshot({path:path.join(output,'returning.png')});
         await page.reload(); await page.waitForTimeout(1800);
-        const afterReload = (await data(page)).rest;
-        // pagehide saves the additional visible wake-up time since the heartbeat.
-        assert.ok(afterReload <= waking.rest && afterReload > waking.rest - 0.1);
-        assert.deepEqual((await data(page)).plants,g.plants);
+        const again = await data(page);
+        assert.equal(again.patches.find((b) => b.flower === 'daisy').growth, bed.growth, 'a reload never applies growth twice');
+        assert.equal(again.plants.length, g.plants.length);
       }
       await page.close();
-      console.log(`PASS migration, ownership, resume, copy: ${hours}h`);
+      console.log(`PASS ownership, growth on its own, resume, copy: ${hours}h`);
     }
     const small=await pageFor(168,{small:true,reduced:true});
-    await small.screenshot({path:path.join(output,'resting-small-reduced.png')});
+    await small.screenshot({path:path.join(output,'week-away-small-reduced.png')});
     assert.ok(await small.locator('#play').isVisible());
-    assert.equal((await data(small)).plants.length,fixture.plants.length);
     await small.locator('#play').click(); await small.waitForTimeout(600);
     const ids=(await data(small)).plants.map(p=>p.id);
     // Launch through the real pointer handlers, then background immediately.
@@ -96,22 +111,27 @@ const clone = x => JSON.parse(JSON.stringify(x));
     await small.waitForFunction(()=>document.querySelector('#turn').textContent==='9',{timeout:35000});
     const played=await data(small);
     assert.ok(ids.every(id=>played.plants.some(p=>p.id===id)));
-    assert.ok(played.rest<hiddenSave.rest);
+    assert.equal(played.time.turns, hiddenSave.time.turns + 1, 'the turn counts toward the day');
     assert.equal(new Set(played.plants.map(p=>p.id)).size,played.plants.length);
     await small.reload();await small.waitForTimeout(800);
     assert.equal(await small.locator('#play').innerText(),'Continue · turn 9');
-    console.log('PASS reduced motion, small phone, mid-shot background/resume, turn recovery');
+    console.log('PASS reduced motion, small phone, mid-shot background/resume, the day\'s turns');
     await small.close();
-    const failed=await pageFor(72,{failWrites:true});
-    assert.equal(await failed.evaluate(()=>localStorage.getItem('bloom.garden2')),null);
-    assert.deepEqual(await failed.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden1'))),fixture);
+    const failed=await pageFor(72,{failWrites:true,seed:{...oldSaves}});
+    assert.equal(await stored(failed, KEY),null);
+    for (const [k, v] of Object.entries(oldSaves)) assert.equal(await stored(failed, k), v);
     assert.match(await failed.locator('#t-note').innerText(),/could not be saved/);
     await failed.close();
-    const recovered=await pageFor(72,{malformed:true});
-    assert.deepEqual(strip((await data(recovered)).plants),fixture.plants);
+    const good = gardenV4({ now: NOW });
+    const recovered=await pageFor(72,{seed:{[KEY]:'{broken',[KEY + '.backup']:good}});
+    assert.deepEqual((await data(recovered)).plants.slice(0, fixturePlants.length).map(({ a, d, k, s }) => ({ a, d, k, s })), fixturePlants.map(({ a, d, k, s }) => ({ a, d, k, s })));
     await recovered.close();
+    const unreadable=await pageFor(72,{seed:{[KEY]:'{broken'}});
+    assert.equal(await stored(unreadable, KEY),'{broken');
+    assert.match(await unreadable.locator('#t-note').innerText(),/untouched/);
+    await unreadable.close();
     assert.deepEqual(errors,[]);
-    console.log('PASS failed writes, legacy recovery, no runtime errors');
+    console.log('PASS failed writes, recovery from the backup, unreadable saves untouched, no runtime errors');
     console.log(`Evidence: ${output}`);
   } finally { if(browser)await browser.close(); await new Promise(r=>server.close(r)); }
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -2,7 +2,7 @@ const {chromium}=require(process.env.BLOOM_PLAYWRIGHT||'playwright');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 // Serve the page, its root-level scripts, and install files; new modules need no allowlist edit.
 const SERVED=/^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2)|[\w-]+\.js)$/;
-const fixture=require('./fixtures/garden-v1.json');
+const {KEY,gardenV4}=require('./fixtures/garden-v4.cjs');
 const root=path.resolve(__dirname,'..'),out=process.env.BLOOM_EVIDENCE||'/tmp/bloom-ticket02';
 const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,1,0,0,0,0,0,0],items:[
   {kind:'shape',sector:2,ring:5,hp:30,maxHp:30,sp:0,ci:0},{kind:'orb',sector:6,ring:7}]};
@@ -18,12 +18,12 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   async function setup(width=390,height=844,options={}){
    const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:options.motion?'no-preference':'reduce'});
    page.on('pageerror',e=>errors.push(e.message));await page.route(/fonts\.(googleapis|gstatic)\.com/,r=>r.abort());
-   await page.addInitScript(({fixture,run})=>{if(!sessionStorage.getItem('setup')){sessionStorage.setItem('setup','1');localStorage.setItem('bloom.garden1',JSON.stringify({...fixture,tended:Date.now()}));localStorage.setItem('bloom.run3',JSON.stringify(run));}},{fixture,run:options.run||run});
+   await page.addInitScript(({key,garden,run})=>{if(!sessionStorage.getItem('setup')){sessionStorage.setItem('setup','1');localStorage.setItem(key,garden);localStorage.setItem('bloom.run3',JSON.stringify(run));}},{key:KEY,garden:gardenV4(),run:options.run||run});
    await page.goto(`http://127.0.0.1:${server.address().port}`,{waitUntil:'load'});await page.waitForTimeout(250);
    return page;
   }
   const snapshot=p=>p.evaluate(()=>JSON.parse(localStorage.getItem('bloom.run3')));
-  const plants=p=>p.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden2')).plants);
+  const plants=p=>p.evaluate(()=>JSON.parse(localStorage.getItem('bloom.garden4')).plants);
   async function garden(p){await p.waitForFunction(()=>document.body.dataset.view==='garden');}
   async function play(p){await p.locator('#play').click();assert.equal(await p.evaluate(()=>document.body.dataset.view),'run');}
   async function shot(p){const box=await p.locator('#stage').boundingBox();const x=box.x+box.width/2,y=box.y+box.height*.7;
@@ -71,7 +71,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   await p.setViewportSize({width:568,height:320});await p.waitForTimeout(150);await assertBounds(p);assert.deepEqual(await plants(p),owned);
   await p.setViewportSize({width:390,height:844});await p.waitForTimeout(150);
   // Wild plants grow on their own: tapping one opens nothing. Tapping a bed does; the lawn closes it.
-  const target=await p.evaluate(()=>{const r=document.querySelector('#garden-scene').getBoundingClientRect(),scene=BloomGardenView.layout(r),g=JSON.parse(localStorage.getItem('bloom.garden2'));
+  const target=await p.evaluate(()=>{const r=document.querySelector('#garden-scene').getBoundingClientRect(),scene=BloomGardenView.layout(r),g=JSON.parse(localStorage.getItem('bloom.garden4'));
    const item=g.plants[0],at=BloomGardenLayout.projectPlant(item,scene);return {x:scene.cx+at.x,y:scene.cy+at.y-8};});
   await p.touchscreen.tap(target.x,target.y);assert.ok(await p.locator('#garden-inspection').isHidden());
   await p.locator('.anchor-target:not([hidden])').nth(2).tap();assert.ok(await p.locator('#garden-inspection').isVisible());

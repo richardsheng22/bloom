@@ -1,6 +1,6 @@
 # 07 — Make power-ups feel like events
 
-Status: planned. Dependencies: none. Art: none required (existing sun, drawn bee and dew).
+Status: implemented. Dependencies: none. Art: none required (existing sun, drawn bee and dew).
 
 ## Outcome
 
@@ -45,3 +45,11 @@ Other changes:
 - Late in a run (turn 60+), a sunbeam visibly clears or halves buds across half the board.
 - A dewdrop pushes buds back, never onto another item or past the rim.
 - The bot's average run length changes by less than about 25%; record the numbers.
+
+## Implementation record — 2026-09-29
+
+- `sunbeam`, `dewSplash` and `releaseBee` in `index.html`, with `powerNow() = max(3, ceil(pollen × 0.35))`. The first try at 0.6 made bot runs 45% longer (108, 124, 156 turns), so it was lowered, and the shower soaks a quarter rather than a third.
+- The turn waits for the sweep, the shower and its washed-back buds, and the swarm (`powersBusy`).
+- Visuals: a sweeping beam with a warm glow over the swept half; a cool wash, rain streaks and ripples for the shower; three or five bees.
+- Bot runs (aiming at the nearest bud, fast-forwarded) ended at turns 60, 65, 77 and 97 (mean 75) against 88 and 90 before: within the 25% allowed, though a single run varies widely.
+- Checked late in a run (turn 45, 52 pollen): each power-up visibly took a large share of the board's hits.

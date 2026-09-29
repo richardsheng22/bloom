@@ -5,22 +5,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const SERVED = /^(index\.html|manifest\.webmanifest|(?:icons|assets)\/[\w-]+\.(?:png|webp)|fonts\/[\w-]+\.(?:css|woff2)|[\w-]+\.js)$/;
-const G = require('../garden-state.js'), L = require('../garden-layout.js');
-const fixture = require('./fixtures/garden-v1.json');
+const { gardenV4 } = require('./fixtures/garden-v4.cjs');
 const root = path.resolve(__dirname, '..');
 const out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu';
 
 // A garden with the fixture's plants and beds; `bed` planted and flowering if given.
-function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
-  const now = Date.now(), disk = new Map([[G.LEGACY, JSON.stringify({ ...fixture, tended: now })]]);
-  const st = { getItem: (k) => disk.get(k) ?? null, setItem: (k, v) => disk.set(k, v), removeItem: (k) => disk.delete(k) };
-  const g = G.load(st, now).garden;
-  L.initialize(g, G.allocateId);
-  if (bed) { g.patches[0].flower = bed; g.patches[0].growth = 0.8; g.focus = g.patches[0].id; }
-  if (bed && visited) g.discoveries.push({ id: G.allocateId(g, 'discovery'), type: 'bed-visit', bed: g.patches[0].id, kind: bed, at: now });
-  g.lastSeen = g.tended = now - hoursAway * 3600000;
-  return JSON.stringify(G.snapshot(g));
-}
+const gardenJSON = ({ hoursAway = 0, bed = null, visited = false } = {}) => gardenV4({ hoursAway, bed, visited });
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -37,7 +27,7 @@ function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
     const p = await browser.newPage({ viewport: opts.size || { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
     p.on('pageerror', (e) => errors.push(e.message));
     await p.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
-    await p.addInitScript((g) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('bloom.garden2', g); } }, garden);
+    await p.addInitScript((g) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('bloom.garden4', g); } }, garden);
     await p.goto(`http://127.0.0.1:${server.address().port}/?erwu=${opts.seed || 7}`, { waitUntil: 'load' });
     await p.waitForTimeout(600);
     return p;
@@ -138,11 +128,11 @@ function gardenJSON({ hoursAway = 0, bed = null, visited = false } = {}) {
     for (let i = 0; i < 140; i++) { await p.waitForTimeout(250); const s = await info(p); if (first[first.length - 1] !== s.action) first.push(s.action); if (s.pose === 'pounce') break; }
     assert.ok(first.includes('visit-bloom') && first.includes('stalk'), first.join(','));
     await p.screenshot({ path: path.join(out, 'first-bloom.png') });
-    const visits = await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden2')).discoveries.filter((d) => d.type === 'bed-visit').length);
+    const visits = await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden4')).discoveries.filter((d) => d.type === 'bed-visit').length);
     assert.equal(visits, 1);
     await p.reload(); await p.waitForTimeout(800);
     assert.notEqual((await info(p)).action, 'visit-bloom');
-    assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden2')).discoveries.filter((d) => d.type === 'bed-visit').length), 1);
+    assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden4')).discoveries.filter((d) => d.type === 'bed-visit').length), 1);
     await p.close();
     console.log(`PASS the first bloom, recorded once: ${first.join(' → ')}`);
 

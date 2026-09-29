@@ -1,6 +1,6 @@
 # 05 — Something happened while you were away
 
-Status: planned. Dependencies: 01, 03. Art: visitors and keepsakes (ticket 10) to show them.
+Status: engine implemented and tested; showing visitors, traces and gifts waits on the art (ticket 10). Dependencies: 01, 03. Art: visitors and keepsakes (ticket 10) to show them.
 
 ## Outcome
 
@@ -44,3 +44,10 @@ Opening the game is a small surprise. Most times, something is new: a visitor at
 ## Out of scope
 
 Notifications, collecting or trading visitors, feeding mechanics, completion percentages.
+
+## Implementation record — 2026-09-29
+
+- `garden-visits.js` with `tests/garden-visits.test.cjs`. It runs from `welcomeBack` on every opening; results are saved in `garden.visits` and first visits as `visit-first` discoveries.
+- Simulated over 20 garden-years of daily openings (Toronto time): the fox came every 14–19 days (median 16); 90% of openings had something new. First rare visits wait at least a week in a new garden.
+- The bed news line works now ("The cosmos in the morning bed opened while you were away.").
+- Waiting on art: nothing is drawn for visitors, traces or gifts yet, so they are recorded silently.

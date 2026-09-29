@@ -1,6 +1,6 @@
 # 02 — Start with a bare garden that fills in over weeks
 
-Status: planned. Dependencies: 01. Art: the bare backdrop (ticket 08) for the final look.
+Status: implemented in code; the final look waits on the bare backdrop (ticket 08). Dependencies: 01. Art: the bare backdrop (ticket 08) for the final look.
 
 ## Outcome
 
@@ -44,3 +44,11 @@ Tier thresholds rise so the top tier takes about 3–4 weeks under ticket 01's p
 - An owner's existing v3 garden is still present in storage after first launch of v4.
 - Each milestone shows once, survives reload, and never repeats.
 - With the bare plate in place, day 1 and day 30 screenshots differ clearly at phone size.
+
+## Implementation record — 2026-09-29
+
+- `garden-state.js` is version 4 under `bloom.garden4` (backup `bloom.garden4.backup`). Older keys are listed in `BloomGarden.RETIRED` and never read, written or removed. Migration code for v1–v3 is gone, since nothing loads those saves any more.
+- A new garden gets three tufts of grass by the rose bed; a run left from the older garden is set aside for a new one.
+- Until `garden-plate-bare` exists, the garden view washes the painted borders along the sides and foot back to lawn by how grown the garden is, clear of the fountain and log (`paintBackground`). It's a stand-in: flowers still show faintly through it.
+- Tier thresholds are now 4, 15, 40, 75, 120. Milestone moments are recorded as `milestone` discoveries and shown once on the garden's label.
+- Checked: `tests/garden-state.test.cjs` (old saves untouched, v4 round trip) and `tests/garden-browser.cjs` (bare first launch, old saves byte-for-byte, the old run set aside).

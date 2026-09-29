@@ -1,6 +1,6 @@
 # 01 — Pace the garden by days, not turns
 
-Status: planned. Dependencies: none. Art: none.
+Status: implemented. Dependencies: none. Art: none.
 
 ## Outcome
 
@@ -59,3 +59,11 @@ These are part of ticket 05's "something happened" moment rather than silent num
 ## Out of scope
 
 Push notifications, streaks, daily rewards, catch-up purchases.
+
+## Implementation record — 2026-09-29
+
+- `garden-time.js` (`BloomTime`) with `tests/garden-time.test.cjs`: garden days from 4:00, the budget (25 full turns, then a quarter), 5 wild plants a day from play, growth on its own (0.03 a day to every planted bed, 1 wild plant, +0.05 to every plant, at most 7 days at once), and clock changes that never apply a day twice.
+- `BloomBeds.GROW` retuned (turn 0.002, bloom 0.002, at most 0.0055 a shot, miss 0.0003, full bloom 0.015). Misses now share a shot's cap with blooms: a late shot bounces dozens of times, and uncapped misses established a bed in two days.
+- Seeds that find no new ground still fly out and feed the nearest plant, so a run keeps its seed flights all day.
+- Rest is retired: `rest` is always 0, nothing dims on return, and the resting note is gone.
+- Measured with a bot planting three beds and playing 40 turns a day: the focus bed reached 0.22, 0.44, 0.71 and 0.99 on days 1–4, so it's established on day 5; the garden reached tier 2 by day 3 at about six new plants a day, putting the top tier around week 3. The second bed only starts growing in earnest once the first is established.

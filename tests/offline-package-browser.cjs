@@ -52,7 +52,7 @@ const TYPES = { html: 'text/html', js: 'application/javascript', css: 'text/css'
     await p.locator('.anchor-target:not([hidden])').first().click();
     await p.locator('.bed-chip').first().click();
     await p.locator('#bed-plant').click();
-    const planted = await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden2')).patches.filter((b) => b.flower).length);
+    const planted = await p.evaluate(() => JSON.parse(localStorage.getItem('bloom.garden4')).patches.filter((b) => b.flower).length);
     assert.ok(planted >= 1, 'a bed is planted');
     await p.locator('#inspection-close').click();
     console.log('PASS offline: a bed is planted and saved');

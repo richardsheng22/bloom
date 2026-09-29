@@ -1,6 +1,6 @@
 # 03 — Follow the real northern seasons
 
-Status: planned. Dependencies: 01. Art: seasonal backdrops (08) and seasonal clumps (09) for the final look; the code works with existing art first.
+Status: implemented in code with existing art; seasonal backdrops (08) and clumps (09) will finish the look. Dependencies: 01. Art: seasonal backdrops (08) and seasonal clumps (09) for the final look; the code works with existing art first.
 
 ## Outcome
 
@@ -40,3 +40,12 @@ Season edges blend over about a week, so the change is gradual.
 - Setting the device clock across a season boundary changes the look gradually over about a week.
 - No plant, bed or growth value changes because of the season.
 - Reduced motion: no snow or leaf motion, still frames only.
+
+## Implementation record — 2026-09-29
+
+- `BloomTime.season`, `plantPhase`, `bedsFlowering` and `dayPart` in `garden-time.js`, with tests (seasons change on the 1st of March, June, September and December and blend over the last week).
+- Light: `SEASON_LIGHT` grades the backdrop in both views (warm amber autumn, pale cool winter); the garden also takes the real time of day (`DAY_LIGHT`), softened at night. The run's 25-turn "seasons" are now times of day (`TIMES`): morning, afternoon, golden evening, starlight.
+- Air: spring petals, summer pollen glints, autumn leaves, winter snow, and fireflies on summer evenings, in both views.
+- Plants out of their months show as `clump-leafy`; flowering kinds rest out of sight in winter. Beds flower March to November and show their young stage over winter. No growth value changes.
+- Review override: `?month=1` and `?hour=21` (development only).
+- Not yet: a frost wash over the painted plants themselves, and seasonal backdrops.

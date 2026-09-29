@@ -6,7 +6,7 @@ const path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu-render';
 const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,get cat(){return cat},catPose,basketPose,paintedErwuPose,bedArtVariant,drawBed,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
 const marker = '  window.claude?.hot?.snapshot?';
-const fixture = require('./fixtures/garden-v1.json');
+const { KEY, gardenV4 } = require('./fixtures/garden-v4.cjs');
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -29,7 +29,7 @@ const fixture = require('./fixtures/garden-v1.json');
       const p = await browser.newPage({ viewport: size, deviceScaleFactor: 2 });
       p.on('pageerror', e => errors.push(e.message));
       await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
-      await p.addInitScript(f => localStorage.setItem('bloom.garden1', JSON.stringify({ ...f, tended: Date.now() })), fixture);
+      await p.addInitScript(([k, g]) => localStorage.setItem(k, g), [KEY, gardenV4()]);
       await p.goto(`http://127.0.0.1:${server.address().port}/${before ? 'before' : ''}`);
       return p;
     }

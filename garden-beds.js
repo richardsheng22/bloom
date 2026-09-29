@@ -14,11 +14,12 @@
     moonflower: 'Stays closed by day and opens in the evening.', dandelion: 'When it has gone to seed, tap it to blow.',
     'bleeding-heart': 'Arching stems of little heart-shaped flowers.', strawberry: 'White flowers that ripen into berries.',
   });
-  // Tunable pacing (ticket 04/11). A rare planting establishes a little more slowly.
-  // Observed with random-aim bot runs of 9–18 turns: a first bed establishes in three runs (ticket 04).
-  // Blooms from a single shot add at most `bloomPerShot`, so a long, busy late-game run can't
-  // finish every bed at once (owner feedback: three beds in one 37-turn run was too fast).
-  const GROW = Object.freeze({ turn: 0.012, bloom: 0.011, bloomPerShot: 0.03, miss: 0.002, fullBloom: 0.06, rare: 0.75, idle: 0.25 });
+  // Tunable pacing, paced by days (living-garden ticket 01). The old values were tuned on
+  // random-aim runs of 9–18 turns, but real runs last 80–90, so three beds finished in one
+  // sitting. Now a common bed takes about five days of ordinary play (25–40 turns a day, the
+  // turns past 25 counting a quarter; see BloomTime) plus a little growth on its own each day,
+  // and a rare one about seven. Blooms from a single shot add at most `bloomPerShot`.
+  const GROW = Object.freeze({ turn: 0.002, bloom: 0.002, bloomPerShot: 0.0055, miss: 0.0003, fullBloom: 0.015, rare: 0.75, idle: 0.25 });
   const LUCK = Object.freeze({ firstChance: 0.5, base: 0.3, perDryRun: 0.2, earliest: 3, latest: 8 });
   const STAGES = Object.freeze([[0.2, 'planted'], [0.55, 'growing'], [1, 'flowering']]);
   const STAGE_NAMES = Object.freeze({ empty: 'Ready for planting', planted: 'Just planted', growing: 'Growing', flowering: 'Flowering', established: 'Established' });
@@ -73,9 +74,10 @@
     }
     return change;
   }
-  function tendTurn(g) {
+  // `weight` is how much the turn counts toward the day's growth (BloomTime.turnWeight).
+  function tendTurn(g, weight = 1) {
     for (const p of g.patches) if (p.puffed) p.puffed--;
-    return grow(g, GROW.turn, 'turn');
+    return grow(g, GROW.turn * weight, 'turn');
   }
 
   // A planting plan: what goes into a bed, and where the current planting goes.

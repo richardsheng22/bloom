@@ -1,0 +1,107 @@
+/* Garden time: garden days and their tending budget, growth on its own, the real (northern)
+   seasons, what flowers when, and the slowly fading character of how the garden is played.
+   Pure; no canvas or browser globals. Times are epoch milliseconds read in local time. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.BloomTime = factory();
+})(typeof globalThis === 'object' ? globalThis : this, function () {
+  'use strict';
+  // A garden day runs from 4:00 to 4:00, so late-evening play counts toward the day it began in.
+  const DAY_START_HOUR = 4;
+  // The first turns of a garden day count fully; after that each turn counts a quarter. Play
+  // grows the garden faster, but no single sitting can finish it (living-garden ticket 01).
+  const BUDGET = Object.freeze({ fullTurns: 25, lateWeight: 0.25, plants: 5 });
+  // Growth on its own, per garden day that passed (at most a week's worth at once).
+  const OWN = Object.freeze({ maxDays: 7, bed: 0.03, plants: 1, growth: 0.05 });
+  const CHARACTER_KEYS = Object.freeze(['blooms', 'misses', 'dew', 'bee', 'sun', 'morning', 'evening']);
+  const CHARACTER_DECAY = 0.9;   // per garden day
+  const finite = (n) => typeof n === 'number' && Number.isFinite(n);
+
+  function dayIndex(t) {
+    const d = new Date(t - DAY_START_HOUR * 3600000);
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+  function fresh(now) {
+    return { time: { day: dayIndex(now), turns: 0, planted: 0, grown: dayIndex(now) },
+      character: Object.fromEntries(CHARACTER_KEYS.map((k) => [k, 0])) };
+  }
+  function valid(g) {
+    const t = g && g.time, c = g && g.character;
+    return !!t && Number.isSafeInteger(t.day) && Number.isSafeInteger(t.grown) && Number.isSafeInteger(t.turns) && t.turns >= 0 &&
+      Number.isSafeInteger(t.planted) && t.planted >= 0 && !!c && CHARACTER_KEYS.every((k) => finite(c[k]) && c[k] >= 0);
+  }
+  // Opening the garden. Starts a new day's budget when the garden day has changed, and returns
+  // how many whole garden days of growth on its own are due (0–7). A clock moved backwards gives
+  // nothing and moves nothing back, so no day's growth can ever be applied twice.
+  function arrive(g, now) {
+    const today = dayIndex(now), t = g.time;
+    if (today !== t.day) {
+      const passed = Math.max(0, Math.min(30, today - t.day));
+      for (const k of CHARACTER_KEYS) g.character[k] *= Math.pow(CHARACTER_DECAY, passed);
+      t.day = today; t.turns = 0; t.planted = 0;
+    }
+    const due = Math.max(0, Math.min(OWN.maxDays, today - t.grown));
+    if (today > t.grown) t.grown = today;
+    return due;
+  }
+  // How much the next turn counts toward growth.
+  const turnWeight = (g) => (g.time.turns < BUDGET.fullTurns ? 1 : BUDGET.lateWeight);
+  // Count a tended turn; returns the weight it earned.
+  function tendTurn(g) {
+    const w = turnWeight(g);
+    g.time.turns++;
+    return w;
+  }
+  // Whether play may add another wild plant today, and noting that it did.
+  const mayPlant = (g) => g.time.planted < BUDGET.plants;
+  function notePlanted(g) { g.time.planted++; }
+  function note(g, key, amount = 1) { if (key in g.character) g.character[key] += amount; }
+
+  // ----- Seasons (northern hemisphere, owner decision 2026-09-29) -----
+  const SEASONS = Object.freeze(['winter', 'spring', 'summer', 'autumn']);
+  const seasonOfMonth = (m) => SEASONS[Math.floor(((m + 1) % 12) / 3)];   // m: 0 = January
+  const BLEND_DAYS = 7;
+  // The season now, the next one, and how far (0–1) the last week has blended toward it.
+  function season(t) {
+    const d = new Date(t), m = d.getMonth(), name = seasonOfMonth(m);
+    const next = SEASONS[(SEASONS.indexOf(name) + 1) % 4];
+    // seasons change on the 1st of March, June, September and December
+    const edgeMonth = [2, 5, 8, 11].find((x) => x > m) ?? 14;
+    const edge = new Date(d.getFullYear(), edgeMonth, 1);
+    const daysLeft = (edge - d) / 86400000;
+    const blend = Math.max(0, Math.min(1, (BLEND_DAYS - daysLeft) / BLEND_DAYS));
+    return { name, next, blend };
+  }
+  // When each kind flowers, by month (1 = January), inclusive. Outside it a plant shows leaves;
+  // in winter flowering kinds rest out of sight. Grass, clover leaves, fern and mushrooms
+  // don't flower and stay all year.
+  const FLOWERING = Object.freeze({
+    daisy: [5, 10], cosmos: [7, 10], lavender: [6, 9], forget: [4, 6], buttercup: [5, 7], clover: [5, 9],
+    foxglove: [6, 7], bluebell: [4, 5], sweetpea: [6, 9], cornflower: [6, 9], rose: [6, 10], wild: [5, 9],
+    tulip: [4, 5], peony: [5, 6], poppy: [6, 8],
+  });
+  const EVERGREEN = new Set(['grass', 'fern', 'mushroom']);
+  const month = (t) => new Date(t).getMonth() + 1;
+  function flowering(kind, t) {
+    const w = FLOWERING[kind];
+    if (!w) return false;
+    const m = month(t);
+    return m >= w[0] && m <= w[1];
+  }
+  // A plant's look this month: 'flower', 'leaves', or 'rest' (winter, out of sight).
+  function plantPhase(kind, t) {
+    if (EVERGREEN.has(kind)) return 'leaves';
+    if (flowering(kind, t)) return 'flower';
+    return seasonOfMonth(new Date(t).getMonth()) === 'winter' ? 'rest' : 'leaves';
+  }
+  // Beds flower from March to November and rest over winter; their growth never changes.
+  const bedsFlowering = (t) => { const m = month(t); return m >= 3 && m <= 11; };
+  // The time of day, by the local clock.
+  function dayPart(t) {
+    const h = new Date(t).getHours();
+    return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
+  }
+
+  return { DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
+    mayPlant, notePlanted, note, season, seasonOfMonth, flowering, plantPhase, bedsFlowering, dayPart };
+});

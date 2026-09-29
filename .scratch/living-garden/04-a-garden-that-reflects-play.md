@@ -1,6 +1,6 @@
 # 04 — Let the garden reflect how she plays
 
-Status: planned. Dependencies: 01. Art: tulip, peony and poppy clumps (ticket 09); existing clumps stand in until then.
+Status: implemented with stand-in clumps for tulip, peony and poppy. Dependencies: 01. Art: tulip, peony and poppy clumps (ticket 09); existing clumps stand in until then.
 
 ## Outcome
 
@@ -48,3 +48,12 @@ After a month, her garden is recognisably hers. A drift of bluebells on the side
 - Two scripted players (one aiming mostly left with dew, one mostly right and missing often) produce visibly different gardens after a simulated month.
 - Drifts form: the median distance between plants of the same kind is clearly smaller than with random kinds.
 - No change to run difficulty or score.
+
+## Implementation record — 2026-09-29
+
+- `chooseKind` and `BUD_FLOWERS` in `index.html`: half of bloom plantings are the bud's own kind; four in ten new plants copy their nearest flowering neighbour; evening and morning play bias the common kinds.
+- `mature()` turns a plant into the most common flowering kind around it when that's a step on, so drifts spread once the garden is full.
+- `powerMark`: dew plants ferns and forget-me-nots, the sunbeam buttercups, bees feed lavender and clover.
+- `garden.character` (blooms, misses, dew, bee, sun, morning, evening) fades by a tenth a garden day and feeds visitor boosts (ticket 05).
+- `tulip`, `peony` and `poppy` are valid plant kinds; until ticket 09's clumps exist they draw as sweet peas, a rose bush and a wildflower tuft.
+- Not yet measured: the two-player comparison in the acceptance criteria.

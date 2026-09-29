@@ -6,8 +6,8 @@ const G = require('../garden-state.js');
 const NOW = 1800000000000;
 
 function garden() {
-  const g = { v: 3, tended: NOW, lastSeen: NOW, rest: 0, plants: [], patches: [], objects: [], discoveries: [], ...B.fresh(),
-    nextIds: { plant: 1, patch: 1, object: 1, discovery: 1, seed: 1 } };
+  const g = G.fresh(NOW);
+  delete g.fresh;
   L.initialize(g, G.allocateId);
   return g;
 }
@@ -133,27 +133,20 @@ test('time of day: moonflowers open at night, sunflowers turn from morning to ev
   assert.ok(B.sunAngle(7) < 0 && B.sunAngle(18) > 0 && B.sunAngle(3) === -1);
 });
 
-test('v2 saves upgrade to v3 keeping every owned record; the v2 save becomes the backup', () => {
+test('a new garden has three empty beds, an empty seed tin and fresh seed pacing, and saves', () => {
   const disk = new Map();
   const st = { getItem: (k) => disk.get(k) ?? null, setItem: (k, v) => disk.set(k, v), removeItem: (k) => disk.delete(k) };
-  const v2 = { v: 2, layoutVersion: 1, tended: NOW, lastSeen: NOW, rest: 0.3, nextIds: { plant: 2, patch: 2, object: 2, discovery: 1 },
-    plants: [{ id: 'plant-1', a: 1, d: 1.4, k: 'daisy', g: 0.5, s: 9 }],
-    patches: [{ id: 'patch-1', kind: 'flower-patch', anchor: 'bed-top', growth: 0 }], objects: [{ id: 'object-1', kind: 'stone', anchor: null }], discoveries: [] };
-  disk.set(G.KEY, JSON.stringify(v2));
-  const session = G.load(st, NOW);
-  const g = session.garden;
-  assert.equal(g.v, 3);
-  assert.deepEqual(g.plants, v2.plants);
-  assert.deepEqual(g.patches, [{ id: 'patch-1', kind: 'flower-patch', anchor: 'bed-top', flower: null, growth: 0 }]);
-  assert.deepEqual(g.objects, [{ id: 'object-1', kind: 'stone', anchor: 'nook-right' }]);
-  assert.deepEqual([g.seeds, g.focus, g.luck, g.nextIds.seed], [[], null, { dry: 0, last: null }, 1]);
+  const session = G.load(st, NOW), g = session.garden;
+  L.initialize(g, G.allocateId);
+  assert.equal(g.patches.length, 3);
+  assert.ok(g.patches.every((p) => p.flower === null && p.growth === 0));
+  assert.deepEqual([g.seeds, g.focus, g.luck], [[], null, { dry: 0, last: null }]);
   assert.ok(G.save(st, session));
-  assert.equal(JSON.parse(disk.get(G.BACKUP)).v, 2);
-  assert.deepEqual(G.load(st, NOW).garden, g);
+  assert.deepEqual(G.load(st, NOW).garden, G.snapshot(g));
 });
 
 test('saves from a newer version are left untouched', () => {
-  const disk = new Map([[G.KEY, JSON.stringify({ v: 4 })]]);
+  const disk = new Map([[G.KEY, JSON.stringify({ v: 5 })]]);
   const st = { getItem: (k) => disk.get(k) ?? null, setItem: () => { throw new Error('should not write'); }, removeItem: () => {} };
   const session = G.load(st, NOW);
   assert.equal(session.writable, false);

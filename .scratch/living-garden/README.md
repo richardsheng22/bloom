@@ -62,14 +62,14 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 
 | Ticket | Status |
 |---|---|
-| 01 | Implemented in code (see ticket) |
-| 02 | Save v4 and bare start implemented; final look waits on 08 |
-| 03 | Calendar, light, flowering windows, winter dormancy and air implemented; final look waits on 08/09 |
-| 04 | Implemented with existing clumps standing in for tulip, peony and poppy |
-| 05 | Engine and its tests implemented; showing visitors waits on 10 |
-| 06 | Cast data implemented in the engine; drawing and Erwu's reactions wait on 10 |
-| 07 | Implemented |
-| 08–10 | Waiting on the owner (prompts ready) |
+| 01 | Implemented; pacing measured (a common bed in about five days) |
+| 02 | Save v4 and the bare start implemented; a stand-in wash until the bare backdrop (08) |
+| 03 | Calendar, light, flowering months, winter rest and air implemented with existing art |
+| 04 | Implemented; tulip, peony and poppy use stand-in clumps until 09 |
+| 05 | Engine and tests implemented; nothing is drawn until the visitor art (10) |
+| 06 | Cast data implemented; drawing and Erwu's reactions wait on 10. The robin is now a drawn blue jay |
+| 07 | Implemented and balanced against bot runs |
+| 08–10 | Waiting on the owner: prompts are in each ticket |
 | 11 | Not started (optional) |
 
 Update this table with the tickets.

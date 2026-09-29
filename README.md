@@ -15,10 +15,10 @@ The leaf button brings you back to the garden without resetting your run. During
 - **Aim:** pull back anywhere on the screen like a slingshot, then let go. Letting go near where you started cancels the shot.
 - **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Pollen pips under a bud (or a number, for tough ones) show the hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
 - **Pollen clusters** give you one more ball. The **petal** pickup splits your next shot three ways.
-- **Power-ups** (from turn 4) sit on glowing, pulsing medallions: hit one with pollen to use it. A **dewdrop** splashes every bud around it, a **bee** buzzes from bud to bud for a few seconds, and a **sunbeam** hits every bud in a line straight out from Erwu for two. If several drift past unused, the game gently reminds you how they work.
+- **Power-ups** (from turn 4) sit on glowing, pulsing medallions: hit one with pollen to use it. They grow with your pollen, so they matter all run. A **sunbeam** sweeps half the flower, striking every bud it passes; a **dewdrop** brings a summer shower that soaks the buds around it and washes them back a ring; a **bee** sets a swarm on the buds nearest Erwu. Each leaves its mark in the garden too. If several drift past unused, the game gently reminds you how they work.
 - **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** (at most one a turn) bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Each new thing gets a short introduction the first time it appears.
 - **Buds** are drawn as compact flower heads with their count at their foot, so a crowded board stays readable.
-- **Seasons:** every 25 turns the season turns: spring, summer, autumn, evening and starlight, then a new year. The light changes and something new drifts on the air (summer pollen, autumn leaves, fireflies).
+- **Times of day:** every 25 turns the time of day moves on: morning, afternoon, golden evening and starlight, then a new morning. The light changes, and the run takes the real season's light and air (spring petals, summer pollen, autumn leaves, winter snow).
 - **Special turns:** from turn 12, every 10-15 turns one turn is different: **a gust of wind** shifts everything one place round the flower, **a stubborn bud** comes alone but tough, or **a butterfly turn** gives an extra pollen for each bloom (up to five).
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
 - **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
@@ -35,7 +35,7 @@ The leaf button brings you back to the garden without resetting your run. During
 
 - The garden has three flower beds (the morning bed, the high bed and the evening bed), plus a cushion and a sunny stone for Erwu.
 - Tap an empty bed and choose lavender, daisies or cosmos, or a rare seed from your seed tin. A preview shows how it will look in flower; **Plant** confirms and **Cancel** changes nothing.
-- The bed you planted last grows as you play: a little every turn, a little more for every bud you bloom, and a clear boost at full bloom. Other planted beds grow slowly alongside. Tap a bed and **Grow this bed** to choose which one you're growing. Now and then a bloom's seed flies to it during a run.
+- The bed you planted last grows as you play: a little every turn, a little more for every bud you bloom, and a clear boost at full bloom. Other planted beds grow slowly alongside. Tap a bed and **Grow this bed** to choose which one you're growing. Now and then a bloom's seed flies to it during a run. The garden grows by days, not turns: a common bed takes about five days of ordinary play and a rare one about a week, and every planted bed grows a little on its own each day.
 - Beds go from *just planted* to *growing*, *flowering* and finally *established*. The garden screen says which bed you're growing and how far along it is, and the end of a run says what changed.
 - **Replant** a bed any time. Nothing is thrown away: whatever was growing waits in your seed tin, just as grown, to be planted again.
 - Beds stay in their places while you choose what to grow. Arrange and furniture editing were retired after owner review.
@@ -56,20 +56,22 @@ The leaf button brings you back to the garden without resetting your run. During
 ## The garden
 
 - Every bud you bloom sends a glowing seed arcing out into the garden, where it sprouts a flower (daisy, cosmos, lavender, buttercup, forget-me-not).
-- Pollen that bounces off the rim drops seeds, so even a miss grows grass, clover and ferns, or feeds the nearest plant.
+- Pollen that bounces off the rim drops seeds, so even a miss grows grass, clover and ferns, or feeds the nearest plant. What blooms decides what grows: a rose bud grows a rose bush, a bellflower bluebells, and tulips, peonies and poppies their own. New plants often take after their neighbours, so drifts form, and dew, bees and sunbeams leave ferns, lavender and buttercups behind. Play in the evening and the garden leans to pale flowers; in the morning, buttercups and forget-me-nots.
 - Each turn Erwu tends the garden and everything grows a little. While you're aiming, she keeps an eye on it (the little glints of dew).
 - The garden has its own view. A bed's planting card overlays the foot of the scene without moving or resizing the garden. Rotating the phone changes the presentation, never saved plant positions.
-- The five buds under **Best** show how grown the garden is. Once it's growing well, butterflies start to visit.
+- The five buds under **Best** show how grown the garden is; the last takes three or four weeks. Each step brings a small moment on the garden's label. Once it's growing well, butterflies and a blue jay start to visit.
 - **Full bloom** lights the petals one by one, then bursts: sunbeams, a petal shower, hearts from Erwu and a couple of butterflies set free.
-- During a run the painted meadow around the flower is washed back to a plain lawn by however much of your garden is missing or resting, so it visibly fills in as you play.
+- The garden starts bare in 1.0 and fills in over weeks. During a run the painted meadow around the flower is washed back to a plain lawn by however much of your garden hasn't grown yet, so it visibly fills in; in the garden, the painted borders do the same.
 - Everything growing on the lawn comes from play. As the garden grows, lawn daisies and clover spread, a wildflower meadow creeps in from the edges, moss finds the stepping stones, ferns unfurl by the log, ivy climbs the fountain, a robin starts visiting it, and a fairy ring appears.
-- Your plants and their growth stay yours, however long you are away. Rest begins after about four hours and deepens over the following 36 hours: the garden grows quieter and its colour becomes subdued. It never withers away.
-- Sitting with Erwu restores half the garden's liveliness; ordinary turns bring back the rest. There are no cleanup chores or lost progress.
+- Your plants and their growth stay yours, however long you are away, and being away never dims or hides anything. Each garden day (4:00 to 4:00) the first 25 turns count fully and later ones a quarter, and play adds only a few new wild plants a day, so no single sitting can finish the garden.
+- The garden follows the real northern seasons: flowers come and go in their months, winter is frosty with flowering plants resting out of sight and beds cut back, and spring brings them back. On summer evenings there are fireflies. When you come back, something may have happened: a bed that opened, and (once their art arrives) visitors, their traces and Erwu's presents.
 
 ## Files
 
 - `index.html`: the interface and canvas game (no build step)
-- `garden-state.js`: garden ownership, save migration, and temporary rest
+- `garden-state.js`: garden ownership and saves (version 4, a fresh start in 1.0)
+- `garden-time.js`: garden days and their budget, growth on its own, the real seasons and what flowers when
+- `garden-visits.js`: while you were away: visitors, their traces and Erwu's presents
 - `garden-layout.js`: persisted bed/furnishing positions and Erwu's destinations; legacy arrangement operations remain for compatibility
 - `garden-beds.js`: what grows in the beds, rare seeds and the seed tin
 - `garden-view.js`: garden projection and return-request rules
@@ -98,4 +100,4 @@ Building the app needs Xcode 26 on a Mac. Without one, GitHub Actions builds it:
 
 ## Garden saves
 
-The garden is saved locally in this browser. The current format (version 3) retains stable plant identities, separates permanent growth from temporary rest, and holds the beds, their plantings, the seed tin and seed pacing. Existing gardens migrate automatically; their original save is kept, and subsequent writes retain the previous valid snapshot. Unreadable or newer-format saves are left untouched. If saving is unavailable, the game says so and remains playable for the current visit. Clearing browser storage still removes local progress.
+The garden is saved locally in this browser under its own key. The current format (version 4) retains stable plant identities and holds the beds, their plantings, the seed tin and seed pacing, the garden day, the character of play and the visitors seen. Version 4 starts everyone with a new, bare garden: older saves (`bloom.garden2`, its backup and `bloom.garden1`) are left in storage exactly as they were, and never read, written or removed. Subsequent writes retain the previous valid snapshot. Unreadable or newer-format saves are left untouched. If saving is unavailable, the game says so and remains playable for the current visit. Clearing browser storage still removes local progress.

@@ -1,22 +1,24 @@
-/* Persistent ownership and temporary rest. No canvas or browser globals here. */
+/* Persistent ownership. No canvas or browser globals here.
+   Version 4 (living-garden ticket 02) starts every player with a new, bare garden under its own
+   key. Older saves (`bloom.garden2`, its backup and `bloom.garden1`) are never read, written or
+   removed: they stay in storage exactly as they were. */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./garden-layout.js'), require('./garden-beds.js'));
-  else root.BloomGarden = factory(root.BloomGardenLayout, root.BloomBeds);
-})(typeof globalThis === 'object' ? globalThis : this, function (Layout, Beds) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./garden-layout.js'), require('./garden-beds.js'), require('./garden-time.js'), require('./garden-visits.js'));
+  else root.BloomGarden = factory(root.BloomGardenLayout, root.BloomBeds, root.BloomTime, root.BloomVisits);
+})(typeof globalThis === 'object' ? globalThis : this, function (Layout, Beds, Time, Visits) {
   'use strict';
-  const KEY = 'bloom.garden2', BACKUP = 'bloom.garden2.backup', LEGACY = 'bloom.garden1';
-  // Rest arrives after a few hours away and is complete after a day. Simply visiting wakes
-  // the garden only a little (`visitWake`); playing turns brings the rest of it back, so it is
-  // play that brings the garden to life (owner reviews, 2026-09-28).
-  const REST = Object.freeze({ graceHours: 3, settleHours: 21, wakeSeconds: 90, visitWake: 0.2, turnRecovery: 0.18 });
-  const VERSION = 3;
-  // the last six are the wildflowers a full garden matures into
+  const KEY = 'bloom.garden4', BACKUP = 'bloom.garden4.backup';
+  const RETIRED = Object.freeze(['bloom.garden2', 'bloom.garden2.backup', 'bloom.garden1']);
+  const VERSION = 4;
+  // Growth a tended turn gives every plant, at full weight (see BloomTime.turnWeight).
+  const TEND = 0.01;
+  // the last six are the wildflowers a full garden matures into; tulip, peony and poppy grow
+  // from the buds of the same name (living-garden ticket 04)
   const KINDS = new Set(['grass', 'clover', 'fern', 'mushroom', 'daisy', 'cosmos', 'lavender', 'forget', 'buttercup',
-    'foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild']);
+    'foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild', 'tulip', 'peony', 'poppy']);
   const domains = ['plant', 'patch', 'object', 'discovery', 'seed'];
   const collections = ['plants', 'patches', 'objects', 'discoveries', 'seeds'];
   const finite = (n) => typeof n === 'number' && Number.isFinite(n);
-  const clamp = (n) => Math.max(0, Math.min(1, n));
   const timestamp = (n) => finite(n) && n >= 0;
   const parse = (raw) => { try { return JSON.parse(raw); } catch { return null; } };
   function validPlants(plants) {
@@ -30,64 +32,40 @@
   }
   function valid(g) {
     if (!g || g.v !== VERSION || !validPlants(g.plants) || !timestamp(g.lastSeen) || !timestamp(g.tended) ||
-      !finite(g.rest) || g.rest < 0 || g.rest > 1 || !g.nextIds || !Array.isArray(g.patches) || !Array.isArray(g.discoveries) ||
-      !Layout.valid(g) || !Beds.valid(g)) return false;
+      g.rest !== 0 || !g.nextIds || !Array.isArray(g.patches) || !Array.isArray(g.discoveries) ||
+      !Layout.valid(g) || !Beds.valid(g) || !Time.valid(g) || !Visits.valid(g)) return false;
     return domains.every((domain, i) => {
       const records = g[collections[i]];
       return hasIds(records, domain) && Number.isSafeInteger(g.nextIds[domain]) && g.nextIds[domain] > 0 &&
         records.every((r) => Number(r.id.split('-')[1]) < g.nextIds[domain]);
     });
   }
-  function fresh(now) {
+  // `rest` is retired (absence no longer dims the garden) and always 0; it stays in the format
+  // so every reader finds a valid value.
+  function fresh(now, seed = Math.floor(Math.random() * 2 ** 31)) {
     return { v: VERSION, tended: now, lastSeen: now, rest: 0, nextIds: { plant: 1, patch: 1, object: 1, discovery: 1, seed: 1 },
-      plants: [], patches: [], objects: [], discoveries: [], ...Beds.fresh(), fresh: true };
-  }
-  // v2 → v3 adds the seed tin, seed pacing, and a planting in each bed. Returns a new object.
-  function upgrade(g) {
-    if (!g || g.v !== 2 || !g.nextIds) return null;
-    const out = JSON.parse(JSON.stringify(g));
-    out.v = VERSION;
-    out.nextIds.seed = 1;
-    Object.assign(out, Beds.fresh());
-    if (out.layoutVersion === 1 && !Layout.upgrade(out)) return null;
-    return valid(out) ? out : null;
-  }
-  function migrate(g, now) {
-    if (!g || g.v !== 1 || !validPlants(g.plants) || !timestamp(g.tended)) return null;
-    const out = fresh(now);
-    delete out.fresh;
-    out.tended = g.tended;
-    out.lastSeen = g.tended;
-    out.plants = g.plants.map(({ a, d, k, g: growth, s }, i) => ({ id: `plant-${i + 1}`, a, d, k, g: growth, s }));
-    out.nextIds.plant = out.plants.length + 1;
-    return out;
+      plants: [], patches: [], objects: [], discoveries: [], ...Beds.fresh(), ...Time.fresh(now), ...Visits.fresh(seed), fresh: true };
   }
   function load(storage, now = Date.now()) {
-    let raw, backup, legacy;
-    try { raw = storage.getItem(KEY); backup = storage.getItem(BACKUP); legacy = storage.getItem(LEGACY); }
+    let raw, backup;
+    try { raw = storage.getItem(KEY); backup = storage.getItem(BACKUP); }
     catch { return { garden: fresh(now), writable: false, issue: 'unavailable' }; }
     const current = parse(raw);
     // A newer format must never be overwritten by an older client.
     if (current && Number.isInteger(current.v) && current.v > VERSION) return { garden: fresh(now), writable: false, issue: 'newer' };
     if (valid(current)) return { garden: current, writable: true, issue: null };
-    // The previous format is kept as the backup until the upgraded garden has been written.
-    const upgraded = upgrade(current);
-    if (upgraded) return { garden: upgraded, writable: true, issue: null };
     const recovered = parse(backup);
     if (valid(recovered)) return { garden: recovered, writable: true, issue: 'recovered' };
-    const recoveredOld = upgrade(recovered);
-    if (recoveredOld) return { garden: recoveredOld, writable: true, issue: 'recovered' };
-    const migrated = migrate(parse(legacy), now);
-    if (migrated) return { garden: migrated, writable: true, issue: null };
     // Leave unrecognized data untouched. A temporary garden remains playable.
-    const unreadable = raw !== null || backup !== null || legacy !== null;
+    const unreadable = raw !== null || backup !== null;
     return { garden: fresh(now), writable: !unreadable, issue: unreadable ? 'unreadable' : null };
   }
   function snapshot(g) {
     // In-flight/sprouting plants are already owned; animation fields are transient.
-    return { v: VERSION, ...(g.layoutVersion === undefined ? {} : { layoutVersion: g.layoutVersion }), tended: g.tended, lastSeen: g.lastSeen, rest: g.rest, nextIds: { ...g.nextIds },
+    return { v: VERSION, ...(g.layoutVersion === undefined ? {} : { layoutVersion: g.layoutVersion }), tended: g.tended, lastSeen: g.lastSeen, rest: 0, nextIds: { ...g.nextIds },
       plants: g.plants.map(({ id, a, d, k, g: growth, s }) => ({ id, a, d, k, g: growth, s })),
-      patches: g.patches, objects: g.objects, discoveries: g.discoveries, focus: g.focus, seeds: g.seeds, luck: { ...g.luck } };
+      patches: g.patches, objects: g.objects, discoveries: g.discoveries, focus: g.focus, seeds: g.seeds, luck: { ...g.luck },
+      time: { ...g.time }, character: { ...g.character }, visits: g.visits };
   }
   function save(storage, session) {
     if (!session.writable) return false;
@@ -95,14 +73,12 @@
     if (!valid(data)) return false;
     try {
       const previous = storage.getItem(KEY);
-      const prior = parse(previous);
-      if (valid(prior) || (prior && prior.v === 2)) {
+      if (valid(parse(previous))) {
         storage.setItem(BACKUP, previous);
         if (storage.getItem(BACKUP) !== previous) return false;
       }
       const raw = JSON.stringify(data);
       storage.setItem(KEY, raw);
-      // Keep the legacy snapshot untouched, even after verified migration.
       if (storage.getItem(KEY) !== raw) {
         if (previous !== null) storage.setItem(KEY, previous);
         else storage.removeItem(KEY);
@@ -111,31 +87,18 @@
       return true;
     } catch { return false; }
   }
-  function restAt(g, now = Date.now()) {
-    const awayHours = Math.max(0, now - g.lastSeen) / 3600000;
-    return clamp(g.rest + Math.max(0, awayHours - REST.graceHours) / REST.settleHours);
-  }
+  // Opening the garden. Being away never takes anything away.
   function arrive(g, now = Date.now()) {
-    g.rest = restAt(g, now);
-    g.lastSeen = now;
-    return g.rest;
+    if (now > g.lastSeen) g.lastSeen = now;
+    g.rest = 0;
   }
-  // Visiting wakes the garden gradually, but never below `floor` (the caller passes the part
-  // of the rest a visit can't lift: see REST.visitWake). Turns lift the rest (`tend`).
-  function wake(g, seconds, floor = 0) {
-    if (!finite(seconds) || seconds <= 0) return false;
-    const before = g.rest;
-    g.rest = clamp(Math.max(Math.min(g.rest, floor), g.rest - Math.min(seconds, 1) / REST.wakeSeconds));
-    return before !== g.rest;
-  }
-  function tend(g, now = Date.now()) {
-    g.tended = now; g.lastSeen = now;
-    g.rest = clamp(g.rest - REST.turnRecovery);
-    for (const p of g.plants) p.g = Math.min(1, p.g + 0.035);
+  function tend(g, now = Date.now(), amount = TEND) {
+    g.tended = now; if (now > g.lastSeen) g.lastSeen = now;
+    for (const p of g.plants) p.g = Math.min(1, p.g + amount);
   }
   function allocateId(g, domain = 'plant') {
     if (!domains.includes(domain)) throw new Error('Unknown garden identity domain');
     return `${domain}-${g.nextIds[domain]++}`;
   }
-  return { KEY, BACKUP, LEGACY, VERSION, REST, load, save, snapshot, valid, upgrade, restAt, arrive, wake, tend, allocateId };
+  return { KEY, BACKUP, RETIRED, VERSION, TEND, KINDS, load, save, snapshot, valid, fresh, arrive, tend, allocateId };
 });

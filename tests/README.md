@@ -6,7 +6,9 @@ The persistence and elapsed-time tests use Node's built-in test runner; no packa
 node --test tests/*.test.cjs
 ```
 
-This covers save ownership and migration (`garden-state`), arranging beds and furnishings (`garden-layout`), cultivation, rare-seed pacing and the seed tin (`garden-beds`), and garden projection (`garden-view`).
+This covers save ownership and the version 4 fresh start (`garden-state`), arranging beds and furnishings (`garden-layout`), cultivation, rare-seed pacing and the seed tin (`garden-beds`), garden days, growth on its own, seasons and flowering (`garden-time`), visitors, their cadence and Erwu's presents (`garden-visits`), and garden projection (`garden-view`).
+
+The browser suites seed a version 4 garden built from the generated fixture by `tests/fixtures/garden-v4.cjs`.
 
 The browser suite uses an existing Playwright installation and Chromium. It serves this checkout on an ephemeral loopback port and uses isolated browser storage; it does not access a player's saved garden. Google Fonts requests are blocked so tests use the shipped system-font fallbacks without external network access.
 
