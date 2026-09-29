@@ -193,6 +193,18 @@
         return [{ do: 'pose', pose: 'curl', dur: 1.6 }, { do: 'pose', pose: 'yawn', dur: 1.3 }, { do: 'pose', pose: 'stretch', dur: 1.6 },
           walkTo('gate'), { do: 'pose', pose: 'front', dur: 3.5, blink: true }];
       case 'home': return [walkTo('nest'), { do: 'pose', pose: 'curl', dur: 20 + rnd() * 20 }];
+      // living-garden ticket 06: a visitor has come. She turns to watch it where she is (up at a
+      // bird on the fountain or the log, with the tail-twitching look-up), or, for the fox,
+      // goes back to her basket and watches it from there, unimpressed, before curling up.
+      case 'watch-visitor': {
+        if (!arg) return null;
+        const look = arg.high ? null : { x: arg.x, y: arg.y - 10 };
+        return [{ do: 'pose', pose: 'sit', dur: 4 + rnd() * 3, look, lookUp: !!arg.high }, { do: 'pose', pose: 'sit', dur: 2 + rnd() * 2, look }];
+      }
+      case 'retreat': {
+        if (!arg) return null;
+        return [walkTo('nest'), { do: 'pose', pose: 'sit', dur: 6 + rnd() * 3, look: { x: arg.x, y: arg.y - 10 } }, { do: 'pose', pose: 'curl', dur: 20 + rnd() * 20 }];
+      }
     }
     return null;
   }

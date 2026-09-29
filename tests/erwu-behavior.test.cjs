@@ -194,3 +194,18 @@ test('she never walks far straight up or down the lawn: steep stretches zigzag, 
   assert.ok(before > 20, `the plain routes had long steep legs: ${before}`);
   assert.equal(steep, 0, `long steep legs ${steep} of ${legs}, down from ${before}`);
 });
+test('a visitor: she watches it, looking up at a bird on the fountain, and retreats from the fox', () => {
+  const wd = world(358, 400), st = E.create(5);
+  st.at = { ...wd.places.nodes.gate }; st.pose = 'sit';
+  assert.ok(E.request(st, 'watch-visitor', wd, { x: -100, y: -120, high: true }));
+  E.update(st, 0.1, wd);
+  assert.equal(st.pose, 'sit'); assert.deepEqual(st.look, { up: true });
+  assert.ok(E.request(st, 'watch-visitor', wd, { x: 80, y: 40, high: false }));
+  E.update(st, 0.1, wd);
+  assert.deepEqual(st.look, { x: 80, y: 30 });
+  assert.equal(E.request(st, 'watch-visitor', wd, null), false);
+  assert.ok(E.request(st, 'retreat', wd, { x: 150, y: 20 }));
+  for (let i = 0; i < 400 && st.step?.do !== 'pose'; i++) E.update(st, 0.1, wd);
+  assert.ok(Math.hypot(st.at.x, st.at.y) < 6, 'back in her basket');
+  assert.equal(st.pose, 'sit');
+});

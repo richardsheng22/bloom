@@ -1,6 +1,6 @@
 # 06 — The visitor cast, and how Erwu responds
 
-Status: implemented (2026-09-29); the owner check of the cottontail and blue jay is still open.
+Status: implemented, including Erwu's reactions (2026-09-29); the owner check of the cottontail and blue jay is still open.
 
 ## Outcome
 
@@ -55,4 +55,5 @@ Her existing behaviour module already handles visitors (butterflies): approach, 
 - `VISITOR_LOOK` in `index.html` gives each visitor its poses, leaving pose and size. Birds fly off; the rabbit and frog hop; the fox walks away.
 - Ground visitors (cottontail, squirrel, chipmunk, junco, cardinal) join Erwu's visitor list, so she may stalk one; her pounce sends it off (checked with a junco in the browser). The fox and anything up on the fountain or log are left alone.
 - The fountain's ambient blue jay is now the painted one; it steps aside when a blue jay is the visitor.
-- Not yet: Erwu's other per-visitor reactions from the table (chattering at birds, retreating from the fox).
+- Erwu notices each visitor a moment after it arrives (`erwu-behavior.js`, new `watch-visitor` and `retreat` actions, with a unit test): she stalks the rabbit or the squirrel; watches birds, bees, the moth and the frog, looking up with the tail-twitching `look-up` at a bird on the fountain or log; and at the fox she goes back to her basket and glances at it over the rim before curling up. Her reaction waits until any welcome-back greeting has finished.
+- From her basket she now glances toward whatever she's watching (`peek-glance`, turned its way).

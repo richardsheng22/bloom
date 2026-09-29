@@ -67,7 +67,7 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | 03 | Implemented with seasonal backdrops, rose beds and clumps |
 | 04 | Implemented with the painted tulips, peonies and poppies |
 | 05 | Implemented: visitors, traces and presents are shown |
-| 06 | Implemented; Erwu stalks ground visitors. Other per-visitor reactions and the owner's look at the cottontail and blue jay remain |
+| 06 | Implemented with Erwu's reactions; the owner's look at the cottontail and blue jay remains |
 | 07 | Implemented and balanced against bot runs |
 | 08 | Done: seasonal backdrops and rose beds |
 | 09–10 | Done. Erwu's toward/away walk sheet is held back (style mismatch; see 10) |

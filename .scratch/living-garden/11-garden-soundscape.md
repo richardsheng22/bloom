@@ -17,6 +17,24 @@ Sound is off by default. There is no music or ambient sound; only synthesised no
 - Stays off by default until the owner decides otherwise (iOS ticket 08 settles defaults and the silent switch).
 - Audio must be bundled and licensed for distribution (iOS ticket 12). Either record them (owner) or use clearly licensed recordings; synthesised birdsong tends to sound artificial.
 
+## What it takes (2026-09-29)
+
+External recordings are not required for a first version. The game already makes all its sounds in code (Web Audio), and some garden sounds synthesise convincingly:
+
+| Sound | Synthesised? |
+|---|---|
+| Fountain trickle | Yes: filtered noise with a slow, bubbling modulation |
+| Breeze through leaves | Yes: band-passed noise swelling and fading |
+| Summer crickets at night | Yes: short high chirp trains |
+| Winter hush, a distant wind | Yes |
+| Birdsong, a blue jay's call, a cardinal's whistle | Poorly: synthesised birds sound like toys. These are the ones worth recordings. |
+
+So there are two ways:
+1. **Synthesised only, no assets:** fountain, breeze, crickets and winter air by season and time of day. Small and license-free; a day or two of work plus tuning by ear.
+2. **Synthesised base plus a few short recordings** for the birds and visitors (blue jay, cardinal, a general daytime chorus). These need to be licensed for an App Store app: CC0 or bought (for example from Freesound's CC0 filter or a sound library), or recorded in the owner's own garden on a phone, which would make it truly theirs. About 5–8 clips of a few seconds each, a few hundred KB in total.
+
+Either way it stays off by default, respects the silent switch (iOS ticket 08), and never plays louder than the game's notes.
+
 ## Required from the owner
 
 Whether to do this for 1.0, and a source for the recordings.

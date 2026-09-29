@@ -2455,6 +2455,18 @@
     }
     const v = currentVisitor(sc, m);
     if (!v) return;
+    // a moment after it arrives, Erwu notices: she stalks the rabbit or the squirrel, retreats
+    // from the fox, and turns to watch anything else (after a welcome, not in the middle of it)
+    if (!v.noticed && !v.leaving && now - v.born > 1500 && erwuPlaces) {
+      v.noticed = true;
+      const w = erwuWorld(), arg = { x: v.x, y: v.y, high: v.high };
+      const [act, a, why] = v.kind === 'fox' ? ['retreat', arg, 'a fox at the edge of the lawn']
+        : (v.kind === 'cottontail' || v.kind === 'squirrel') && !v.high ? ['stalk', 'visitor', `a ${v.kind === 'cottontail' ? 'rabbit' : 'squirrel'} in the garden`]
+        : ['watch-visitor', arg, `watching ${BloomVisits.CAST[v.kind].name.toLowerCase()}`];
+      const greeting = erwu.action === 'greet' || erwu.steps.some((x) => x.do === 'begin' && x.name === 'greet');
+      if (greeting) BloomErwu.queue(erwu, act, w, a, why);
+      else BloomErwu.request(erwu, act, w, a, why);
+    }
     const look = VISITOR_LOOK[v.kind], age = Math.max(0, now - v.born) / 1000, depth = depthAt(v.y);
     if (!v.leaving && Date.now() > v.until) sendVisitorOff();
     const base = visitorFrame(look.poses[0]), unit = sc.nest * look.size * depth / base[2];
@@ -5159,7 +5171,12 @@
   function paintedErwuPose(pose, nest) {
     // Timers are seconds remaining, not normalized expression weights.
     const blink = Math.max(erwu.blink, cat.blink) > 0;
-    if (nest) return (ERWU_BASKET[pose] || [blink ? 'peek-sleepy' : 'peek'])[0];
+    if (nest) {
+      if (ERWU_BASKET[pose]) return ERWU_BASKET[pose][0];
+      // watching something from her basket (a visitor): a glance its way
+      if (erwu.look && !erwu.look.up && ART.erwu.frames['peek-glance']) return 'peek-glance';
+      return blink ? 'peek-sleepy' : 'peek';
+    }
     if (pose === 'front') return blink ? 'sit-drowsy' : catnipGlow > 0.5 ? 'sit-content'
       : erwu.look && erwu.look.up ? 'look-up' : 'sit-front';
     return ERWU_POSES[pose];
@@ -5175,7 +5192,7 @@
     if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; floor = size * b[1]; }
     const f = name && ART.erwu.frames[name];
     if (!f) return false;
-    const flip = !nest && !ERWU_FACING_US.has(pose) && erwu.facing < 0;
+    const flip = nest ? name === 'peek-glance' && erwu.look && erwu.look.x < erwu.at.x : !ERWU_FACING_US.has(pose) && erwu.facing < 0;
     const lift = pose === 'pounce' ? (erwu.jump || 0) * size * 0.55 : 0;
     ctx.save(); ctx.globalAlpha *= alpha;
     if (!nest) groundShadow(ctx, erwu.at.x, floor, f[2] * unit * 0.8 * (1 - Math.min(0.4, lift / size)), 0.2);
