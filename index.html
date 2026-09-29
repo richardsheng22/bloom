@@ -1129,7 +1129,10 @@
     // after real time away, Erwu comes to say hello when you next see the garden
     if (away > 3 * 3.6e6) greetPending = true;
     gardenDirty = true;
-    gardenNote = news || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
+    const first = visitNews && visitNews.firsts.length ? visitNews.firsts[visitNews.firsts.length - 1] : null;
+    const firstLine = first && `${BloomVisits.CAST[first].name} came by ${PLACE_WORDS[BloomVisits.CAST[first].place] || 'the garden'}.`;
+    const giftLine = visitNews && visitNews.gift ? `${CAT_NAME} left you something by her basket.` : '';
+    gardenNote = firstLine || news || giftLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
     el.tNote.textContent = gardenMessage();
   }
   // Tier milestones, each told once on the garden's label (living-garden ticket 02).
@@ -1349,7 +1352,7 @@
   // next one is loaded too, and paintBackground blends toward it.
   const seasonPlates = ART && ART.lawn.seasons ? ART.lawn.seasons : null;
   const plateSeason = seasonPlates ? BloomTime.season(seasonClock()) : null;
-  const artSources = !ART ? {} : { erwu: ART.erwu.src, garden: ART.garden.src, play: ART.play.src,
+  const artSources = !ART ? {} : { erwu: ART.erwu.src, garden: ART.garden.src, play: ART.play.src, ...(ART.visitors ? { visitors: ART.visitors.src } : {}),
     lawn: seasonPlates ? seasonPlates[plateSeason.name] : ART.lawn.src,
     ...(seasonPlates && plateSeason.blend > 0 ? { 'lawn-next': seasonPlates[plateSeason.next] } : {}) };
   for (const [key, src] of Object.entries(artSources)) {
@@ -1452,9 +1455,19 @@
     return true;
   }
   // The rose bed carries Erwu's basket; the bed is placed so the basket sits on her nest.
+  // The rose bed follows the season (living-garden ticket 08): summer is the original bed, and
+  // spring, autumn and winter are their own paintings, placed by their baskets so the basket
+  // Erwu sits in stays exactly where and as large as it always is.
+  function roseSeason() {
+    const c = BloomTime.season(seasonClock()), s = c.blend > 0.5 ? c.next : c.name;
+    return s !== 'summer' && ART.garden.baskets && ART.garden.baskets[s] && ART.garden.frames[`rose-bed-${s}`] ? s : null;
+  }
   function roseBedPlacement(r) {
-    const f = ART.garden.frames['rose-bed'], b = ART.garden.basket, width = 2 * r.rx + 22, k = width / f[2];
-    return { f, b, k, x: -(b.cx - f[6]) * k, y: -(b.cy - f[7]) * k };
+    const f0 = ART.garden.frames['rose-bed'], b0 = ART.garden.basket, width = 2 * r.rx + 22, k0 = width / f0[2];
+    const season = roseSeason();
+    if (!season) return { f: f0, b: b0, k: k0, x: -(b0.cx - f0[6]) * k0, y: -(b0.cy - f0[7]) * k0 };
+    const f = ART.garden.frames[`rose-bed-${season}`], b = ART.garden.baskets[season], k = b0.outerRx * k0 / b.outerRx;
+    return { f, b, k, x: -b.cx * k, y: -b.cy * k };
   }
   // The same basket on its own, `r` its outer radius, for the run and the end card.
   function basketPlacement(r) {
@@ -1530,7 +1543,13 @@
       const v = rnd(), phase = BloomTime.plantPhase(p.k, seasonClock());
       let name = (p.g < 0.25 || phase === 'leaves') && p.k !== 'grass' && p.k !== 'mushroom' && p.k !== 'fern' ? 'clump-leafy'
         : p.k === 'daisy' && v < 0.3 ? 'clump-wild' : p.k === 'grass' && v < 0.35 ? 'clump-leafy' : `clump-${p.k}`;
-      // tulips, peonies and poppies until their own clumps are painted (living-garden ticket 09)
+      // the season's own clumps (living-garden ticket 09): frosted grass over winter, seedheads
+      // and turning leaves in autumn, bulbs coming up among the spring leaves
+      const season = BloomTime.season(seasonClock()).name, has = (n) => !!ART.garden.frames[n];
+      if (season === 'winter' && has('clump-frost-grass') && (p.k === 'grass' || p.k === 'fern' || name === 'clump-leafy')) name = v < 0.8 ? 'clump-frost-grass' : 'clump-twigs';
+      else if (season === 'autumn' && phase === 'leaves' && has('clump-seedgrass') && !NON_FLOWERS.has(p.k)) name = ['clump-seedgrass', 'clump-coneflower', 'clump-autumn-shrub', 'clump-sedum'][Math.floor(v * 4)];
+      else if (season === 'spring' && phase === 'leaves' && v < 0.45 && has('clump-crocus') && !NON_FLOWERS.has(p.k)) name = ['clump-crocus', 'clump-daffodil', 'clump-snowdrop', 'clump-forget-spring'][Math.floor(v / 0.45 * 4)];
+      // tulips, peonies and poppies before their own clumps were painted
       if (!ART.garden.frames[name]) name = { 'clump-tulip': 'clump-sweetpea', 'clump-peony': 'clump-rose', 'clump-poppy': 'clump-wild' }[name] || name;
       if (ART.garden.frames[name]) {
         const w = h * (p.k === 'mushroom' ? 1.2 : 1.45) + u * 0.5;
@@ -1990,6 +2009,13 @@
     return out;
   }
   const EDGE_FLOWERS = ['clump-daisy', 'clump-forget', 'clump-clover', 'clump-buttercup', 'clump-foxglove', 'clump-bluebell', 'clump-wild', 'clump-sweetpea', 'clump-cornflower', 'clump-lavender'];
+  // the border in each season, once the seasonal clumps are painted (living-garden ticket 09)
+  const EDGE_SEASONS = {
+    spring: { flowers: ['clump-crocus', 'clump-daffodil', 'clump-snowdrop', 'clump-forget-spring', 'clump-tulip', 'clump-bluebell'], green: ['clump-grass', 'clump-leafy'] },
+    summer: { flowers: EDGE_FLOWERS.concat(['clump-peony', 'clump-poppy']), green: ['clump-grass', 'clump-leafy'] },
+    autumn: { flowers: ['clump-aster', 'clump-sedum', 'clump-coneflower', 'clump-autumn-shrub', 'clump-cosmos', 'clump-seedgrass'], green: ['clump-seedgrass', 'clump-leafy'] },
+    winter: { flowers: ['clump-hellebore', 'clump-holly', 'clump-twigs', 'clump-frost-grass'], green: ['clump-frost-grass', 'clump-twigs'] },
+  };
   function drawYard(g) {
     const sc = gardenScene, m = BloomGardenLayout.landmarks(sc), rest = garden.rest, tier = gardenTier(), rnd = seeded(2718);
     const W2 = sc.width / 2, H2 = sc.height / 2, line = rgb(hexRgb(C.walnut), 0.4), clear = yardClear(sc, m);
@@ -2019,8 +2045,10 @@
       if (painted) {
         // the lawn's edges fill in with flowers as the garden grows; grass and leaves first
         const w = (28 + rnd() * 14) * k, flip = rnd() < 0.5, flowers = tier >= (seasonPlates ? 1 : 2) && rnd() < 0.7;
-        let name = flowers ? EDGE_FLOWERS[Math.floor(rnd() * EDGE_FLOWERS.length)] : rnd() < 0.5 ? 'clump-grass' : 'clump-leafy';
-        if (flowers) {
+        const edge = ART.garden.frames['clump-hellebore'] ? EDGE_SEASONS[BloomTime.season(edgeClock).name] : null, pickR = rnd(), greenR = rnd();
+        let name = edge ? (flowers ? edge.flowers[Math.floor(pickR * edge.flowers.length)] : edge.green[greenR < 0.5 ? 0 : 1])
+          : flowers ? EDGE_FLOWERS[Math.floor(pickR * EDGE_FLOWERS.length)] : greenR < 0.5 ? 'clump-grass' : 'clump-leafy';
+        if (flowers && !edge) {
           const phase = BloomTime.plantPhase(name.slice('clump-'.length), edgeClock);
           if (phase === 'rest') continue;
           if (phase === 'leaves') name = 'clump-leafy';
@@ -2325,11 +2353,14 @@
       ctx.beginPath(); ctx.arc(sx, sy - 2 * k, 3.4 * k, 0, TAU); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.arc(sx + 0.4, sy - 2 * k, 1.8 * k, 0, TAU * 0.8); ctx.stroke();
     }
-    if (tier >= 2 && part !== 'night') {
+    const paintedJay = !!(artImage('visitors') && ART.visitors.frames['bluejay-perch']);
+    if (tier >= 2 && part !== 'night' && !(visitorShown && visitorShown.kind === 'bluejay')) {
       // a blue jay drops by the fountain's top bowl every so often, dips to drink, and goes
       const cyc = reduced ? 3 : t % 26, f = m.fountain;
       if (cyc < 9) {
         const bx = f.x + f.width * 0.14, by = f.y - f.height * 0.87, dip = !reduced && cyc > 3 && cyc < 5 ? Math.sin((cyc - 3) * Math.PI * 2) * 0.35 : 0, s = 3.4 * k;
+        if (paintedJay) paintPiece(ctx, 'visitors', dip > 0.1 ? 'bluejay-drink' : 'bluejay-perch', bx, by, sc.nest * VISITOR_LOOK.bluejay.size * depthAt(by));
+        else {
         ctx.save(); ctx.translate(bx, by); ctx.rotate(dip);
         ctx.fillStyle = '#4F7FC4'; ctx.beginPath(); ctx.ellipse(0, -s, s * 1.35, s, -0.2, 0, TAU); ctx.fill();
         ctx.fillStyle = '#EEF1F4'; ctx.beginPath(); ctx.ellipse(-s * 0.55, -s * 0.75, s * 0.72, s * 0.62, 0, 0, TAU); ctx.fill();
@@ -2341,9 +2372,113 @@
         ctx.fillStyle = '#3D6BAF'; ctx.beginPath(); ctx.moveTo(s * 1.1, -s * 1.2); ctx.lineTo(s * 2.3, -s * 1.7); ctx.lineTo(s * 1.2, -s * 0.6); ctx.fill();
         ctx.fillStyle = '#FFFFFF'; ctx.fillRect(s * 0.1, -s * 1.35, s * 0.5, s * 0.14);
         ctx.restore();
+        }
       }
     }
+    drawVisitors(now, sc, m);
     ctx.restore();
+  }
+  // ----- Visitors, their traces and Erwu's presents (living-garden tickets 05, 06, 10). Who
+  // came is decided by garden-visits.js when the garden is opened; this draws them. A visitor
+  // still here stays a little while, changing pose now and then, and leaves on its own, when
+  // Erwu pounces, or when a run starts. Sizes are widths in nests (Erwu is about 1.8 long). -----
+  const VISITOR_LOOK = {
+    bluejay: { poses: ['bluejay-perch', 'bluejay-drink'], leave: 'bluejay-fly', size: 0.55, fly: true },
+    cardinal: { poses: ['cardinal-perch', 'cardinal-peck'], leave: 'cardinal-fly', size: 0.5, fly: true, ground: true },
+    junco: { poses: ['junco-stand', 'junco-peck'], leave: 'junco-hop', size: 0.4, fly: true, ground: true },
+    goldfinch: { poses: ['goldfinch-perch', 'goldfinch-peck'], leave: 'goldfinch-fly', size: 0.42, fly: true },
+    hummingbird: { poses: ['hummingbird-hover', 'hummingbird-feed'], leave: 'hummingbird-hover', size: 0.4, fly: true, hover: true },
+    cottontail: { poses: ['cottontail-sit', 'cottontail-nibble'], leave: 'cottontail-hop', size: 1.0, ground: true },
+    squirrel: { poses: ['squirrel-sit', 'squirrel-dig'], leave: 'squirrel-run', size: 0.95, ground: true },
+    chipmunk: { poses: ['chipmunk-sit', 'chipmunk-cheeks'], leave: 'chipmunk-run', size: 0.55, ground: true },
+    frog: { poses: ['frog-sit', 'frog-puff'], leave: 'frog-jump', size: 0.55 },
+    fox: { poses: ['fox-stand', 'fox-sit'], leave: 'fox-walk', size: 1.6 },
+    bumblebee: { poses: ['bumblebee-side', 'bumblebee-top'], leave: 'bumblebee-side', size: 0.26, fly: true, hover: true },
+    lunamoth: { poses: ['lunamoth-open', 'lunamoth-rest'], leave: 'lunamoth-side', size: 0.5, fly: true, hover: true },
+  };
+  const PLACE_WORDS = { fountain: 'the fountain', beds: 'the beds', bed: 'the flowers', log: 'the log', lawn: 'the lawn', roses: 'the roses',
+    seedheads: 'the seedheads', flowers: 'the flowers', 'lawn-edge': 'the edge of the lawn' };
+  // Where a visitor (or its trace) stands in the garden, in scene coordinates; `slot` spreads them.
+  function visitorSpot(place, sc, m, slot = 0, trace = false) {
+    const f = m.fountain, d = m.deadwood, r = m.roses, side = slot % 2 ? 1 : -1;
+    const beds = BloomGardenLayout.geometry(sc).map((q) => ({ q, bed: BloomGardenLayout.at(garden, q.id) })).filter((x) => x.bed && x.bed.flower !== undefined);
+    const bedAt = (want) => { const list = beds.filter(want); const b = (list.length ? list : beds)[slot % Math.max(1, (list.length ? list : beds).length)]; return b && b.q; };
+    switch (place) {
+      case 'fountain': return trace ? { x: f.x + f.width * 0.32, y: f.y + 5 } : { x: f.x + f.width * 0.14, y: f.y - f.height * 0.87, high: true };
+      case 'log': return trace ? { x: d.x - d.width * 0.25, y: d.y + 8 } : { x: d.x - d.width * 0.12, y: d.y - d.height * 0.55, high: true };
+      case 'roses': return { x: r.x + side * r.rx * 0.78, y: r.y + r.ry * 0.62 };
+      case 'lawn-edge': return { x: sc.width / 2 - 34, y: d.y + d.height + 30 };
+      case 'lawn': return { x: side * sc.width * 0.3, y: (m.path.top + sc.height / 2) / 2 - 10 };
+      case 'bed': case 'beds': case 'seedheads': case 'flowers': {
+        const q = bedAt((x) => x.bed.flower && x.bed.growth >= 0.55) || { x: side * 60, y: 20 };
+        return place === 'beds' || trace ? { x: q.x + side * 36, y: q.y + 16 } : { x: q.x + side * 8, y: q.y - 22, high: true };
+      }
+    }
+    return { x: 0, y: m.path.top + 20 };
+  }
+  let visitorShown = null, giftBeat = -1;
+  const visitorFrame = (n) => ART && ART.visitors && ART.visitors.frames[n];
+  function currentVisitor(sc, m) {
+    const p = garden.visits && garden.visits.present, look = p && VISITOR_LOOK[p.kind];
+    if (!p || !look || !artImage('visitors') || !visitorFrame(look.poses[0])) { if (visitorShown && !visitorShown.leaving) visitorShown = null; return visitorShown; }
+    if (!visitorShown || visitorShown.kind !== p.kind || visitorShown.until !== p.until) {
+      // animals that can't fly wait at the foot of the fountain or the log, not on top of it
+      const at = visitorSpot(p.place, sc, m, Math.floor(p.until / 1000) % 7, !look.fly && (p.place === 'fountain'));
+      visitorShown = { kind: p.kind, until: p.until, x: at.x, y: at.y, high: !!at.high, flip: at.x > 0 && !at.high, born: performance.now(), leaving: null };
+    }
+    return visitorShown;
+  }
+  // Erwu pounced, or a run is starting: it goes now.
+  function sendVisitorOff() {
+    if (!visitorShown || visitorShown.leaving) return;
+    visitorShown.leaving = performance.now();
+    if (garden.visits && garden.visits.present) { garden.visits.present = null; saveGarden(); }
+  }
+  function drawVisitors(now, sc, m) {
+    const pal = artImage('visitors');
+    if (!pal) return;
+    // traces, and a present by the basket's gate
+    const tr = (garden.visits && garden.visits.traces) || [];
+    tr.forEach((x, i) => {
+      if (!visitorFrame(x.trace)) return;
+      const at = visitorSpot(x.place, sc, m, i + 3, true), w = sc.nest * (/tracks|earth|clover|splash/.test(x.trace) ? 0.85 : 0.45) * depthAt(at.y);
+      paintPiece(ctx, 'visitors', x.trace, at.x, at.y + w * 0.25, w, false, 0.9);
+    });
+    const gift = garden.visits && garden.visits.gift;
+    if (gift && visitorFrame(gift.item)) {
+      const gx = m.roses.x + 30, gy = m.roses.y + m.roses.ry + 16;
+      groundShadow(ctx, gx, gy, sc.nest * 0.4, 0.12);
+      paintPiece(ctx, 'visitors', gift.item, gx, gy, sc.nest * 0.36 * depthAt(gy));
+      // a slow glint, so a present among fallen leaves is still found
+      const beat = Math.floor(now / 2600);
+      if (!reduced && beat !== giftBeat) { giftBeat = beat; glint(gx + sc.nest * 0.08, gy - sc.nest * 0.12, 0.8); }
+    }
+    const v = currentVisitor(sc, m);
+    if (!v) return;
+    const look = VISITOR_LOOK[v.kind], age = Math.max(0, now - v.born) / 1000, depth = depthAt(v.y);
+    if (!v.leaving && Date.now() > v.until) sendVisitorOff();
+    const base = visitorFrame(look.poses[0]), unit = sc.nest * look.size * depth / base[2];
+    let x = v.x, y = v.y, name = look.poses[Math.floor(age / 3.4) % look.poses.length], alpha = Math.min(1, age / 0.6), flip = v.flip;
+    if (look.hover && !reduced) { y -= 4 + Math.sin(age * 3) * 3; x += Math.sin(age * 1.3) * 5; }
+    if (v.leaving) {
+      const k = Math.max(0, now - v.leaving) / 1000 / (reduced ? 0.4 : 1.6);
+      if (k >= 1) { visitorShown = null; return; }
+      name = look.leave; alpha = 1 - Math.max(0, k - 0.6) / 0.4;
+      if (!reduced) {
+        const dir = v.x > 0 ? 1 : -1; flip = dir < 0;
+        x += dir * k * sc.width * 0.55; if (look.fly) y -= k * sc.height * 0.4; else if (v.kind === 'cottontail' || v.kind === 'frog') y -= Math.abs(Math.sin(k * Math.PI * 3)) * 10;
+      }
+    }
+    if (!look.fly || !v.high) groundShadow(ctx, x, v.y, visitorFrame(name)[2] * unit * 0.7, 0.14 * alpha);
+    paintPiece(ctx, 'visitors', name, x, y, visitorFrame(name)[2] * unit, flip, alpha);
+  }
+  // A tap near the visitor says who it is.
+  function tapVisitor(x, y) {
+    if (!visitorShown || visitorShown.leaving || !gardenScene) return false;
+    if (Math.hypot(x - visitorShown.x, y - (visitorShown.y - gardenScene.nest * 0.3)) > gardenScene.nest * 0.9) return false;
+    gardenNote = `${BloomVisits.CAST[visitorShown.kind].name} at ${PLACE_WORDS[BloomVisits.CAST[visitorShown.kind].place] || 'the garden'}.`;
+    el.tNote.textContent = gardenMessage();
+    return true;
   }
   // ----- Rest as dormancy. A resting garden draws back: most of what play has grown goes
   // quiet and out of sight (never removed; it stays owned and in place), and comes back as
@@ -2777,7 +2912,8 @@
     return { places: erwuPlaces, rest: garden.rest, scaleAt: depthAt, // one walk cycle: how far the painted paws travel back while planted (about 1.25 nests)
       stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.25 : 0.5) : 26,
       beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
-      objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 })) };
+      objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 }))
+        .concat(visitorShown && !visitorShown.leaving && !visitorShown.high && VISITOR_LOOK[visitorShown.kind].ground ? [{ id: 'visitor', x: visitorShown.x, y: visitorShown.y, landed: true }] : []) };
   }
   const catnipGrown = () => garden.patches.some((p) => p.anchor && p.flower === 'catnip' && p.growth >= 0.55);
   let titleT = 0, settleTimer = 0, overTimer = 0, inspectedErwu = false;
@@ -3014,7 +3150,7 @@
   }
   function leaveTitle() {
     if (presentation !== 'garden') return;
-    clearTimeout(settleTimer); clearAim(); closeInspection();
+    clearTimeout(settleTimer); clearAim(); closeInspection(); sendVisitorOff();
     presentation = 'run'; titleT = 0; gardenRequested = false; gardenCache = null; bgCache = null;
     arenaReveal = reduced ? 1 : 0;
     document.body.dataset.view = presentation;
@@ -3602,7 +3738,7 @@
     if (presentation === 'garden' && gardenScene) {
       BloomErwu.update(erwu, dt, erwuWorld());
       for (const ev of erwu.events.splice(0)) {
-        if (ev.type === 'scare') scareFly(ev.visitor);
+        if (ev.type === 'scare') { if (ev.visitor === 'visitor') sendVisitorOff(); else scareFly(ev.visitor); }
         if (ev.type === 'purr') purr();
       }
       erwuYawn = erwu.pose === 'yawn' ? Math.min(1, erwu.poseAge / 1.3) : 0;
@@ -5538,6 +5674,7 @@
     clearAim();
     if (!tapped || presentation !== 'garden' || !gardenScene) return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
+    if (tapVisitor(e.clientX - gardenScene.cx, e.clientY - gardenScene.cy)) return;
     // Wild plants grow on their own; tapping the lawn just closes whatever is open.
     closeInspection();
   });

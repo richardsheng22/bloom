@@ -45,3 +45,7 @@ Two targeted built-in image edits produced the final selected files:
 - Owner recognition of the rabbit and blue jay remains an art-review item. Tickets 08–10 should not be marked fully integrated or accepted solely because source files exist.
 
 Next: set source regions and anchors in `tools/build-art.cjs`, pack atlases, integrate the seasonal/visitor behavior, then capture in-game evidence. This is the separate follow-up specified in the original asset brief.
+
+## Integrated — 2026-09-29
+
+All sheets except `erwu-walk-updown.png` are packed and in the game; see the records in tickets 08, 09 and 10. The walk sheet is held back because its style doesn't match her other poses (ticket 10).

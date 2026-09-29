@@ -64,13 +64,13 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 |---|---|
 | 01 | Implemented; pacing measured (a common bed in about five days) |
 | 02 | Implemented with the bare seasonal backdrops |
-| 03 | Implemented with the seasonal backdrops; seasonal rose beds (image 7) and clumps (09) still to come |
-| 04 | Implemented; tulip, peony and poppy use stand-in clumps until 09 |
-| 05 | Engine and tests implemented; nothing is drawn until the visitor art (10) |
-| 06 | Cast data implemented; drawing and Erwu's reactions wait on 10. The robin is now a drawn blue jay |
+| 03 | Implemented with seasonal backdrops, rose beds and clumps |
+| 04 | Implemented with the painted tulips, peonies and poppies |
+| 05 | Implemented: visitors, traces and presents are shown |
+| 06 | Implemented; Erwu stalks ground visitors. Other per-visitor reactions and the owner's look at the cottontail and blue jay remain |
 | 07 | Implemented and balanced against bot runs |
-| 08 | Done: four seasonal backdrops in the game; seasonal rose beds (image 7) requested |
-| 09–10 | Waiting on the owner: prompts in [ART-PROMPTS.md](ART-PROMPTS.md) |
+| 08 | Done: seasonal backdrops and rose beds |
+| 09–10 | Done. Erwu's toward/away walk sheet is held back (style mismatch; see 10) |
 | 11 | Not started (optional) |
 
 Update this table with the tickets.

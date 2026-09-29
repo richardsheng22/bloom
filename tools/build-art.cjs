@@ -2,7 +2,7 @@
 //   node tools/build-art.cjs
 // Each sheet has a flat grey background. Pieces are cut out by colour distance from it,
 // with the grey un-mixed from soft edges, trimmed, and packed into one WebP per sheet group.
-// Writes assets/erwu.webp, garden.webp, play.webp, garden-plate-<season>.webp and art-manifest.js. Uses the same
+// Writes assets/erwu.webp, garden.webp, play.webp, visitors.webp, garden-plate-<season>.webp and art-manifest.js. Uses the same
 // Playwright/Chromium overrides as the browser tests (see tests/README.md).
 const { chromium } = require(process.env.BLOOM_PLAYWRIGHT || 'playwright');
 const fs = require('node:fs');
@@ -32,6 +32,38 @@ const ERWU = [
   // rim there, since her own basket's front is drawn over her
   { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
 ];
+// The living-garden sheets (see .scratch/living-garden/ART-PROMPTS.md). Grid sheets are cut
+// by `grid`: every shape on the sheet belongs to the cell its centre falls in, so a tall grass
+// that leans over a cell line stays whole and never picks up a neighbour. Names run row by row.
+const SEASON_CLUMPS = { file: 'garden-clumps-seasons.png', scale: 0.6, grid: { cols: 4, rows: 4, names: [
+  'clump-tulip', 'clump-peony', 'clump-poppy', 'clump-aster',
+  'clump-crocus', 'clump-daffodil', 'clump-snowdrop', 'clump-forget-spring',
+  'clump-sedum', 'clump-seedgrass', 'clump-autumn-shrub', 'clump-coneflower',
+  'clump-hellebore', 'clump-holly', 'clump-twigs', 'clump-frost-grass'] } };
+// The rose bed in spring, autumn and winter, and where its basket stands (source pixels, fitted
+// by the basket's wicker against the summer bed's; see the ticket 08 record). Summer is 'rose-bed'.
+const ROSE_SCALE = 0.37;
+const ROSE_BASKETS = {
+  spring: { cx: 685.5, cy: 639.5, rx: 216.7, ry: 102.0, outerRx: 237.1, outerRy: 124.9, bottom: 845.9 },
+  autumn: { cx: 681.1, cy: 598.2, rx: 238.3, ry: 112.1, outerRx: 260.7, outerRy: 137.4, bottom: 825.2 },
+  winter: { cx: 689.2, cy: 587.6, rx: 249.3, ry: 117.3, outerRx: 272.7, outerRy: 143.7, bottom: 825.2 },
+};
+const ROSE_BEDS = Object.keys(ROSE_BASKETS).map((season) => ({ file: `rose-bed-${season}.png`, scale: ROSE_SCALE, regions: { [`rose-bed-${season}`]: [0, 0, 1305, 1205] } }));
+// visitors, the traces they leave and Erwu's presents: their own atlas
+const VISITORS = [
+  { file: 'visitors-1.png', scale: 0.5, grid: { cols: 3, rows: 5, names: [
+    'bluejay-perch', 'bluejay-drink', 'bluejay-fly', 'cardinal-perch', 'cardinal-peck', 'cardinal-fly',
+    'junco-stand', 'junco-peck', 'junco-hop', 'goldfinch-perch', 'goldfinch-peck', 'goldfinch-fly',
+    'hummingbird-hover', 'hummingbird-feed', 'hummingbird-perch'] } },
+  { file: 'visitors-2.png', scale: 0.5, grid: { cols: 3, rows: 7, names: [
+    'cottontail-sit', 'cottontail-nibble', 'cottontail-hop', 'squirrel-sit', 'squirrel-run', 'squirrel-dig',
+    'chipmunk-sit', 'chipmunk-cheeks', 'chipmunk-run', 'frog-sit', 'frog-jump', 'frog-puff',
+    'fox-stand', 'fox-walk', 'fox-sit', 'bumblebee-side', 'bumblebee-top', 'bumblebee-rest',
+    'lunamoth-open', 'lunamoth-side', 'lunamoth-rest'] } },
+  { file: 'keepsakes.png', scale: 0.4, grid: { cols: 4, rows: 4, names: [
+    'feather', 'maple-leaf', 'oak-leaf', 'acorn', 'pine-cone', 'pebble', 'cosmos-head', 'daisy-head',
+    'acorn-shells', 'dug-earth', 'seed-husks', 'nibbled-clover', 'rabbit-tracks', 'bird-tracks', 'fox-tracks', 'splash'] } },
+];
 const GARDEN = [
   { file: 'garden-pieces-v2.png', split: ['steps'], regions: {
     'rose-bed': [14, 14, 448, 408], fountain: [478, 26, 292, 392], log: [790, 94, 452, 344], cushion: [30, 454, 348, 208],
@@ -51,6 +83,8 @@ const GARDEN = [
     'clump-rose': [22, 638, 288, 284], 'clump-fern': [326, 650, 308, 268], 'clump-grass': [646, 646, 296, 272], 'clump-mushroom': [974, 710, 248, 216],
     'clump-wild': [22, 942, 296, 284], 'clump-sweetpea': [354, 930, 264, 292], 'clump-cornflower': [658, 946, 264, 276], 'clump-leafy': [954, 978, 284, 240],
   } },
+  SEASON_CLUMPS,
+  ...ROSE_BEDS,
 ];
 const PLAY = [
   { file: 'play-pieces.png', regions: {
@@ -131,7 +165,16 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
         return { canvas: pc, sx: P.x0 + l, sy: P.y0 + t, w, h };
       };
       const made = [];
-      for (const [name, r] of Object.entries(sheet.regions)) {
+      if (sheet.grid) {
+        const { cols, rows, names } = sheet.grid, P = parts(0, 0, W, H), cells = names.map(() => []);
+        for (const q of P.out) {
+          if (q.box[4] < 60) continue;
+          const cx = (q.box[0] + q.box[2]) / 2, cy = (q.box[1] + q.box[3]) / 2;
+          cells[Math.min(rows - 1, Math.floor(cy / H * rows)) * cols + Math.min(cols - 1, Math.floor(cx / W * cols))].push(q.id);
+        }
+        names.forEach((n, i) => { if (n && cells[i].length) { const c = cut(P, cells[i]); made.push({ name: n, ...c, ax: c.w / 2, ay: c.h }); } });
+      }
+      for (const [name, r] of Object.entries(sheet.regions || {})) {
         const P = parts(...r), big = P.out.filter((p) => p.box[4] >= 80).sort((a, b) => b.box[4] - a.box[4]);
         const groups = split.includes(name)
           ? big.filter((p) => p.box[4] > 400).sort((a, b) => a.box[1] - b.box[1] || a.box[0] - b.box[0]).map((p, i) => [`${name.replace(/s$/, '')}-${i}`, [p.id]])
@@ -199,7 +242,7 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
     return { url: out.toDataURL('image/webp', 0.9), frames, size: [out.width, out.height] };
   }, { sheets: sheets(group) });
 
-  const erwu = await pack(ERWU), garden = await pack(GARDEN), play = await pack(PLAY);
+  const erwu = await pack(ERWU), garden = await pack(GARDEN), play = await pack(PLAY), visitors = await pack(VISITORS);
   // the garden backdrop, one per season (living-garden ticket 08): bare borders that play fills
   // in, painted from the same composition so the fountain and log stand in the same places
   const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
@@ -211,12 +254,18 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
   const plates = {};
   for (const season of SEASONS) plates[season] = await reencode(`garden-bare-${season}.webp`, 'image/webp');
   const write = (file, url) => { const buf = Buffer.from(url.split(',')[1], 'base64'); fs.writeFileSync(path.join(root, 'assets', file), buf); return buf.length; };
-  const sizes = { erwu: write('erwu.webp', erwu.url), garden: write('garden.webp', garden.url), play: write('play.webp', play.url) };
+  const sizes = { erwu: write('erwu.webp', erwu.url), garden: write('garden.webp', garden.url), play: write('play.webp', play.url), visitors: write('visitors.webp', visitors.url) };
   for (const season of SEASONS) sizes[season] = write(`garden-plate-${season}.webp`, plates[season]);
   const manifest = {
     note: 'frame: [x, y, w, h, anchorX, anchorY, sourceX, sourceY, bedRimWidth?]; anchors are where a piece meets the ground',
     erwu: { src: 'assets/erwu.webp', size: erwu.size, frames: erwu.frames },
-    garden: { src: 'assets/garden.webp', size: garden.size, frames: garden.frames, basket: BASKET },
+    // `baskets`: the seasonal rose beds' baskets, in their own frames' pixels
+    garden: { src: 'assets/garden.webp', size: garden.size, frames: garden.frames, basket: BASKET,
+      baskets: Object.fromEntries(Object.entries(ROSE_BASKETS).map(([season, b]) => {
+        const f = garden.frames[`rose-bed-${season}`], k = ROSE_SCALE;
+        return [season, { cx: (b.cx - f[6]) * k, cy: (b.cy - f[7]) * k, rx: b.rx * k, ry: b.ry * k, outerRx: b.outerRx * k, outerRy: b.outerRy * k, bottom: (b.bottom - f[7]) * k }];
+      })) },
+    visitors: { src: 'assets/visitors.webp', size: visitors.size, frames: visitors.frames },
     play: { src: 'assets/play.webp', size: play.size, frames: play.frames, basket: PLAY_BASKET },
     // the backdrop for each season (summer is the default), and where its fountain and log
     // stand (fractions of its width and height; the same in every season)
@@ -227,7 +276,7 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
     '/* Generated by tools/build-art.cjs from the painted source sheets in assets/. Do not edit by hand. */\n' +
     "(function (root) { 'use strict';\n  const ART = " + JSON.stringify(manifest) + ";\n" +
     "  if (typeof module === 'object' && module.exports) module.exports = ART; else root.BloomArt = ART;\n})(typeof globalThis === 'object' ? globalThis : this);\n");
-  for (const [k, v] of Object.entries({ erwu, garden, play })) console.log(`${k}.webp ${v.size.join('x')} ${(sizes[k] / 1024).toFixed(0)} KB, ${Object.keys(v.frames).length} pieces`);
+  for (const [k, v] of Object.entries({ erwu, garden, play, visitors })) console.log(`${k}.webp ${v.size.join('x')} ${(sizes[k] / 1024).toFixed(0)} KB, ${Object.keys(v.frames).length} pieces`);
   for (const season of SEASONS) console.log(`garden-plate-${season}.webp ${(sizes[season] / 1024).toFixed(0)} KB`);
   await browser.close();
 })().catch((e) => { console.error(e); process.exitCode = 1; });

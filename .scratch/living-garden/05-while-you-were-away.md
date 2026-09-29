@@ -1,6 +1,6 @@
 # 05 — Something happened while you were away
 
-Status: engine implemented and tested; showing visitors, traces and gifts waits on the art (ticket 10). Dependencies: 01, 03. Art: visitors and keepsakes (ticket 10) to show them.
+Status: implemented, visitors, traces and presents shown (2026-09-29).
 
 ## Outcome
 
@@ -51,3 +51,9 @@ Notifications, collecting or trading visitors, feeding mechanics, completion per
 - Simulated over 20 garden-years of daily openings (Toronto time): the fox came every 14–19 days (median 16); 90% of openings had something new. First rare visits wait at least a week in a new garden.
 - The bed news line works now ("The cosmos in the morning bed opened while you were away.").
 - Waiting on art: nothing is drawn for visitors, traces or gifts yet, so they are recorded silently.
+
+## Drawing — 2026-09-29
+
+- `drawVisitors` in `index.html`: the present visitor at its place (`visitorSpot`), sized in nests and by depth, changing pose every few seconds, hovering for bees, hummingbirds and moths; it leaves on its own when its time is up, when Erwu pounces, or when a run starts, and is cleared from the save then.
+- Traces lie at their place; Erwu's present lies by the basket's gate with a slow glint so it's found among autumn leaves.
+- The garden label names a first visit ("A cottontail came by the beds."), else a bed that opened, else a present. Tapping a visitor names it.

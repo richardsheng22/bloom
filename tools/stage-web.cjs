@@ -16,7 +16,7 @@ const FILES = [
   // game modules, in the order index.html loads them
   'garden-layout.js', 'garden-beds.js', 'garden-time.js', 'garden-visits.js', 'garden-state.js', 'garden-view.js', 'erwu-behavior.js', 'art-manifest.js',
   // packed runtime art (built from the source sheets by tools/build-art.cjs)
-  'assets/erwu.webp', 'assets/garden.webp', 'assets/play.webp',
+  'assets/erwu.webp', 'assets/garden.webp', 'assets/play.webp', 'assets/visitors.webp',
   'assets/garden-plate-spring.webp', 'assets/garden-plate-summer.webp', 'assets/garden-plate-autumn.webp', 'assets/garden-plate-winter.webp',
   // bundled fonts and their licences
   'fonts/fonts.css', 'fonts/fraunces.woff2', 'fonts/bricolage-grotesque.woff2', 'fonts/OFL-Fraunces.txt', 'fonts/OFL-Bricolage-Grotesque.txt',
@@ -28,7 +28,7 @@ function stage() {
   if (missing.length) throw new Error(`missing from the package: ${missing.join(', ')}`);
   // every art file the manifest names must be on the list
   const art = require(path.join(root, 'art-manifest.js'));
-  for (const k of ['erwu', 'garden', 'play', 'lawn']) {
+  for (const k of ['erwu', 'garden', 'play', 'visitors', 'lawn']) {
     if (!FILES.includes(art[k].src)) throw new Error(`art-manifest names ${art[k].src}, which is not packaged`);
   }
   for (const src of Object.values(art.lawn.seasons || {})) if (!FILES.includes(src)) throw new Error(`art-manifest names ${src}, which is not packaged`);

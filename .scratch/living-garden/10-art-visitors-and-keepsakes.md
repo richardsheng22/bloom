@@ -1,6 +1,6 @@
 # 10 — Art: visitors and keepsakes
 
-Status: waiting on the owner. Dependencies: none. Used by: 05, 06.
+Status: done for the visitors and keepsakes (2026-09-29); the owner check of the cottontail and blue jay is still open.
 
 ## What's needed
 
@@ -20,3 +20,8 @@ The complete, copy-ready prompts, the files to attach and why, and the output na
 - Each visitor reads as its species at phone size next to Erwu.
 - Poses of one animal share size and colour, so switching between them doesn't jump.
 - The owner confirms the cottontail and the blue jay look right.
+
+## Implementation record — 2026-09-29
+
+- The three sheets are cut by `grid` into a new atlas, `assets/visitors.webp` (52 pieces, 288 KB), named in `ART.visitors`. Cut-outs were checked on a dark background: clean edges on the hummingbird's wings, the luna moth and the snow patches.
+- Not integrated: `erwu-walk-updown.png` (toward and away from us). It is drawn in a noticeably fluffier, more photographic style than her other poses, with a different tail, so she would visibly change as she turns. It needs regenerating against `erwu-sprite-v2.png` before it can replace the zigzag walk.

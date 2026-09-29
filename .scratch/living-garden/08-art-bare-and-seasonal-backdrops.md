@@ -1,6 +1,6 @@
 # 08 — Art: the bare backdrop in four seasons
 
-Status: done (2026-09-29); the seasonal rose beds (ART-PROMPTS image 7) are still to come. Dependencies: none. Used by: 02, 03.
+Status: done (2026-09-29), including the seasonal rose beds.
 
 ## What's needed
 
@@ -35,3 +35,8 @@ The complete, copy-ready prompts, the files to attach and why, and the output na
 - The game loads the real season's backdrop, and in a season's last week the next one too, blending toward it. The stand-in wash and the season light grading are skipped with the seasonal backdrops, which carry their own light.
 - The lawn-edge border now grows with the garden (4 + 7 per tier clumps, flowering in their months), so a month-old garden is framed by drifts where day one is bare lawn.
 - Remaining: the rose bed around Erwu's basket blooms all year (a single painted piece), which looks wrong in winter and early spring. Image 7 in ART-PROMPTS.md asks for spring, autumn and winter versions.
+
+## Seasonal rose beds — 2026-09-29
+
+- `rose-bed-spring/autumn/winter.png` are packed into `garden.webp` at 0.37 scale. Their baskets were fitted by the wicker's outline, calibrated on the summer bed (within a few pixels of its known basket); winter's snowy rim was set by hand. `ART.garden.baskets` holds each basket in its own frame's pixels.
+- `roseBedPlacement` scales each season's bed so its basket matches the summer basket exactly, so Erwu sits in the same place all year; `clipBasket` draws the front wall from the same season's bed. The season switches half-way through the last week's blend.

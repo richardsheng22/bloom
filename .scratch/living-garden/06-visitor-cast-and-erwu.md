@@ -1,6 +1,6 @@
 # 06 — The visitor cast, and how Erwu responds
 
-Status: cast data in `garden-visits.js`; drawing and Erwu's reactions wait on the visitor sheets (ticket 10). Dependencies: 05. Art: two visitor sheets (ticket 10).
+Status: implemented (2026-09-29); the owner check of the cottontail and blue jay is still open.
 
 ## Outcome
 
@@ -49,3 +49,10 @@ Her existing behaviour module already handles visitors (butterflies): approach, 
 
 - The cast table above is encoded in `BloomVisits.CAST`, with tests for seasons, times and needs.
 - The procedurally drawn robin at the fountain is now a drawn blue jay (blue back, white breast, crest and necklace), shown once the garden reaches tier 2, until the painted one arrives.
+
+## Drawing and Erwu — 2026-09-29
+
+- `VISITOR_LOOK` in `index.html` gives each visitor its poses, leaving pose and size. Birds fly off; the rabbit and frog hop; the fox walks away.
+- Ground visitors (cottontail, squirrel, chipmunk, junco, cardinal) join Erwu's visitor list, so she may stalk one; her pounce sends it off (checked with a junco in the browser). The fox and anything up on the fountain or log are left alone.
+- The fountain's ambient blue jay is now the painted one; it steps aside when a blue jay is the visitor.
+- Not yet: Erwu's other per-visitor reactions from the table (chattering at birds, retreating from the fox).
