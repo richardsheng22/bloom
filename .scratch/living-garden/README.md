@@ -63,13 +63,14 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | Ticket | Status |
 |---|---|
 | 01 | Implemented; pacing measured (a common bed in about five days) |
-| 02 | Save v4 and the bare start implemented; a stand-in wash until the bare backdrop (08) |
-| 03 | Calendar, light, flowering months, winter rest and air implemented with existing art |
+| 02 | Implemented with the bare seasonal backdrops |
+| 03 | Implemented with the seasonal backdrops; seasonal rose beds (image 7) and clumps (09) still to come |
 | 04 | Implemented; tulip, peony and poppy use stand-in clumps until 09 |
 | 05 | Engine and tests implemented; nothing is drawn until the visitor art (10) |
 | 06 | Cast data implemented; drawing and Erwu's reactions wait on 10. The robin is now a drawn blue jay |
 | 07 | Implemented and balanced against bot runs |
-| 08–10 | Waiting on the owner: prompts in [ART-PROMPTS.md](ART-PROMPTS.md) |
+| 08 | Done: four seasonal backdrops in the game; seasonal rose beds (image 7) requested |
+| 09–10 | Waiting on the owner: prompts in [ART-PROMPTS.md](ART-PROMPTS.md) |
 | 11 | Not started (optional) |
 
 Update this table with the tickets.

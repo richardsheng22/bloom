@@ -16,7 +16,8 @@ const FILES = [
   // game modules, in the order index.html loads them
   'garden-layout.js', 'garden-beds.js', 'garden-time.js', 'garden-visits.js', 'garden-state.js', 'garden-view.js', 'erwu-behavior.js', 'art-manifest.js',
   // packed runtime art (built from the source sheets by tools/build-art.cjs)
-  'assets/erwu.webp', 'assets/garden.webp', 'assets/play.webp', 'assets/garden-plate.webp',
+  'assets/erwu.webp', 'assets/garden.webp', 'assets/play.webp',
+  'assets/garden-plate-spring.webp', 'assets/garden-plate-summer.webp', 'assets/garden-plate-autumn.webp', 'assets/garden-plate-winter.webp',
   // bundled fonts and their licences
   'fonts/fonts.css', 'fonts/fraunces.woff2', 'fonts/bricolage-grotesque.woff2', 'fonts/OFL-Fraunces.txt', 'fonts/OFL-Bricolage-Grotesque.txt',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -30,6 +31,7 @@ function stage() {
   for (const k of ['erwu', 'garden', 'play', 'lawn']) {
     if (!FILES.includes(art[k].src)) throw new Error(`art-manifest names ${art[k].src}, which is not packaged`);
   }
+  for (const src of Object.values(art.lawn.seasons || {})) if (!FILES.includes(src)) throw new Error(`art-manifest names ${src}, which is not packaged`);
   // no runtime network: pages and styles must not load anything from another origin
   for (const f of FILES.filter((f) => /\.(html|css|js|webmanifest)$/.test(f))) {
     const text = fs.readFileSync(path.join(root, f), 'utf8');

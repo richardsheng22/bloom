@@ -1,6 +1,6 @@
 # Art prompts for the living garden
 
-Seven images, for tickets [08](08-art-bare-and-seasonal-backdrops.md), [09](09-art-seasonal-clumps.md) and [10](10-art-visitors-and-keepsakes.md). Every prompt below is complete: copy it as it is, attach the files listed under it, and save the result under the name given. Put the results in `assets/` on the branch; after that, I set each sheet's regions in `tools/build-art.cjs` and wire them into the game.
+Seven images (plus the rose bed in three seasons, image 7), for tickets [08](08-art-bare-and-seasonal-backdrops.md), [09](09-art-seasonal-clumps.md) and [10](10-art-visitors-and-keepsakes.md). Every prompt below is complete: copy it as it is, attach the files listed under it, and save the result under the name given. Put the results in `assets/` on the branch; after that, I set each sheet's regions in `tools/build-art.cjs` and wire them into the game.
 
 Same process as the storybook sheets in [`../art-direction/PROMPTS.md`](../art-direction/PROMPTS.md).
 
@@ -14,6 +14,7 @@ All of these are already in the repository. Attach them from these paths.
 | `assets/garden-background-v2.png` (941 × 1672) | The current full-screen garden backdrop, with its flower borders | The composition to keep for the bare backdrop: the fountain and log must stay exactly where they are, because the game reads their positions from it. |
 | `assets/garden-clumps.png` (1254 × 1254) | The 16 flower clumps the garden grows from play | The scale, view, grass tuft and grid the new clumps must match, so old and new sit side by side. |
 | `assets/erwu-sprite-v2.png` (1122 × 1402) | Erwu's 20 painted poses | The size of the visitors next to Erwu, and the same drawing style for animals. |
+| `.scratch/living-garden/rose-bed-reference.png` | The rose bed with Erwu's basket, cut from the garden pieces sheet | For image 7: the seasonal rose beds must keep this exact shape, size and basket position. |
 | Your photo of the cottontail (optional) | The rabbit that visits your garden | So it looks like yours. Reference only: it is not stored in the repository. |
 
 Image 2 (spring, autumn, winter) also attaches the **bare summer backdrop you generate in image 1**, so all four seasons share one composition.
@@ -21,7 +22,9 @@ Image 2 (spring, autumn, winter) also attaches the **bare summer backdrop you ge
 ## Order
 
 1. Image 1 first; images 2a–2c from it.
-2. Images 3–6 in any order, whenever convenient.
+2. Images 3–7 in any order, whenever convenient.
+
+Images 1, 2a, 2b and 2c are done (2026-09-29) and in the game.
 
 Checks for every sheet: flat plain light grey background (#E6E6E6), wide gaps so nothing touches, no text, no shadows. If a generation adds a frame, text, or shadows, regenerate; the build tool cuts pieces out by the grey.
 
@@ -76,6 +79,45 @@ Redraw the second attached image, a full-screen portrait garden illustration, EX
 Change only the season, to winter: a light, soft layer of snow over the lawn, with pale green grass showing through in patches; snow resting on the fountain's bowls and along the top of the log; the fountain still, with a thin skin of pale ice in its bowls; the overhanging branches along the top bare, with a little snow on them; pale, cool, gentle daylight with soft blue shadows. Keep it cosy and light, not grey or gloomy. The open lawn clearing in the middle stays open. No flowers.
 
 Portrait 9:16. No cat, no basket, no rose bed, no flower beds, no cushion, no stones or stepping stones, no path, no text, no buttons, no frame lines. Highest resolution.
+```
+
+## 7a. Rose bed, early spring → `assets/rose-bed-spring.png`
+
+Attach: `.scratch/art-direction/target-mockup.webp` and `.scratch/living-garden/rose-bed-reference.png`.
+Size: the same as the reference (528 × 488), or larger in the same proportion.
+
+```
+Redraw the second attached image, a round garden rose bed with a wicker cat basket in its middle, EXACTLY: the same shape, size and outline, the same ring of pale stones around it in exactly the same places, the same empty round wicker basket with its cream tufted cushion in exactly the same place, size and shape, the same gentle three-quarter view from above, the same storybook watercolour style with soft warm-brown outlines and subtle paper grain. The first attached image is the style reference. NOT photographic, NOT 3D.
+
+Change only the season, to early spring: the rose bushes are fresh green and leafy with only a few small closed rose buds and no open flowers; a few white snowdrops and purple crocuses in the soil between the stones.
+
+Keep the basket empty (no cat). Flat plain light grey background (#E6E6E6) around it, with no ground, no shadows, no text. Highest resolution.
+```
+
+## 7b. Rose bed, autumn → `assets/rose-bed-autumn.png`
+
+Attach: `.scratch/art-direction/target-mockup.webp` and `.scratch/living-garden/rose-bed-reference.png`.
+Size: the same as the reference (528 × 488), or larger in the same proportion.
+
+```
+Redraw the second attached image, a round garden rose bed with a wicker cat basket in its middle, EXACTLY: the same shape, size and outline, the same ring of pale stones around it in exactly the same places, the same empty round wicker basket with its cream tufted cushion in exactly the same place, size and shape, the same gentle three-quarter view from above, the same storybook watercolour style with soft warm-brown outlines and subtle paper grain. The first attached image is the style reference. NOT photographic, NOT 3D.
+
+Change only the season, to autumn: the rose bushes have a few last open pink roses and some red rose hips; some of their leaves have turned yellow and orange; a few fallen leaves on the stones.
+
+Keep the basket empty (no cat). Flat plain light grey background (#E6E6E6) around it, with no ground, no shadows, no text. Highest resolution.
+```
+
+## 7c. Rose bed, winter → `assets/rose-bed-winter.png`
+
+Attach: `.scratch/art-direction/target-mockup.webp` and `.scratch/living-garden/rose-bed-reference.png`.
+Size: the same as the reference (528 × 488), or larger in the same proportion.
+
+```
+Redraw the second attached image, a round garden rose bed with a wicker cat basket in its middle, EXACTLY: the same shape, size and outline, the same ring of pale stones around it in exactly the same places, the same empty round wicker basket with its cream tufted cushion in exactly the same place, size and shape, the same gentle three-quarter view from above, the same storybook watercolour style with soft warm-brown outlines and subtle paper grain. The first attached image is the style reference. NOT photographic, NOT 3D.
+
+Change only the season, to winter: the rose bushes are cut back to short, bare, thorny stems with a few dry leaves; a soft layer of snow on the stones, on the soil and resting lightly on the rim of the basket (the cushion inside stays clean and cosy); no flowers.
+
+Keep the basket empty (no cat). Flat plain light grey background (#E6E6E6) around it, with no ground, no shadows, no text. Highest resolution.
 ```
 
 ---
@@ -160,4 +202,4 @@ Flat plain light grey background (#E6E6E6) everywhere, with no ground beyond the
 
 - Check the four backdrops line up: laid over each other, the fountain and log should match within a few pixels. If one drifts, regenerate that one from image 1.
 - Look at the cottontail and the blue jay on your phone next to Erwu: do they look like the ones in your garden?
-- Put all seven files in `assets/` with the names above and tell me; I'll pack them, set their regions, and finish tickets 02, 03, 05 and 06 with them.
+- Put the files in `assets/` with the names above and tell me; I'll pack them, set their regions, and finish tickets 02, 03, 05 and 06 with them.

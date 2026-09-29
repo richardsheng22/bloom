@@ -1345,10 +1345,17 @@
   // has loaded, or if it can't be decoded, the drawn garden and Erwu stand in. No save
   // data depends on art. -----
   const ART = typeof BloomArt === 'object' ? BloomArt : null, artImages = {};
-  if (ART) for (const key of ['erwu', 'garden', 'play', 'lawn']) {
+  // The backdrop is the real season's (living-garden ticket 08); in a season's last week the
+  // next one is loaded too, and paintBackground blends toward it.
+  const seasonPlates = ART && ART.lawn.seasons ? ART.lawn.seasons : null;
+  const plateSeason = seasonPlates ? BloomTime.season(seasonClock()) : null;
+  const artSources = !ART ? {} : { erwu: ART.erwu.src, garden: ART.garden.src, play: ART.play.src,
+    lawn: seasonPlates ? seasonPlates[plateSeason.name] : ART.lawn.src,
+    ...(seasonPlates && plateSeason.blend > 0 ? { 'lawn-next': seasonPlates[plateSeason.next] } : {}) };
+  for (const [key, src] of Object.entries(artSources)) {
     const rec = artImages[key] = { img: new Image(), ready: false };
     rec.img.onload = () => { rec.ready = true; gardenDirty = true; bgCache = null; if (key === 'lawn') document.body.classList.add('painted'); if (key === 'lawn' && gardenScene) { gardenScene.scenery = paintedScenery(gardenScene); erwuPlaces = null; } };
-    rec.img.src = ART[key].src;
+    rec.img.src = src;
   }
   const artImage = (key) => artImages[key] && artImages[key].ready ? artImages[key].img : null;
   const paintedGarden = () => presentation === 'garden' && !!artImage('garden');
@@ -2002,15 +2009,22 @@
     for (let i = -4; i <= 4; i++) { g.beginPath(); g.moveTo(i * 40 - 36, H2); g.lineTo(i * 40 + 36, -H2); g.stroke(); }
     g.restore();
     }
-    // a wildflower meadow creeping in from the edges as the garden grows
-    const meadow = Math.round((painted ? 3 + tier * 3 : 6 + tier * 9) * (1 - (paintedRest ?? rest) * 0.75));
+    // a wildflower meadow creeping in from the edges as the garden grows: on the bare seasonal
+    // backdrops this is the border, and it flowers in its months (living-garden tickets 02, 03)
+    const meadow = Math.round((painted ? (seasonPlates ? 4 + tier * 7 : 3 + tier * 3) : 6 + tier * 9) * (1 - (paintedRest ?? rest) * 0.75));
+    const edgeClock = seasonClock();
     for (let i = 0; i < meadow; i++) {
       const a = rnd() * TAU, e = 0.86 + rnd() * 0.12, x = Math.cos(a) * (W2 - 6) * e, y = m.roses.y * 0.5 + Math.sin(a) * (H2 - 8) * e;
       if (!clear(x, y, painted ? 14 : 6)) continue;
       if (painted) {
         // the lawn's edges fill in with flowers as the garden grows; grass and leaves first
-        const w = (28 + rnd() * 14) * k, flip = rnd() < 0.5, flowers = tier >= 2 && rnd() < 0.7;
-        const name = flowers ? EDGE_FLOWERS[Math.floor(rnd() * EDGE_FLOWERS.length)] : rnd() < 0.5 ? 'clump-grass' : 'clump-leafy';
+        const w = (28 + rnd() * 14) * k, flip = rnd() < 0.5, flowers = tier >= (seasonPlates ? 1 : 2) && rnd() < 0.7;
+        let name = flowers ? EDGE_FLOWERS[Math.floor(rnd() * EDGE_FLOWERS.length)] : rnd() < 0.5 ? 'clump-grass' : 'clump-leafy';
+        if (flowers) {
+          const phase = BloomTime.plantPhase(name.slice('clump-'.length), edgeClock);
+          if (phase === 'rest') continue;
+          if (phase === 'leaves') name = 'clump-leafy';
+        }
         swayPiece(g, name, x, y, w, flip, 0.8 + 0.2 * (1 - (e - 0.86) / 0.12));
         continue;
       }
@@ -3697,10 +3711,12 @@
     const lawn = artImage('lawn'), plate = plateRect();
     if (lawn) {
       g.drawImage(lawn, plate.x, plate.y, plate.w, plate.h);
+      const next = artImage('lawn-next'), cal0 = calendar();
+      if (next && cal0.blend > 0) { g.globalAlpha = cal0.blend; g.drawImage(next, plate.x, plate.y, plate.w, plate.h); g.globalAlpha = 1; }
       g.fillStyle = rgb(hexRgb(C.ground), presentation === 'run' ? 0.2 : 0.04); g.fillRect(0, 0, W, H);
       if (bgLush < 0) bgLush = Math.round(lushness() * 20) / 20;
-      if (presentation === 'garden' && !artImage('bare')) {
-        // Until the bare backdrop (living-garden ticket 08) arrives, the painted borders along
+      if (presentation === 'garden' && !seasonPlates) {
+        // Without the bare seasonal backdrops (living-garden ticket 08), the painted borders along
         // the sides and the foot give way to plain lawn, and fill back in as the garden grows.
         const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.5);
         if (bare > 0.01) {
@@ -3721,11 +3737,12 @@
           g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = bare; g.drawImage(m, 0, 0); g.restore();
         }
       }
+      // the seasonal backdrops carry their season's light; the older, single backdrop is graded
       const cal = calendar();
-      gradeLight(g, SEASON_LIGHT[cal.name], 1 - cal.blend); gradeLight(g, SEASON_LIGHT[cal.next], cal.blend);
+      if (!seasonPlates) { gradeLight(g, SEASON_LIGHT[cal.name], 1 - cal.blend); gradeLight(g, SEASON_LIGHT[cal.next], cal.blend); }
       if (presentation === 'garden') gradeLight(g, DAY_LIGHT[BloomTime.dayPart(seasonClock())]);
       bgSeason = lightKey();
-      if (presentation === 'run') {
+      if (presentation === 'run' && !seasonPlates) {
         // a plain lawn over the painted meadow, thinning as the garden grows
         const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.42);
         g.fillStyle = rgb(lawnCol, 0.66 * bare); g.fillRect(plate.x, plate.y, plate.w, plate.h);
@@ -3735,9 +3752,9 @@
           const x = plate.x + rnd() * plate.w, y = plate.y + rnd() * plate.h, l = 3 + rnd() * 5;
           g.beginPath(); g.moveTo(x, y); g.lineTo(x - l * 0.3, y - l); g.stroke();
         }
-        // the time of day's light
-        gradeLight(g, TIMES[timeAt(turn)]);
       }
+      // the time of day's light
+      if (presentation === 'run') gradeLight(g, TIMES[timeAt(turn)]);
       const paper = hexRgb(C.ground);
       for (const [y0, y1] of [[0, H * 0.18], [H, H * 0.84]]) {
         const zg = g.createLinearGradient(0, y0, 0, y1);

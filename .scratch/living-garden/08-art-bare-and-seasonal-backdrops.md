@@ -1,6 +1,6 @@
 # 08 — Art: the bare backdrop in four seasons
 
-Status: waiting on the owner. Dependencies: none. Used by: 02, 03.
+Status: done (2026-09-29); the seasonal rose beds (ART-PROMPTS image 7) are still to come. Dependencies: none. Used by: 02, 03.
 
 ## What's needed
 
@@ -27,3 +27,11 @@ The complete, copy-ready prompts, the files to attach and why, and the output na
 - Laid over each other, the fountain and log line up in all four within a few pixels.
 - At phone size the four read as their seasons without text.
 - The bare summer version, next to the current backdrop, looks clearly emptier but still inviting.
+
+## Implementation record — 2026-09-29
+
+- The owner generated all four; each is 941 × 1672, and the fountain and log stand exactly on the positions the layout already uses (`ART.lawn.fountain` and `.log`), so the layout is unchanged.
+- Sources are `assets/garden-bare-<season>.webp`; `tools/build-art.cjs` writes `assets/garden-plate-<season>.webp` (390–480 KB each) and `ART.lawn.seasons`. The old lush `garden-plate.webp` is retired; its source stays in `assets/`.
+- The game loads the real season's backdrop, and in a season's last week the next one too, blending toward it. The stand-in wash and the season light grading are skipped with the seasonal backdrops, which carry their own light.
+- The lawn-edge border now grows with the garden (4 + 7 per tier clumps, flowering in their months), so a month-old garden is framed by drifts where day one is bare lawn.
+- Remaining: the rose bed around Erwu's basket blooms all year (a single painted piece), which looks wrong in winter and early spring. Image 7 in ART-PROMPTS.md asks for spring, autumn and winter versions.
