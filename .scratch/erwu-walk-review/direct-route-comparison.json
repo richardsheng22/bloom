@@ -1,0 +1,15 @@
+{
+  "firstFrameSpeed": 33.99999999999977,
+  "cruiseSpeed": 34.0000000000002,
+  "lastMovingFrameSpeed": 11.999999999991644,
+  "firstFrameFractionOfCruise": 0.9999999999999875,
+  "strideAtThisSize": 70.975,
+  "cycleSeconds": 2.0874999999999875,
+  "distinctFramesPerSecond": 3.83233532934134,
+  "route": {
+    "maxDirectionChangeDegreesInOneFrame": 99.77137208787903,
+    "turnsOver30Degrees": 3,
+    "instantaneousFacingFlips": 0,
+    "distance": 293.43543227330537
+  }
+}
