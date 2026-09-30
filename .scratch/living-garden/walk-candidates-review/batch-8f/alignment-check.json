@@ -1,0 +1,353 @@
+{
+  "alignment": [
+    {
+      "name": "front2",
+      "width": 1492,
+      "height": 1054,
+      "head": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 24.098039215686278
+      },
+      "body": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 15.215007215007216
+      }
+    },
+    {
+      "name": "front3",
+      "width": 1492,
+      "height": 1054,
+      "head": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 18.550802139037426
+      },
+      "body": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 16.734487734487725
+      }
+    },
+    {
+      "name": "front4",
+      "width": 1492,
+      "height": 1054,
+      "head": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 16.78163992869876
+      },
+      "body": {
+        "scale": 1.02,
+        "dx": 9,
+        "dy": -9,
+        "error": 19.4119769119769
+      }
+    },
+    {
+      "name": "front6",
+      "width": 1493,
+      "height": 1054,
+      "head": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 18.94563279857399
+      },
+      "body": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 14.745310245310263
+      }
+    },
+    {
+      "name": "front8",
+      "width": 1492,
+      "height": 1054,
+      "head": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 22.865418894830643
+      },
+      "body": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 13.062049062049066
+      }
+    },
+    {
+      "name": "back2",
+      "width": 1660,
+      "height": 948,
+      "head": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 15.006535947712408
+      },
+      "body": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 10.376190476190477
+      }
+    },
+    {
+      "name": "back4",
+      "width": 1660,
+      "height": 948,
+      "head": {
+        "scale": 1,
+        "dx": -9,
+        "dy": 0,
+        "error": 19.1843137254902
+      },
+      "body": {
+        "scale": 0.98,
+        "dx": -6,
+        "dy": -3,
+        "error": 18.03571428571429
+      }
+    },
+    {
+      "name": "back5",
+      "width": 1659,
+      "height": 948,
+      "head": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 16.36862745098038
+      },
+      "body": {
+        "scale": 1,
+        "dx": -3,
+        "dy": 0,
+        "error": 14.996825396825404
+      }
+    },
+    {
+      "name": "back6",
+      "width": 1659,
+      "height": 948,
+      "head": {
+        "scale": 0.98,
+        "dx": -3,
+        "dy": 0,
+        "error": 19.609150326797373
+      },
+      "body": {
+        "scale": 0.95,
+        "dx": 6,
+        "dy": -3,
+        "error": 17.03253968253968
+      }
+    },
+    {
+      "name": "back7",
+      "width": 1660,
+      "height": 948,
+      "head": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 14.932026143790853
+      },
+      "body": {
+        "scale": 1,
+        "dx": 0,
+        "dy": 0,
+        "error": 13.467460317460315
+      }
+    },
+    {
+      "name": "back8",
+      "width": 1659,
+      "height": 948,
+      "head": {
+        "scale": 1,
+        "dx": -6,
+        "dy": 0,
+        "error": 15.022222222222226
+      },
+      "body": {
+        "scale": 1,
+        "dx": -3,
+        "dy": -3,
+        "error": 16.077777777777758
+      }
+    }
+  ],
+  "sheets": [
+    {
+      "view": "front",
+      "frame": 1,
+      "old": {
+        "x": 112,
+        "y": 480,
+        "w": 228,
+        "h": 129,
+        "count": 18832
+      },
+      "now": {
+        "x": 111,
+        "y": 480,
+        "w": 230,
+        "h": 130,
+        "count": 19105
+      },
+      "lowerSilhouetteIoU": 0.9814582680455448,
+      "maxBoundsDelta": 2
+    },
+    {
+      "view": "front",
+      "frame": 2,
+      "old": {
+        "x": 554,
+        "y": 480,
+        "w": 225,
+        "h": 129,
+        "count": 17642
+      },
+      "now": {
+        "x": 553,
+        "y": 480,
+        "w": 229,
+        "h": 130,
+        "count": 18041
+      },
+      "lowerSilhouetteIoU": 0.9700215314967151,
+      "maxBoundsDelta": 4
+    },
+    {
+      "view": "front",
+      "frame": 3,
+      "old": {
+        "x": 997,
+        "y": 480,
+        "w": 226,
+        "h": 127,
+        "count": 18060
+      },
+      "now": {
+        "x": 996,
+        "y": 480,
+        "w": 227,
+        "h": 127,
+        "count": 18503
+      },
+      "lowerSilhouetteIoU": 0.9588021000750027,
+      "maxBoundsDelta": 1
+    },
+    {
+      "view": "front",
+      "frame": 4,
+      "old": {
+        "x": 1438,
+        "y": 480,
+        "w": 229,
+        "h": 126,
+        "count": 19305
+      },
+      "now": {
+        "x": 1438,
+        "y": 480,
+        "w": 229,
+        "h": 126,
+        "count": 19705
+      },
+      "lowerSilhouetteIoU": 0.9679160571053826,
+      "maxBoundsDelta": 0
+    },
+    {
+      "view": "back",
+      "frame": 1,
+      "old": {
+        "x": 112,
+        "y": 520,
+        "w": 217,
+        "h": 105,
+        "count": 16996
+      },
+      "now": {
+        "x": 112,
+        "y": 520,
+        "w": 217,
+        "h": 105,
+        "count": 16689
+      },
+      "lowerSilhouetteIoU": 0.9739232346908878,
+      "maxBoundsDelta": 0
+    },
+    {
+      "view": "back",
+      "frame": 2,
+      "old": {
+        "x": 556,
+        "y": 520,
+        "w": 216,
+        "h": 99,
+        "count": 15642
+      },
+      "now": {
+        "x": 556,
+        "y": 520,
+        "w": 216,
+        "h": 99,
+        "count": 15487
+      },
+      "lowerSilhouetteIoU": 0.9720620842572062,
+      "maxBoundsDelta": 0
+    },
+    {
+      "view": "back",
+      "frame": 3,
+      "old": {
+        "x": 1000,
+        "y": 520,
+        "w": 215,
+        "h": 99,
+        "count": 15829
+      },
+      "now": {
+        "x": 999,
+        "y": 520,
+        "w": 215,
+        "h": 99,
+        "count": 15612
+      },
+      "lowerSilhouetteIoU": 0.9678913438067221,
+      "maxBoundsDelta": 1
+    },
+    {
+      "view": "back",
+      "frame": 4,
+      "old": {
+        "x": 1442,
+        "y": 520,
+        "w": 216,
+        "h": 99,
+        "count": 16372
+      },
+      "now": {
+        "x": 1442,
+        "y": 520,
+        "w": 216,
+        "h": 99,
+        "count": 16213
+      },
+      "lowerSilhouetteIoU": 0.9752076135054858,
+      "maxBoundsDelta": 0
+    }
+  ]
+}

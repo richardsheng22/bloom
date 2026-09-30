@@ -509,3 +509,7 @@ No orange outline, no other changes.
 - Look at the cottontail and the blue jay on your phone next to Erwu: do they look like the ones in your garden?
 - Put the files in `assets/` with the names above and tell me; I'll pack them, set their regions, and wire them in.
 - For Erwu's frames (image 8), I'll check each sheet's paws and proportions against the side walk before using it, and show you a looping preview.
+
+### Section 8f generation delivery
+
+Source assets generated; see [batch evidence and packing handoff](walk-candidates-review/batch-8f/README.md). The two diagonal sequences now have eight source frames each. Optional front/back touch-ups are included. Atlas packing and runtime adoption remain the next step described above.
