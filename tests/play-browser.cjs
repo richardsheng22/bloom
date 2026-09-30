@@ -39,6 +39,27 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   const p=await open();const saved=await p.evaluate(()=>__play.snapshot());await p.click('#play');await p.click('#visit-garden');await p.reload();await p.waitForFunction(()=>!document.body.classList.contains('loading'));
   assert.deepEqual(await p.evaluate(()=>__play.snapshot()),saved);await p.close();
   console.log('PASS run recovery, quarantine failure, future saves, ownership, and exact resume');
+  const modal=await open();
+  for(let cycle=0;cycle<2;cycle++){
+   await modal.click('#t-guide');
+   for(let n=0;n<12;n++){await modal.keyboard.press(n%2?'Shift+Tab':'Tab');assert.ok(await modal.evaluate(()=>!!document.activeElement.closest('#guide')));}
+   await modal.keyboard.press('Escape');assert.equal(await modal.evaluate(()=>document.querySelector('#app').inert),true);
+   assert.equal(await modal.evaluate(()=>document.activeElement.id),'t-guide');
+  }
+  await modal.click('#play');await shot(modal);await modal.waitForFunction(()=>__play.state==='flying');await modal.click('#r-guide');
+  const paused=await modal.evaluate(()=>({shot:__play.shot,balls:__play.balls,items:__play.items}));
+  await modal.waitForTimeout(1200);assert.deepEqual(await modal.evaluate(()=>({shot:__play.shot,balls:__play.balls,items:__play.items})),paused);
+  await modal.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
+  await modal.waitForTimeout(100);await modal.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));});
+  assert.deepEqual(await modal.evaluate(()=>({shot:__play.shot,balls:__play.balls,items:__play.items})),paused);
+  await modal.keyboard.press('Escape');await modal.waitForFunction(()=>__play.state==='ready'&&__play.snapshot().turn===9,null,{timeout:35000});
+  await modal.click('#r-guide');await modal.keyboard.press('Escape');await modal.waitForTimeout(100);
+  assert.equal(await modal.evaluate(()=>__play.snapshot().turn),9);await modal.close();
+  // Help opened during the game-over delay postpones the end card until dismissal.
+  const ending=await open({run:checkpoint({pawReady:false,items:[{kind:'shape',sector:0,ring:1,hp:99,maxHp:99,sp:0,ci:0}]})});
+  await ending.click('#play');await ending.evaluate(()=>{__play.items[0].ring=0;__play.afterAdvance()});await ending.click('#r-guide');
+  await ending.waitForTimeout(500);assert.ok(await ending.locator('#over').isHidden());await ending.keyboard.press('Escape');await ending.locator('#over').waitFor({state:'visible'});await ending.close();
+  console.log('PASS modal focus, inert restoration, shot/background pause and deferred game over');
   // Additional interaction checks are added with their implementation slices below.
   assert.deepEqual(errors,[]);console.log('PASS no page errors');
  }finally{await browser.close();await new Promise(r=>server.close(r));}

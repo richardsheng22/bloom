@@ -1148,9 +1148,9 @@
   let readySnapshot = null;
   let introTimer = 0;
   function offerIntro() {
-    clearTimeout(introTimer);
+    cancelPresentation(introTimer);
     if (presentation !== 'run' || gardenRequested || !introQueue.length) return;
-    introTimer = setTimeout(() => {
+    introTimer = schedulePresentation(() => {
       if (presentation !== 'run' || gardenRequested || !introQueue.length) return;
       const k = introQueue.shift(); banner(INTRO[k][0], INTRO[k][1]);
     }, 700);
@@ -1165,7 +1165,7 @@
     offerIntro();
   }
   function newGame() {
-    gardenRequested = false; clearTimeout(overTimer); clearAim();
+    gardenRequested = false; cancelPresentation(overTimer); clearAim();
     items = []; balls = []; particles = []; floats = []; tweens = []; blooms = []; bees = []; beams = []; clocks = []; showers.length = 0;
     turn = 1; ballCount = START_BALLS; pending = 0; petalNext = false; pawReady = true;
     charges = new Array(SECTORS).fill(0); shownCharges = new Array(SECTORS).fill(0);
@@ -2902,7 +2902,7 @@
   let bannerTimer = 0;
   function banner(text, sub = '', big = false) {
     const host = el.banner;
-    clearTimeout(bannerTimer);
+    cancelPresentation(bannerTimer);
     host.replaceChildren();
     const rib = document.createElement('div');
     rib.className = 'ribbon' + (big ? ' big' : '');
@@ -2922,7 +2922,7 @@
     rib.style.top = `${CY - R * (big ? 0.62 : 0.5)}px`;
     host.append(rib);
     host.setAttribute('aria-label', sub ? `${text}. ${sub}` : text);
-    bannerTimer = setTimeout(() => host.replaceChildren(), big ? 2600 : 1900);
+    bannerTimer = schedulePresentation(() => host.replaceChildren(), big ? 2600 : 1900);
   }
 
   // Full bloom, in three beats: the petals light up one after another around
@@ -2993,6 +2993,11 @@
         : gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : '');
     }
   }
+
+  // Delayed run presentation shares the visible clock: help and backgrounding pause it.
+  const presentationTimers = new Set();
+  function schedulePresentation(fn, ms) { const timer = { fn, left: ms / 1000 }; presentationTimers.add(timer); return timer; }
+  function cancelPresentation(timer) { presentationTimers.delete(timer); }
 
   // ---------- Turn flow ----------
   function launch(angle) {
@@ -3348,7 +3353,7 @@
     }
   }
   function showTitle() {
-    clearTimeout(overTimer); clearTimeout(introTimer); clearTimeout(settleTimer); clearTimeout(bannerTimer);
+    cancelPresentation(overTimer); cancelPresentation(introTimer); clearTimeout(settleTimer); cancelPresentation(bannerTimer);
     clearTimeout(restartTimer); restartArmed = false; el.restart.classList.remove('armed');
     clearAim(); closeInspection(); gardenRequested = false;
     presentation = 'garden'; titleT = 1; gardenCache = null; bgCache = null;
@@ -3461,7 +3466,7 @@
     [4, 2, 0].forEach((n, i) => tone(noteFreq(n), 0.05, 'sine', 0.5, i * 0.16));
     updateHud();
     if (gardenRequested) { showTitle(); return; }
-    overTimer = setTimeout(() => {
+    overTimer = schedulePresentation(() => {
       if (presentation !== 'run' || state !== 'over') return;
       el.app.inert = true;
       el.overTitle.textContent = `${CAT_NAME}'s curled up for a nap`;
@@ -4015,6 +4020,10 @@
 
   // ---------- Update ----------
   function update(dt) {
+    for (const timer of [...presentationTimers]) {
+      timer.left -= dt;
+      if (timer.left <= 0) { presentationTimers.delete(timer); timer.fn(); }
+    }
     updateAmbience(dt);
     arenaReveal = Math.min(1, arenaReveal + dt / 0.25);
     // the run's painted meadow comes back as the garden does (see paintBackground)
@@ -6184,7 +6193,8 @@
 
   window.addEventListener('keydown', (e) => {
     if (!el.guide.hidden) {
-      if (e.key === 'Escape') closeGuide();
+      if (e.key === 'Tab') { trapGuideFocus(e); return; }
+      if (e.key === 'Escape') { e.preventDefault(); closeGuide(); }
       else if (e.key === 'ArrowRight') guideStep(1);
       else if (e.key === 'ArrowLeft') guideStep(-1);
       return;
@@ -6334,17 +6344,37 @@
     el.guideNext.textContent = last ? (guide.which === 'run' ? 'Let’s play' : 'Lovely') : 'Next';
     el.guideNext.setAttribute('aria-label', last ? 'Close' : `Next, page ${guide.page + 2} of ${pages.length}`);
   }
+  function guideControls() {
+    return [...el.guide.querySelectorAll('button')].filter(b => !b.disabled && b.tabIndex >= 0 && b.getClientRects().length && !b.classList.contains('gone'));
+  }
+  function trapGuideFocus(e) {
+    const controls = guideControls(), index = controls.indexOf(document.activeElement);
+    if (!controls.length) return;
+    e.preventDefault();
+    controls[(index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus({ preventScroll: true });
+  }
   function openGuide(which) {
-    guide = { which, page: 0, from: document.activeElement };
-    el.guide.hidden = false; el.app.inert = true;
+    if (guide) return;
+    clearAim();
+    restartArmed = false; clearTimeout(restartTimer); el.restart.classList.remove('armed');
+    guide = { which, page: 0, from: document.activeElement, at: performance.now(),
+      backgrounds: [el.app, el.title, el.over].map(node => ({ node, inert: node.inert })) };
+    for (const {node} of guide.backgrounds) node.inert = true;
+    el.guide.hidden = false;
+    silenceAmbience();
     showGuidePage();
     el.guideNext.focus({ preventScroll: true });
   }
   function closeGuide() {
-    if (el.guide.hidden) return;
-    el.guide.hidden = true; el.app.inert = false;
-    if (guide && guide.from && guide.from.focus) guide.from.focus({ preventScroll: true });
-    guide = null;
+    if (!guide) return;
+    const previous = guide;
+    el.guide.hidden = true; guide = null;
+    for (const {node, inert} of previous.backgrounds) node.inert = inert;
+    clearAim(); last = performance.now();
+    const fallback = presentation === 'garden' ? el.play : !el.over.hidden ? el.again : stage;
+    const target = previous.from?.isConnected && previous.from.getClientRects().length && !previous.from.closest('[inert], [hidden]') ? previous.from : fallback;
+    target.focus({ preventScroll: true });
+    updateHud();
   }
   const guideStep = (d) => { const n = GUIDES[guide.which].length, next = guide.page + d; if (next >= n) closeGuide(); else if (next >= 0) { guide.page = next; showGuidePage(); } };
   el.tGuide.addEventListener('click', () => openGuide('garden'));
@@ -6377,7 +6407,7 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!document.hidden) { update(dt); draw(now); }
+    if (!document.hidden) { if (!guide) update(dt); draw(guide ? guide.at : now); }
     requestAnimationFrame(frame);
   }
 
