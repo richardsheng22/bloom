@@ -2951,7 +2951,8 @@
     void target.offsetWidth;
     target.classList.add(cls);
   }
-  let hinted = store.get('hinted3', false);
+  let hinted = store.get('hinted3', false), hintShownAt = 0;
+  const HINT_MS = 7000;   // the launch hint fades by itself after this, even before a first launch
   let restartArmed = false, restartTimer = 0;
   function updateHud() {
     replay(el.turn, String(turn), 'tick', el.turn);
@@ -2966,7 +2967,7 @@
     if (lastTier >= 0 && tier > lastTier) tone(noteFreq(9), 0.03, 'sine', 0.8);
     lastTier = tier;
     el.garden.setAttribute('aria-label', `Garden: ${tier} of 5`);
-    el.paw.setAttribute('aria-label', pawReady ? "Erwu's swat is ready" : "Erwu's swat is used up until the next full bloom");
+    el.paw.setAttribute('aria-label', pawReady ? "Erwu's swat is ready" : "Erwu's swat is used for this game");
     el.ff.hidden = !(state === 'flying' && shot && shot.t > 2.5);
     el.ff.setAttribute('aria-pressed', String(timeScale > 1));
     el.visitGarden.setAttribute('aria-pressed', String(gardenRequested));
@@ -2979,7 +2980,9 @@
       el.hint.textContent = shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '';
     } else if (state === 'ready') {
       el.hint.className = '';
-      el.hint.textContent = !hinted ? 'Pull back anywhere and let go to launch'
+      if (!hinted && !hintShownAt && presentation === 'run') { hintShownAt = performance.now(); setTimeout(updateHud, HINT_MS + 50); }
+      const showHint = !hinted && performance.now() - hintShownAt < HINT_MS;
+      el.hint.textContent = showHint ? 'Pull back anywhere and let go to launch'
         : gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : '');
     }
   }
@@ -2990,7 +2993,7 @@
     if (!hinted) { hinted = true; store.set('hinted3', true); }
     lastAim = angle;
     state = 'flying';
-    shot = { angle, petal: petalNext, toLaunch: ballCount, launched: 0, timer: 0, hits: 0, t: 0, seeds: 0, flowers: 0, blooms: 0, banks: 0, closeCall: false };
+    shot = { angle, petal: petalNext, toLaunch: ballCount, launched: 0, timer: 0, hits: 0, t: 0, seeds: 0, flowers: 0, blooms: 0, tricks: 0, closeCall: false };
     petalNext = false;
     gardenNote = '';
     timeScale = 1;
@@ -3035,7 +3038,6 @@
           it.pulse = 1; it.wobV = (it.wobV || 0) + 10;
           if (it.hp <= 0) pop(it, true);
         }
-        pawReady = true;
       }
       if (!settled && p > 0.7) { settled = true; charges.fill(0); }
     }, () => { fbT = -1; items = items.filter((i) => !i.dead); done(); });
@@ -3507,15 +3509,17 @@
     hurt(it, b.gold ? 2 : 1, Math.sign((b.x - p.x) * b.vy - (b.y - p.y) * b.vx || 1));
     hitBall = null;
   }
-  // ----- Skill and celebration. A bank shot: pollen that reached its bud only by bouncing off
-  // the rim, touching no other bud on the way, earns a pollen (twice a turn at most). A chain:
+  // ----- Skill and celebration. A trick shot: a bud bloomed by pollen that has bounced off a
+  // mushroom earns a pollen (twice a turn at most). It replaced a bank shot off the rim, which a
+  // player couldn't aim for: every launch leaves the basket straight out, so it meets the rim
+  // head-on and comes straight back (owner feedback, 2026-09-30). A chain:
   // the 7th, 11th, 15th… bloom of one launch bursts into golden seeds that fly out and plant a
   // flower in the garden. A chain rewards the garden, not the run: seeds that hit buds made runs
   // 65% longer, and a pollen per chain still made them 60% longer (bot runs, ticket 12).
   // Other moments get their own small celebrations: a bloom count that grows during a shot, a
   // close call near Erwu, a filled petal, a new best mid-run, and a cleared board. -----
   let hitBall = null, combo = null, runBestShown = false;
-  const BANK_MAX = 2, CHAIN_FIRST = 7, CHAIN_EVERY = 4, STUBBORN_PAY = 3;
+  const TRICK_MAX = 2, CHAIN_FIRST = 7, CHAIN_EVERY = 4, STUBBORN_PAY = 3;
   function celebrateBloom(it, p) {
     if (it.stubborn) {
       // the stubborn bud gives in: its pollen, a gold burst and a delighted Erwu
@@ -3531,13 +3535,14 @@
     shot.blooms++;
     combo = { n: shot.blooms, t: 0, gold: false };
     const b = hitBall;
-    if (b && b.rim >= 1 && !(b.touches > 0)) {
-      // a bank shot
-      const paid = shot.banks < BANK_MAX;
-      shot.banks++;
-      if (paid) pending++;
+    if (b && b.boinged && shot.tricks < TRICK_MAX) {
+      // a trick shot, off a mushroom: each pollen counts once, and the first two of a turn pay
+      b.boinged = false;
+      const paid = true;
+      shot.tricks++;
+      pending++;
       bursts.push({ x: p.x, y: p.y, col: hexRgb(C.butter), t: 0 });
-      addFloat(p.x, p.y - p.r * 1.3, paid ? 'Banked! +1' : 'Banked!', 'honey', 1.05);
+      addFloat(p.x, p.y - p.r * 1.3, paid ? 'Trick shot! +1' : 'Trick shot!', 'honey', 1.05);
       [7, 11, 14].forEach((n, i) => tone(noteFreq(n), 0.03, 'triangle', 0.35, i * 0.06));
       haptic(2);
       cat.happy = Math.max(cat.happy, 0.9); cat.bounce = 1;
@@ -3686,6 +3691,7 @@
     return true;
   }
   function boing(it, b) {
+    b.boinged = true;   // this pollen has bounced off a mushroom: its next bloom is a trick shot
     it.wobV = (it.wobV || 0) + 9;
     it.pulse = 1;
     const now = performance.now();
@@ -6240,14 +6246,13 @@
   // icon painters: (g, size) on a square canvas, with the ground a little above the bottom
   const sprite = (key, name, w = 0.8, y = 0.86, x = 0.5) => (g, s) => paintPiece(g, key, name, s * x, s * y, s * w);
   const both = (...fs) => (g, s) => fs.forEach((f) => f(g, s));
-  const pickup = (kind, r = 0.34) => (g, s) => drawPickup({ kind, id: 3, born: -1e9, pulse: 0, wob: 0 }, performance.now(), g, { x: s / 2, y: s / 2, r: s * r });
-  // a pollen grain banking off the flower's edge: the rim, its dotted path, and the grain
-  const bank = (g, s) => {
-    g.strokeStyle = rgb(hexRgb(C.walnut), 0.7); g.lineWidth = s * 0.05; g.lineCap = 'round';
-    g.beginPath(); g.arc(s * 0.5, s * 1.55, s * 1.2, -Math.PI * 0.68, -Math.PI * 0.32); g.stroke();
-    g.strokeStyle = rgb(hexRgb(C.honey), 0.85); g.lineWidth = s * 0.03; g.setLineDash([s * 0.04, s * 0.05]);
-    g.beginPath(); g.moveTo(s * 0.14, s * 0.86); g.lineTo(s * 0.5, s * 0.38); g.lineTo(s * 0.8, s * 0.8); g.stroke(); g.setLineDash([]);
-    paintPiece(g, 'play', 'pollen', s * 0.82, s * 0.92, s * 0.24);
+  const pickup = (kind, r = 0.34, cx = 0.5, cy = 0.5) => (g, s) => drawPickup({ kind, id: 3, born: -1e9, pulse: 0, wob: 0 }, performance.now(), g, { x: s * cx, y: s * cy, r: s * r });
+  // a trick shot: pollen bouncing off a mushroom into a bud
+  const trick = (g, s) => {
+    pickup('mushroom', 0.2, 0.26, 0.66)(g, s);
+    g.strokeStyle = rgb(hexRgb(C.honey), 0.9); g.lineWidth = s * 0.03; g.setLineDash([s * 0.04, s * 0.05]); g.lineCap = 'round';
+    g.beginPath(); g.moveTo(s * 0.1, s * 0.14); g.lineTo(s * 0.3, s * 0.5); g.lineTo(s * 0.62, s * 0.36); g.stroke(); g.setLineDash([]);
+    paintPiece(g, 'play', 'bud-rose', s * 0.76, s * 0.62, s * 0.34);
   };
   const goldRing = (g, s) => { g.strokeStyle = C.honey; g.lineWidth = s * 0.045; g.setLineDash([s * 0.09, s * 0.06]); g.beginPath(); g.arc(s / 2, s * 0.5, s * 0.42, 0, TAU); g.stroke(); g.setLineDash([]); };
   const arrow = (g, s) => { g.strokeStyle = C.walnut; g.lineWidth = s * 0.035; g.lineCap = 'round'; g.beginPath(); g.moveTo(s * 0.44, s * 0.52); g.lineTo(s * 0.56, s * 0.52); g.moveTo(s * 0.52, s * 0.47); g.lineTo(s * 0.56, s * 0.52); g.lineTo(s * 0.52, s * 0.57); g.stroke(); };
@@ -6273,7 +6278,7 @@
       { title: 'Help the buds bloom', items: [
         { icon: sprite('erwu', 'peek', 0.84, 0.8), text: 'Pull back anywhere and let go to send pollen flying.' },
         { icon: both(sprite('play', 'bud-rose', 0.38, 0.72, 0.24), arrow, sprite('play', 'open-rose', 0.42, 0.74, 0.76)), text: 'Keep hitting a bud and it bursts into bloom.' },
-        { icon: sprite('erwu', 'swat', 0.9, 0.86), text: 'Buds creep closer. Erwu bats one away, but the next sends her off for a nap.' },
+        { icon: sprite('erwu', 'swat', 0.9, 0.86), text: 'Buds creep closer. Erwu bats one away each game, but the next sends her off for a nap.' },
       ] },
       { title: 'A bigger stream', items: [
         { icon: sprite('play', 'petal-pink', 0.9, 0.72), text: 'Blooms fill the big flower’s petals. Fill them all for a full bloom!' },
@@ -6293,7 +6298,7 @@
       { title: 'Little surprises', items: [
         { icon: pickup('dandelion', 0.36), text: 'Dandelion clock: every pollen through it flies off somewhere new.' },
         { icon: both(sprite('play', 'bud-tulip', 0.52, 0.8), goldRing), text: 'A bud in a gold ring is stubborn, but worth extra pollen.' },
-        { icon: bank, text: 'Bounce a shot off the edge for a bonus.' },
+        { icon: trick, text: 'Bounce off a mushroom into a bud for a bonus.' },
       ] },
       { title: 'Show off', items: [
         { icon: both(sprite('play', 'open-tulip', 0.42, 0.62, 0.3), sprite('play', 'open-poppy', 0.42, 0.62, 0.7), sprite('play', 'open-peony', 0.42, 0.98, 0.5)), text: 'Lots of blooms in one go send seeds to the garden.' },
