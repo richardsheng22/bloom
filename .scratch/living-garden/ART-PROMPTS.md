@@ -513,3 +513,22 @@ No orange outline, no other changes.
 ### Section 8f generation delivery
 
 Source assets generated; see [batch evidence and packing handoff](walk-candidates-review/batch-8f/README.md). The two diagonal sequences now have eight source frames each. Optional front/back touch-ups are included. Atlas packing and runtime adoption remain the next step described above.
+
+**Packed (2026-09-30).** All 16 diagonal frames and the touched-up front and back sheets are in the game.
+- She's drawn in one of five views, chosen by the direction she's walking:
+  - side-on, up to about 27° from level
+  - diagonal toward us or away, from about 27° to 72°
+  - straight toward us or away, beyond that
+
+  Each view has its own way in and out, so the view doesn't flicker.
+- The diagonal frames are mirrored when she faces left.
+- In 20 simulated minutes, her walking time was:
+  - side-on 34%
+  - diagonal toward us 28%, diagonal away 22%
+  - straight toward us 7%, straight away 8%
+
+What's left, none of it blocking:
+- **Some frames draw the legs short.** The new frames keep frame 1's head size exactly, but several draw the legs shorter. Toward frame 2's paws stop 51 px above frame 1's ground line, which is 9% of her height. Frames 4 and 6, and away frames 2, 4 and 5, are 3–8% short. Every frame is fitted to one height, so her head and paws always touch the same lines, and she's drawn slightly larger in those frames rather than bobbing. The fix is an edit per frame: "extend the legs so every planted paw reaches the same ground line as the attached frame 1; change nothing else".
+- **Three kept frames are a slightly different cat.** Toward frames 5 and 7 and away frame 3 came from earlier generations. Their proportions differ a little: frame 5 is heavier, and frame 7's head is a little bigger. Redo them from the anchor like the rest if it shows in play.
+- **The front view's head is about 13% larger** than the side and diagonal views' at the same height. It was like that before.
+

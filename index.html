@@ -3035,6 +3035,7 @@
       stride: gardenScene ? gardenScene.nest * (artImage('erwu') ? 1.25 : 0.5) : 26,
       // with front and back walking frames she walks straight up and down the lawn
       directional: !!(artImage('erwu') && ART.erwu.frames['walk-front-0'] && ART.erwu.frames['walk-back-0']),
+      diagonal: !!(artImage('erwu') && ART.erwu.frames['walk-diag-front-0'] && ART.erwu.frames['walk-diag-back-0']),
       beds: garden.patches.map((p) => ({ id: p.id, anchor: p.anchor, planted: !!(p.flower && p.anchor), stage: BloomBeds.stage(p), flower: p.flower })),
       objects: garden.objects, visitors: flies.filter((f) => !f.leaving).map((f) => ({ id: f.id, x: f.x, y: f.y, landed: f.rest > 0 }))
         .concat(visitorShown && !visitorShown.leaving && !visitorShown.high && VISITOR_LOOK[visitorShown.kind].ground ? [{ id: 'visitor', x: visitorShown.x, y: visitorShown.y, landed: true }] : []) };
@@ -5358,9 +5359,11 @@
   let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null, turnFacing = { facing: 1, since: -1e9 };
   const TURN_MS = 200;
   // Toward and away from us, the sheets hold half a stride (four frames); the other half is the
-  // same frames mirrored, which swaps her left and right paws.
-  const WALK_FRAMES = { side: 8, front: 8, back: 8 }, WALK_HALF = { front: 4, back: 4 };
-  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${i % WALK_HALF[view]}`;
+  // same frames mirrored, which swaps her left and right paws. The diagonal views face right like
+  // the side walk, and are mirrored the same way when she faces left.
+  const WALK_FRAMES = { side: 8, 'diag-front': 8, 'diag-back': 8, front: 8, back: 8 }, WALK_HALF = { front: 4, back: 4 };
+  const sideways = (view) => view === 'side' || view === 'diag-front' || view === 'diag-back';
+  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${WALK_HALF[view] ? i % WALK_HALF[view] : i}`;
   const walkLayer = (view, i, weight, flip) => ({ name: walkName(view, i), weight, flip: WALK_HALF[view] && i >= WALK_HALF[view] ? !flip : flip });
   function paintWalk(layers, x, y, h, alpha) {
     const parts = layers.filter((l) => l.weight > 0.01 && ART.erwu.frames[l.name]).map((l) => {
@@ -5394,25 +5397,26 @@
       const view = erwu.view && ART.erwu.frames[walkName(erwu.view, 0)] ? erwu.view : 'side';
       if (view !== walkView.view) walkView = { view, from: walkView.view, since: now };
       const n = WALK_FRAMES[view], phase = ((erwu.phase / TAU) % 1 + 1) % 1 * n, i = reduced ? 0 : Math.floor(phase) % n;
-      const flip = view === 'side' && erwu.facing < 0, u = Math.max(0, (phase % 1 - 0.5) / 0.5), m = reduced ? 0 : u * u * (3 - 2 * u);
+      const flip = sideways(view) && erwu.facing < 0, u = Math.max(0, (phase % 1 - 0.5) / 0.5), m = reduced ? 0 : u * u * (3 - 2 * u);
       let layers = [walkLayer(view, i, 1 - m, flip), walkLayer(view, (i + 1) % n, m, flip)];
       const k = reduced ? 1 : Math.min(1, (now - walkView.since) / 220);
       if (k < 1 && walkView.from) {
         const from = walkView.from, fi = Math.floor(((erwu.phase / TAU) % 1 + 1) % 1 * WALK_FRAMES[from]) % WALK_FRAMES[from];
-        layers = [walkLayer(from, fi, 1 - k, from === 'side' && erwu.facing < 0), walkLayer(view, i, k, flip)];
+        layers = [walkLayer(from, fi, 1 - k, sideways(from) && erwu.facing < 0), walkLayer(view, i, k, flip)];
       }
       // turning round side-on: she narrows to a sliver and widens again the other way, rather
       // than mirroring in a single frame
       if (erwu.facing !== turnFacing.facing) turnFacing = { facing: erwu.facing, since: now };
-      const tk = reduced ? 1 : Math.min(1, (now - turnFacing.since) / TURN_MS), sx = view === 'side' && tk < 1 ? Math.max(0.12, Math.abs(Math.cos(tk * Math.PI))) : 1;
+      const tk = reduced ? 1 : Math.min(1, (now - turnFacing.since) / TURN_MS), sx = sideways(view) && tk < 1 ? Math.max(0.12, Math.abs(Math.cos(tk * Math.PI))) : 1;
       if (sx < 1 && tk < 0.5) for (const l of layers) l.flip = !l.flip;
       ctx.save(); ctx.globalAlpha *= alpha;
-      groundShadow(ctx, erwu.at.x, erwu.at.y, (view === 'side' ? side[2] * unit * 0.8 * (0.5 + sx / 2) : walkH * 0.75), 0.2);
+      const fw = ART.erwu.frames[walkName(view, i)], across = view === 'side' ? side[2] * unit : fw[2] * walkH / fw[3];
+      groundShadow(ctx, erwu.at.x, erwu.at.y, (sideways(view) ? across * 0.8 * (0.5 + sx / 2) : walkH * 0.75), 0.2);
       ctx.restore();
       ctx.save(); ctx.translate(erwu.at.x, 0); ctx.scale(sx, 1); ctx.translate(-erwu.at.x, 0);
       paintWalk(layers, erwu.at.x, erwu.at.y, walkH, alpha);
       ctx.restore();
-      lastWalk = view === 'side' ? null : { ...walkLayer(view, i, 1, false), t: now };
+      lastWalk = view === 'side' ? null : { ...walkLayer(view, i, 1, flip), t: now };
       return true;
     }
     let name = paintedErwuPose(pose, nest), floor = erwu.at.y;

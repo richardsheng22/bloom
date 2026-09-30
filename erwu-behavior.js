@@ -247,9 +247,12 @@
   // How she moves (see .scratch/erwu-walk-review): she gathers speed over her first steps and
   // brakes into her last, steers along her path with a limited turning rate instead of snapping
   // at corners, slows through a sharp turn, and only swaps the way she faces when the new way
-  // is clearly established. Seen walking up or down the lawn she's drawn from the front or back.
+  // is clearly established. Seen walking up or down the lawn she's drawn from the front or back;
+  // with diagonal views too, those are kept for walking nearly straight up or down, and each
+  // band (side, diagonal, straight) has its own way in and out so the view doesn't flicker.
+  // The thresholds are the sine of her heading: diagonal from about 27°, straight from 72°.
   const GAIT = Object.freeze({ accel: 0.55, brake: 0.5, turnRate: 4.2, lookAhead: 14, minSpeed: 6,
-    flipAt: 0.3, viewIn: 0.8, viewOut: 0.62 });
+    flipAt: 0.3, viewIn: 0.8, viewOut: 0.62, diagIn: 0.45, diagOut: 0.31, straightIn: 0.95, straightOut: 0.89 });
   // Add an action after whatever she's doing now (for short scripted sequences).
   function queue(st, name, w, arg, reason) {
     const steps = plan(st, name, w, arg);
@@ -362,10 +365,18 @@
     // (side, or from the front or back) has its own hysteresis so it doesn't flicker
     const cx = Math.cos(st.heading), sy = Math.sin(st.heading);
     if (Math.abs(cx) > GAIT.flipAt && Math.sign(cx) !== st.facing) st.facing = cx > 0 ? 1 : -1;
-    if (w.directional) {
-      if (st.view !== 'front' && st.view !== 'back') { if (Math.abs(sy) > GAIT.viewIn) st.view = sy > 0 ? 'front' : 'back'; }
-      else if (Math.abs(sy) < GAIT.viewOut) st.view = 'side';
-      else st.view = sy > 0 ? 'front' : 'back';
+    const a = Math.abs(sy), toward = sy > 0 ? 'front' : 'back';
+    if (w.directional && w.diagonal) {
+      let band = st.view === 'front' || st.view === 'back' ? 2 : /^diag-/.test(st.view) ? 1 : 0;
+      if (band === 0 && a > GAIT.diagIn) band = 1;
+      if (band === 1 && a > GAIT.straightIn) band = 2;
+      if (band === 2 && a < GAIT.straightOut) band = 1;
+      if (band === 1 && a < GAIT.diagOut) band = 0;
+      st.view = ['side', 'diag-' + toward, toward][band];
+    } else if (w.directional) {
+      if (st.view !== 'front' && st.view !== 'back') { if (a > GAIT.viewIn) st.view = toward; }
+      else if (a < GAIT.viewOut) st.view = 'side';
+      else st.view = toward;
     } else st.view = 'side';
   }
   function pointAhead(from, path, L) {

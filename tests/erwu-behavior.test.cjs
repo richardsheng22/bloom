@@ -253,6 +253,23 @@ test('walking straight down the lawn she is seen from the front, and up it from 
   assert.ok(Math.max(...xs) - Math.min(...xs) < 6, 'straight, not a zigzag');
   assert.ok(down.length >= 0);
 });
+test('with diagonal views, a slanting walk is seen at three-quarters, straight up or down from the front or back', () => {
+  const views = (extra, to) => {
+    const wd = world(358, 400, { directional: true, ...extra }), st = E.create(3); st.at = { x: -60, y: -60 }; st.pose = 'sit';
+    st.steps = [{ do: 'walk-free', to }, { do: 'pose', pose: 'sit', dur: 60 }];
+    const seen = [];
+    for (let i = 0; i < 900 && !(st.step && st.step.do === 'pose'); i++) { E.update(st, 1 / 60, wd); if (st.pose === 'walk') seen.push(st.view); }
+    return seen;
+  };
+  const slant = views({ diagonal: true }, { x: 40, y: 40 }), up = views({ diagonal: true }, { x: 40, y: -140 });
+  assert.ok(slant.includes('diag-front') && !slant.includes('front') && !slant.includes('back'), [...new Set(slant)].join());
+  assert.ok(up.includes('diag-back'), [...new Set(up)].join());
+  assert.ok(views({ diagonal: true }, { x: -58, y: 80 }).includes('front'), 'straight down is seen from the front');
+  // the view changes only a few times on one straight walk: no flicker between bands
+  const changes = slant.filter((v, i) => i && v !== slant[i - 1]).length;
+  assert.ok(changes <= 2, `${changes} view changes`);
+  assert.ok(!views({}, { x: 40, y: 40 }).some((v) => /^diag-/.test(v || '')), 'no diagonal views without the frames');
+});
 test('rounded corners never cut into the rose bed or leave the lawn', () => {
   for (const directional of [false, true]) {
     const wd = world(358, 400, { directional }), pl = wd.places;

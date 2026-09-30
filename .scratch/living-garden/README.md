@@ -70,7 +70,7 @@ Because the owner's garden has blue jays and cottontails (North America), the wh
 | 06 | Implemented with Erwu's reactions; the owner's look at the cottontail and blue jay remains |
 | 07 | Implemented and balanced against bot runs |
 | 08 | Done: seasonal backdrops and rose beds |
-| 09–10 | Done. Erwu's front and back walks packed (half-strides mirrored); the diagonals are still being generated (ART-PROMPTS 8f) |
+| 09–10 | Done. Erwu walks in five views: side, diagonal toward and away, straight toward and away (ART-PROMPTS 8f) |
 | 11 | Synthesised soundscape implemented; bird calls would need recordings |
 | [12](12-skill-shots-and-celebrations.md) | Bank shots, chain blooms, and celebrations on existing moments |
 

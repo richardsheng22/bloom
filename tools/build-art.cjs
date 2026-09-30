@@ -15,7 +15,8 @@ const root = path.resolve(__dirname, '..');
 // Options: `split` cuts a region into its separate parts (the stepping stones); `scale`
 // shrinks pieces drawn small in the game; `ref` is a bed's rim width in source pixels, so
 // beds from different sheets are drawn at one size; `collect`/`match` recolour a sheet to the
-// colour of another (the walk was generated paler than the poses).
+// colour of another (the walk was generated paler than the poses); `fit` scales every piece
+// to one height.
 const ERWU = [
   { file: 'erwu-sprite-v2.png', collect: 'erwu', regions: {
     'sit-front': [34, 42, 256, 272], 'sit-drowsy': [318, 42, 240, 272], 'sit-content': [578, 42, 240, 272], curl: [830, 126, 280, 188],
@@ -34,6 +35,11 @@ const ERWU = [
   // scaled to one height and anchored on its torso.
   { file: 'erwu-walk-front-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-front-${i}`) } },
   { file: 'erwu-walk-back-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-back-${i}`) } },
+  // walking diagonally toward us and away, facing right: one image per frame, each turned from
+  // the side walk's frame of the same number (so the legs keep its order), coloured and anchored
+  // like the other walks and `fit` to the side walk's height
+  ...['front', 'back'].flatMap((v) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+    { file: `erwu-diag-${v}-${n}.png`, match: 'erwu', walk: true, fit: 240, grid: { cols: 1, rows: 1, names: [`walk-diag-${v}-${n - 1}`] } }))),
   // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
   // rim there, since her own basket's front is drawn over her
   { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
@@ -224,7 +230,7 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
         }
       }
       for (const p of made) {
-        const k = sheet.scale || 1;
+        const k = sheet.fit ? sheet.fit / p.h : sheet.scale || 1;
         if (k !== 1) {
           const w = Math.round(p.w * k), h = Math.round(p.h * k), sc = document.createElement('canvas'); sc.width = w; sc.height = h;
           const sg = sc.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(p.canvas, 0, 0, w, h);
