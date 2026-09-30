@@ -215,8 +215,8 @@
   .ff-wrap { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
   #r-guide { width: 40px; height: 40px; font-size: 18px; }
   #ff {
-    height: 38px;
-    padding-inline: 13px;
+    height: 44px;
+    padding-inline: 11px;
     border: 1px solid var(--hairline);
     border-radius: 19px;
     background: var(--chip);
@@ -671,7 +671,7 @@
     </div>
     <p id="hint" aria-live="polite">Pull back anywhere and let go to launch</p>
     <div class="ff-wrap"><button class="icon-btn guide-btn" id="r-guide" aria-label="How to play" title="How to play" aria-haspopup="dialog">?</button><button id="ff" aria-pressed="false" hidden>
-      <svg viewBox="0 0 30 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="12 4"><path d="M2 8h15a4 4 0 1 0-4-4"/><path d="M2 14h21a3.5 3.5 0 1 1-3.5 3.5"/><path d="M5 11h8"/></svg>Breeze</button></div>
+      <svg viewBox="0 0 30 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="12 4"><path d="M2 8h15a4 4 0 1 0-4-4"/><path d="M2 14h21a3.5 3.5 0 1 1-3.5 3.5"/><path d="M5 11h8"/></svg><span>Speed · 1×</span></button></div>
   </footer>
 </div>
 
@@ -1012,7 +1012,8 @@
   let best = store.get('best', 0);
   let state = 'ready';  // ready | flying | advancing | over
   let presentation = 'run', gardenRequested = false;
-  let shot = null, aim = null, keyAim = -Math.PI / 2, lastAim = -Math.PI / 2, timeScale = 1;
+  let shot = null, aim = null, keyAim = -Math.PI / 2, lastAim = -Math.PI / 2, timeScale = store.get('speed', 1) === 3 ? 3 : 1;
+  let speedDiscovered = store.get('speedSeen', false) === true, shotRandom = Math.random;
   let bloomFx = 0, swatFx = 0, stamenFx = 0;
   const freshCat = () => ({ bounce: 0, mood: 'idle', idle: 0, blink: 0, nextBlink: 3, bat: 0, batA: 0, happy: 0, yawn: 0, yawned: false, twitch: 0, near: null });
   let cat = freshCat();
@@ -2981,7 +2982,10 @@
     lastTier = tier;
     el.garden.setAttribute('aria-label', `Garden: ${tier} of 5`);
     el.paw.setAttribute('aria-label', pawReady ? "Erwu's swat is ready" : "Erwu's swat is used up until the next full bloom");
-    el.ff.hidden = !(state === 'flying' && shot && shot.t > 2.5);
+    if (!speedDiscovered && state === 'flying' && shot?.t > 2.5) { speedDiscovered=true;store.set('speedSeen',true); }
+    el.ff.hidden = !speedDiscovered;
+    el.ff.querySelector('span').textContent = `Speed · ${timeScale}×`;
+    el.ff.setAttribute('aria-label', `Playback speed ${timeScale} times. Switch to ${timeScale===1?3:1} times.`);
     el.ff.setAttribute('aria-pressed', String(timeScale > 1));
     el.visitGarden.setAttribute('aria-pressed', String(gardenRequested));
     el.visitGarden.setAttribute('aria-label', gardenRequested ? 'Cancel return to garden after this turn' : 'Visit the garden');
@@ -3029,7 +3033,8 @@
     petalNext = false;
     gardenNote = '';
     contextualHint=null;hintSeconds=0;
-    timeScale = 1;
+    shotRandom = seeded(Math.floor(Math.random()*0x7fffffff));
+    shot.accumulator = 0;
     cat.mood = 'watch';
     stamenFx = 1; launchFx = 1;
     cat.bat = 1; cat.batA = angle;
@@ -3045,7 +3050,7 @@
     ballCount += pending; pending = 0;
     const hits = shot.hits;
     tendGarden();
-    shot = null; timeScale = 1; cat.mood = 'idle';
+    shot = null; cat.mood = 'idle';
     const word = hits >= 120 ? 'Magnificent' : hits >= 60 ? 'Gorgeous' : hits >= 25 ? 'Lovely' : null;
     if (word) { banner(word, `${hits} hits`); hearts(hits >= 60 ? 3 : 1); cat.happy = hits >= 60 ? 2.2 : 1.6; cat.bounce = 1; }
     updateHud();
@@ -3816,15 +3821,15 @@
             powerHit(it, bee.sting || 1, leanFrom(bee.x, it));
             bee.cd = 0.28;
             if (it.dead) bee.pick++;
-            const a = Math.atan2(bee.y - ty, bee.x - tx) + (Math.random() - 0.5) * 1.2;
+            const a = Math.atan2(bee.y - ty, bee.x - tx) + (shotRandom() - 0.5) * 1.2;
             bee.vx = Math.cos(a) * R * 1.3; bee.vy = Math.sin(a) * R * 1.3;
           }
         } else bee.life = Math.min(bee.life, 0);
       }
       const dx = tx - bee.x, dy = ty - bee.y, d = Math.hypot(dx, dy) || 1, sp = R * (bee.life > 0 ? 1.5 : 1.8);
       const k = Math.min(1, dt * (bee.cd > 0.15 ? 1.2 : 4));
-      bee.vx += (dx / d * sp - bee.vx) * k + (Math.random() - 0.5) * R * 4 * dt;
-      bee.vy += (dy / d * sp - bee.vy) * k + (Math.random() - 0.5) * R * 4 * dt;
+      bee.vx += (dx / d * sp - bee.vx) * k + (shotRandom() - 0.5) * R * 4 * dt;
+      bee.vy += (dy / d * sp - bee.vy) * k + (shotRandom() - 0.5) * R * 4 * dt;
       bee.x += bee.vx * dt; bee.y += bee.vy * dt;
       const rr = Math.hypot(bee.x, bee.y);
       if (rr > R - ballR) { bee.x *= (R - ballR) / rr; bee.y *= (R - ballR) / rr; }
@@ -3869,7 +3874,7 @@
     haptic(2);
   }
   function scatterBall(b, ck) {
-    const a = Math.atan2(b.vy, b.vx) + (Math.random() * 2 - 1) * SCATTER, sp = Math.hypot(b.vx, b.vy);
+    const a = Math.atan2(b.vy, b.vx) + (shotRandom() * 2 - 1) * SCATTER, sp = Math.hypot(b.vx, b.vy);
     b.vx = Math.cos(a) * sp; b.vy = Math.sin(a) * sp;
     ck.hits++; ck.pulse = 1;
     for (let i = 0; i < 2 && !reduced && particles.length < 420 && ck.hits <= CLOCK_SEEDS * 2; i++) {
@@ -4040,6 +4045,32 @@
   const angleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
   // ---------- Update ----------
+  const SHOT_STEP = 1/120;
+  function stepShot(dt) {
+    if(!shot || state!=='flying')return;
+    shot.t += dt;
+    shot.timer -= dt;
+    while (shot.launched < shot.toLaunch && shot.timer <= 0) {
+      const k = shot.petal ? shot.launched % 3 : 0, a = shot.angle + k * TAU / 3;
+      const r0 = coreR + ballR + 1, speed = speedNow();
+      balls.push({x:Math.cos(a)*r0,y:Math.sin(a)*r0,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,out:false,rim:0,homing:false});
+      shot.launched++;shot.timer+=.07;
+    }
+    // The safety limit is simulation time, including at 3x. It cannot buy extra hits.
+    if(shot.t>=22){balls.forEach(b=>b.homing=true);bees.forEach(b=>b.life=Math.min(b.life,0));}
+    stepBalls(dt);updateBees(dt);updateBeams(dt);updateShowers(dt);
+    if(shot.t>2.5 && !speedDiscovered)updateHud();
+    if(shot.launched>=shot.toLaunch && balls.length===0 && !powersBusy())endTurn();
+    else if(shot && shot.hits!==shot.shownHits){shot.shownHits=shot.hits;updateHud();}
+  }
+  function tickTweens(dt) {
+    for (const tw of [...tweens]) {
+      tw.t += dt;
+      const p = Math.min(1, tw.t / tw.dur);
+      tw.fn(p);
+      if (p >= 1) { tweens.splice(tweens.indexOf(tw), 1); tw.done && tw.done(); }
+    }
+  }
   function update(dt) {
     for (const timer of [...presentationTimers]) {
       timer.left -= dt;
@@ -4059,12 +4090,7 @@
       gardenSaveTimer += dt;
       if (gardenSaveTimer >= 15) { gardenSaveTimer = 0; saveGarden(); }
     }
-    for (const tw of [...tweens]) {
-      tw.t += dt;
-      const p = Math.min(1, tw.t / tw.dur);
-      tw.fn(p);
-      if (p >= 1) { tweens.splice(tweens.indexOf(tw), 1); tw.done && tw.done(); }
-    }
+    if(state!=='flying') tickTweens(dt);
 
     // Aim eases toward the thumb so small jitters never snap it around.
     if (aim && aim.target != null) {
@@ -4077,24 +4103,13 @@
     updateHint(dt);
 
     if (state === 'flying' && shot) {
-      const sdt = dt * timeScale;
-      shot.t += dt;
-      shot.timer -= sdt;
-      while (shot.launched < shot.toLaunch && shot.timer <= 0) {
-        const k = shot.petal ? shot.launched % 3 : 0;
-        const a = shot.angle + k * TAU / 3;
-        const r0 = coreR + ballR + 1, speed = speedNow();
-        balls.push({ x: Math.cos(a) * r0, y: Math.sin(a) * r0, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, out: false, rim: 0, homing: false });
-        shot.launched++;
-        shot.timer += 0.07;
+      shot.accumulator += dt*timeScale;
+      // Equal simulation steps and RNG consumption at both playback speeds.
+      while(shot && state==='flying' && shot.accumulator+1e-9>=SHOT_STEP){
+        shot.accumulator-=SHOT_STEP;
+        tickTweens(SHOT_STEP);
+        stepShot(SHOT_STEP);
       }
-      let left = sdt;
-      while (left > 0) { const d = Math.min(left, 1 / 90); stepBalls(d); left -= d; }
-      updateBees(sdt); updateBeams(sdt); updateShowers(sdt);
-      if (shot.t > 22) { balls.forEach((b) => (b.homing = true)); bees.forEach((b) => (b.life = Math.min(b.life, 0))); }
-      if (shot.t > 2.5 && el.ff.hidden) updateHud();
-      if (shot.launched >= shot.toLaunch && balls.length === 0 && !powersBusy()) endTurn();
-      else if (shot && shot.hits !== shot.shownHits) { shot.shownHits = shot.hits; updateHud(); }
     }
 
     for (const it of items) {
@@ -6320,7 +6335,7 @@
   el.scene.addEventListener('lostpointercapture', () => { scenePress = null; });
   window.addEventListener('blur', clearAim);
 
-  el.ff.addEventListener('click', () => { timeScale = timeScale > 1 ? 1 : 3; updateHud(); });
+  el.ff.addEventListener('click', () => { timeScale = timeScale > 1 ? 1 : 3; store.set('speed',timeScale); updateHud(); });
   el.sound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
   el.tSound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
   // ----- How to play: two short picture guides, the garden's and the play's, a few pages each.
@@ -6383,6 +6398,10 @@
         { icon: pickup('dandelion', 0.36), text: 'Dandelion clock: every pollen through it flies off somewhere new.' },
         { icon: both(sprite('play', 'bud-tulip', 0.52, 0.8), goldRing), text: 'A bud in a gold ring is stubborn, but worth extra pollen.' },
         { icon: bank, text: 'Bounce a shot off the edge for a bonus.' },
+      ] },
+      { title: 'At your pace', items: [
+        { icon: pickup('orb', 0.42), text: 'On a longer shot, Speed appears below. Choose 1× or 3×, including before your next shot. Your choice is remembered.' },
+        { icon: sprite('erwu', 'peek', 0.84, 0.8), text: 'Help pauses the shot. Close it whenever you’re ready to carry on.' },
       ] },
       { title: 'Show off', items: [
         { icon: both(sprite('play', 'open-tulip', 0.42, 0.62, 0.3), sprite('play', 'open-poppy', 0.42, 0.62, 0.7), sprite('play', 'open-peony', 0.42, 0.98, 0.5)), text: 'Lots of blooms in one go send seeds to the garden.' },
