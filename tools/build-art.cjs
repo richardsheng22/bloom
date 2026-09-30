@@ -32,15 +32,15 @@ const ERWU = [
   } },
   // side-on, two rows of four: one stride
   { file: V3('walk-side'), match: 'erwu', walk: true, grid: { cols: 4, rows: 2, names: frames('walk-') } },
-  // toward us, away, and diagonally toward and away (facing right): eight frames each, drawn as a
-  // whole stride, so the game plays them as they are rather than mirroring half of them
-  { file: V3('walk-front'), match: 'erwu', walk: true, fit: 240, anchorTop: 0.3, grid: { cols: 4, rows: 2, names: frames('walk-front-') } },
-  { file: V3('walk-back'), match: 'erwu', walk: true, fit: 240, anchorTop: 0.3, grid: { cols: 4, rows: 2, names: frames('walk-back-') } },
-  { file: V3('walk-diag-front'), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames('walk-diag-front-') } },
-  { file: V3('walk-diag-back'), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames('walk-diag-back-') } },
-  // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
-  // rim there, since her own basket's front is drawn over her
-  { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
+  // Straight views use a centred-tail half stride; the renderer mirrors it deterministically.
+  ...['front', 'back'].map((view) => ({ file: V3(`walk-${view}`), match: 'erwu', walk: true, fit: 240,
+    anchorTop: 0.3, grid: { cols: 4, rows: 1, names: frames(`walk-${view}-`).slice(0, 4) } })),
+  // Each diagonal source is one frame: first four exact crops, last four opposite-leg edits.
+  ...['front', 'back'].flatMap((view) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+    file: V3(`diag-${view}-${n}`), match: 'erwu', walk: true, fit: 240,
+    grid: { cols: 1, rows: 1, names: [`walk-diag-${view}-${n - 1}`] },
+  }))),
+  { file: V3('basket-actions'), match: 'erwu', grid: { cols: 2, rows: 1, names: ['swat', 'delighted'] } },
 ];
 // The living-garden sheets (see .scratch/living-garden/ART-PROMPTS.md). Grid sheets are cut
 // by `grid`: every shape on the sheet belongs to the cell its centre falls in, so a tall grass
