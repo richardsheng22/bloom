@@ -5,13 +5,16 @@ const S = require('../garden-sound.js');
 test('silent when sound is off or the game is hidden', () => {
   for (const o of [{ on: false }, { hidden: true }]) {
     const m = S.mix({ season: 'summer', part: 'day', view: 'garden', ...o });
-    assert.ok(['fountain', 'breeze', 'crickets', 'drops', 'dropRate', 'gust'].every((k) => m[k] === 0));
+    assert.ok(['breeze', 'crickets', 'drops', 'dropRate', 'gust'].every((k) => m[k] === 0));
   }
 });
-test('the fountain trickles except in winter, when it is iced over', () => {
-  assert.ok(S.mix({ season: 'summer', part: 'day', view: 'garden' }).fountain > 0);
+test('the fountain is only an occasional droplet, and still in winter, when it is iced over', () => {
+  const s = S.mix({ season: 'summer', part: 'day', view: 'garden' });
+  assert.ok(s.drops > 0 && s.dropRate > 0 && s.dropRate <= 1, 'a droplet now and then, not a steady stream');
+  assert.equal(s.fountain, undefined, 'no steady fountain hiss');
+  assert.ok(S.mix({ season: 'summer', part: 'day', view: 'run' }).dropRate < s.dropRate, 'fewer during a run');
   const w = S.mix({ season: 'winter', part: 'day', view: 'garden' });
-  assert.equal(w.fountain, 0); assert.equal(w.drops, 0); assert.ok(w.breeze > 0);
+  assert.equal(w.drops, 0); assert.ok(w.breeze > 0);
 });
 test('crickets on summer evenings and nights, fewer in autumn, none by day or in spring', () => {
   const c = (season, part) => S.mix({ season, part, view: 'garden' }).crickets;
@@ -21,7 +24,7 @@ test('crickets on summer evenings and nights, fewer in autumn, none by day or in
 });
 test('a run plays the garden more quietly, and nothing is ever louder than the notes', () => {
   const g = S.mix({ season: 'summer', part: 'night', view: 'garden' }), r = S.mix({ season: 'summer', part: 'night', view: 'run' });
-  for (const k of ['fountain', 'breeze', 'crickets', 'drops']) { assert.ok(r[k] < g[k]); assert.ok(g[k] < 0.03); }
+  for (const k of ['breeze', 'crickets', 'drops']) { assert.ok(r[k] < g[k]); assert.ok(g[k] < 0.03); }
 });
 test('the breeze comes in occasional gusts with quiet between, rarer during a run', () => {
   const g = S.mix({ season: 'autumn', part: 'day', view: 'garden' }), r = S.mix({ season: 'autumn', part: 'day', view: 'run' });

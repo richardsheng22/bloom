@@ -7,7 +7,11 @@
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
   // At full level in the garden; a run plays the same garden more quietly beneath the notes.
-  const LEVEL = Object.freeze({ fountain: 0.014, breeze: 0.009, crickets: 0.0045, drops: 0.006 });
+  // The fountain is heard only as a droplet now and then: a steady band of hiss, pulsing to
+  // sound like bubbling, read as a constant shuffle (owner feedback, 2026-09-30), so it's gone.
+  const LEVEL = Object.freeze({ breeze: 0.009, crickets: 0.0045, drops: 0.006 });
+  // droplets a second, in the garden and during a run
+  const DROPS = Object.freeze({ garden: 0.5, run: 0.25 });
   const RUN = 0.4;
   // The breeze isn't a constant rustle: it comes as an occasional gust through the grass, with
   // quiet between (seconds between one gust and the next, and how long one lasts). During a run
@@ -17,7 +21,7 @@
   // `view`: garden|run. Returns layer gains, drop rate (per second), how strong a gust gets, and
   // the gusts' spacing and length.
   function mix({ season, part, view, on = true, hidden = false }) {
-    const off = { fountain: 0, breeze: 0, crickets: 0, drops: 0, dropRate: 0, gust: 0, every: GUSTS.garden.every, lasts: GUSTS.garden.lasts };
+    const off = { breeze: 0, crickets: 0, drops: 0, dropRate: 0, gust: 0, every: GUSTS.garden.every, lasts: GUSTS.garden.lasts };
     if (!on || hidden) return off;
     const k = view === 'run' ? RUN : 1, gusts = view === 'run' ? GUSTS.run : GUSTS.garden;
     const frozen = season === 'winter';                  // the winter fountain stands still, iced over
@@ -25,15 +29,14 @@
     const breeze = { spring: 0.7, summer: 0.5, autumn: 0.9, winter: 1 }[season] ?? 0.6;
     const crickets = season === 'summer' && night ? 1 : season === 'autumn' && night ? 0.45 : 0;
     return {
-      fountain: frozen ? 0 : LEVEL.fountain * k * (night ? 0.8 : 1),
       breeze: LEVEL.breeze * k * (gusts.level || 1) * breeze * (night && !frozen ? 0.7 : 1),
       crickets: LEVEL.crickets * k * crickets,
       drops: frozen ? 0 : LEVEL.drops * k,
-      dropRate: frozen ? 0 : 2.5,
+      dropRate: frozen ? 0 : view === 'run' ? DROPS.run : DROPS.garden,
       // autumn and winter air comes in gusts; spring and summer air barely moves
       gust: { spring: 0.35, summer: 0.25, autumn: 0.7, winter: 0.8 }[season] ?? 0.4,
       every: gusts.every, lasts: gusts.lasts,
     };
   }
-  return { LEVEL, RUN, GUSTS, mix };
+  return { LEVEL, RUN, GUSTS, DROPS, mix };
 });
