@@ -742,6 +742,7 @@
 <script src="garden-visits.js"></script>
 <script src="garden-sound.js"></script>
 <script src="garden-state.js"></script>
+<script src="run-state.js"></script>
 <script src="garden-view.js"></script>
 <script src="erwu-behavior.js"></script>
 <script src="art-manifest.js"></script>
@@ -771,6 +772,9 @@
   };
 
   const CAT_NAME = 'Erwu';
+  const runStorage = { getItem: k => localStorage.getItem(k), setItem: (k,v) => localStorage.setItem(k,v), removeItem: k => localStorage.removeItem(k) };
+  const runSession = BloomRun.load(runStorage);
+  let runNeedsStart = false;
   const RINGS = 7;          // rings between the rim and Erwu
   const SECTORS = 10;       // slots per ring, and petals in the flower
   const STEP = Math.PI * 2 / SECTORS;
@@ -1154,7 +1158,7 @@
   function markReady() {
     state = 'ready';
     readySnapshot = serialize();
-    store.set('run3', readySnapshot);
+    BloomRun.save(runStorage, runSession, readySnapshot);
     saveGarden();
     if (gardenRequested) { showTitle(); return; }
     updateHud();
@@ -1211,6 +1215,11 @@
   let gardenSaveFailed = !!gardenSession.issue && gardenSession.issue !== 'recovered';
   let gardenSaveTimer = 0;
   function gardenMessage() {
+    if (runNeedsStart) return runSession.status === 'future'
+      ? 'This run needs a newer version. Your garden is here; you can play a temporary run.'
+      : 'This run could not be opened. Your garden is here; you can start a new run.';
+    if (!runSession.writable) return 'This run is temporary. Your previous run is kept untouched.';
+    if (runSession.issue) return 'This run could not be saved. You can keep playing here.';
     if (gardenSaveFailed) return gardenSession.writable
       ? 'This visit could not be saved. You can keep playing here.'
       : gardenSession.issue === 'unavailable' ? 'Garden saving is unavailable. You can still play here.'
@@ -2974,6 +2983,7 @@
     el.visitGarden.title = gardenRequested ? 'Cancel return to garden' : 'Visit the garden';
     if (gardenRequested) { el.hint.className = ''; el.hint.textContent = 'Garden after this turn · tap the leaf to cancel'; return; }
     if (restartArmed) return;
+    if (!runSession.writable || runSession.issue) { el.hint.className = ''; el.hint.textContent = gardenMessage(); return; }
     if (state === 'flying' && shot) {
       el.hint.className = 'count';
       el.hint.textContent = shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '';
@@ -3350,7 +3360,7 @@
     el.banner.replaceChildren();
     document.body.classList.add('titling');
     el.app.inert = true; el.app.setAttribute('aria-hidden', 'true');
-    el.play.textContent = state === 'over' ? 'Play again' : readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
+    el.play.textContent = runNeedsStart ? 'Start a new run' : state === 'over' ? 'Play again' : readySnapshot && readySnapshot.turn > 1 ? `Continue · turn ${readySnapshot.turn}` : 'Play';
     noteMilestones();
     el.tNote.textContent = gardenMessage();
     el.title.hidden = false; el.title.classList.remove('enter', 'leaving');
@@ -3381,7 +3391,8 @@
     document.body.dataset.view = presentation;
     el.title.hidden = true; document.body.classList.remove('titling');
     el.app.inert = false; el.app.removeAttribute('aria-hidden');
-    if (state === 'over') newGame();
+    if (runNeedsStart) { BloomRun.prepare(runStorage, runSession); runNeedsStart = false; newGame(); }
+    else if (state === 'over') newGame();
     if (soundOn && audio && audio.state === 'suspended') audio.resume();
     flies = []; particles = []; cat.mood = 'watch'; cat.happy = 0.7; cat.idle = 0;
     gardenDirty = true; updateHud(); offerIntro();
@@ -3443,7 +3454,7 @@
   function gameOver() {
     state = 'over'; readySnapshot = null;
     cat.mood = 'startled';
-    store.del('run3');
+    BloomRun.clear(runStorage, runSession);
     saveGarden();
     const isBest = turn > best;
     if (isBest) { best = turn; store.set('best', best); }
@@ -6384,7 +6395,7 @@
       // bed, and any run from an older garden set aside, since it can't feed this one
       delete garden.fresh;
       for (let i = 0; i < 3; i++) plant('grass', null, 0.15 + Math.random() * 0.1, 1.06, 1.3, null, true);
-      store.del('run3');
+      if (runSession.status === 'valid') BloomRun.clear(runStorage, runSession);
       saveGarden();
     }
     document.addEventListener('visibilitychange', () => {
@@ -6392,8 +6403,9 @@
       else { welcomeBack(); saveGarden(); updateHud(); if (presentation === 'garden' && greetPending) erwuEnter(); }
     });
     window.addEventListener('pagehide', saveGarden);
-    const run = (data && data.run) || store.get('run3', null);
-    if (run && run.v === 3 && run.items && run.items.length) { restore(run); markReady(); }
+    const decoded = data && data.run ? BloomRun.decodeRun(JSON.stringify(data.run)) : runSession;
+    if (decoded.status === 'valid') { restore(decoded.run); markReady(); }
+    else if (['invalid', 'future', 'unavailable'].includes(decoded.status)) { runNeedsStart = true; state = 'ready'; }
     else newGame();
     updateHud();
     showTitle();

@@ -14,7 +14,7 @@ const FILES = [
   'index.html',
   'manifest.webmanifest',
   // game modules, in the order index.html loads them
-  'garden-layout.js', 'garden-beds.js', 'garden-time.js', 'garden-visits.js', 'garden-sound.js', 'garden-state.js', 'garden-view.js', 'erwu-behavior.js', 'art-manifest.js',
+  'garden-layout.js', 'garden-beds.js', 'garden-time.js', 'garden-visits.js', 'garden-sound.js', 'garden-state.js', 'run-state.js', 'garden-view.js', 'erwu-behavior.js', 'art-manifest.js',
   // packed runtime art (built from the source sheets by tools/build-art.cjs)
   'assets/erwu.webp', 'assets/garden.webp', 'assets/play.webp', 'assets/visitors.webp',
   'assets/garden-plate-spring.webp', 'assets/garden-plate-summer.webp', 'assets/garden-plate-autumn.webp', 'assets/garden-plate-winter.webp',
