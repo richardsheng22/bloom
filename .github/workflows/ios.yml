@@ -20,7 +20,31 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env: { BLOOM_EVIDENCE: build/browser-evidence }
       - run: npm run test:offline
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: build/browser-evidence
+
+  art:
+    name: Erwu behaviour and rendering
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:art
+        env: { BLOOM_EVIDENCE: build/art-evidence }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: art-evidence
+          path: build/art-evidence
 
   ios:
     name: iOS app (Simulator, unsigned)

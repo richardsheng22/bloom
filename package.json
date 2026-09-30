@@ -6,6 +6,8 @@
   "scripts": {
     "stage": "node tools/stage-web.cjs",
     "test": "node --test tests/*.test.cjs",
+    "test:browser": "node tests/run-browser.cjs",
+    "test:art": "node tests/run-browser.cjs art",
     "test:offline": "node tests/offline-package-browser.cjs",
     "ios:sync": "npm run stage && cap sync ios"
   },

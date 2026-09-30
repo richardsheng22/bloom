@@ -59,3 +59,11 @@ The current art review additionally loads the painted atlas, renders its sixteen
 ## Offline package (iOS app)
 
 `npm run test:offline` (or `node tests/offline-package-browser.cjs`, with the same overrides) stages the package into `www/`, checks it holds exactly the listed files, then serves only `www/` and aborts every request to any other origin. It checks the bundled fonts and painted art load, plants a bed and plays a run. Evidence defaults to `/tmp/bloom-offline-package`.
+
+## Regression jobs
+
+`npm run test:browser` runs persistence, view/input, and the play regression suite.
+`npm run test:art` runs the slower Erwu behaviour/render suites separately. Both retain
+per-suite logs, console errors, Chromium/Node versions, final screenshots and traces in
+`build/browser-evidence` (override with `BLOOM_EVIDENCE`). CI uploads these even on failure.
+The persistence fixture uses explicit Toronto/UTC contexts and named calendar boundaries.

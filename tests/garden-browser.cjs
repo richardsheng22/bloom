@@ -10,7 +10,7 @@ const { KEY, gardenV4, plants: fixturePlants } = require('./fixtures/garden-v4.c
 const legacy = require('./fixtures/garden-v1.json');
 const root = path.resolve(__dirname, '..');
 const output = process.env.BLOOM_EVIDENCE || '/tmp/bloom-ticket01';
-const NOW = legacy.tended;
+const NOW = Date.parse('2026-09-29T16:00:00Z'); // noon in Toronto; both 0h and 12h stay in this garden day
 const HOUR = 3600000;
 const run = { v: 3, turn: 8, ballCount: 7, petalNext: true, pawReady: false, charges: [1,0,0,1,0,0,0,0,0,0],
   items: [{ kind: 'shape', sector: 2, ring: 5, hp: 3, maxHp: 3, sp: 0, ci: 0 }, { kind: 'orb', sector: 6, ring: 7 }] };
@@ -32,8 +32,9 @@ const oldSaves = { 'bloom.garden1': JSON.stringify(legacy), 'bloom.garden2': JSO
     browser = await chromium.launch({ headless: true, executablePath: process.env.BLOOM_CHROMIUM, args: ['--no-sandbox'] });
     // `hours` away from a garden last seen at NOW; `seed` is what's in storage beforehand.
     async function pageFor(hours, opts = {}) {
+      const base = opts.now ?? NOW;
       const page = await browser.newPage({ viewport: opts.small ? {width:320,height:568} : {width:390,height:844}, deviceScaleFactor:1,
-        isMobile:true, hasTouch:true, reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
+        timezoneId:opts.timezoneId || 'America/Toronto', isMobile:true, hasTouch:true, reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
       page.on('pageerror', e => errors.push(e.message));
       // No network dependency: use the existing system font fallbacks for this suite.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
@@ -45,7 +46,7 @@ const oldSaves = { 'bloom.garden1': JSON.stringify(legacy), 'bloom.garden2': JSO
           for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
         }
         if (opts.failWrites) Storage.prototype.setItem = function() { throw new DOMException('Quota exceeded','QuotaExceededError'); };
-      }, {seed,hours,NOW,opts});
+      }, {seed,hours,NOW:base,opts});
       await page.goto(`http://127.0.0.1:${server.address().port}`,{waitUntil:'load'});
       await page.waitForTimeout(1800);
       return page;
@@ -94,6 +95,22 @@ const oldSaves = { 'bloom.garden1': JSON.stringify(legacy), 'bloom.garden2': JSO
       }
       await page.close();
       console.log(`PASS ownership, growth on its own, resume, copy: ${hours}h`);
+    }
+    // Explicit local garden dates: less than 24 elapsed hours can cross 04:00.
+    for (const timezoneId of ['UTC', 'America/Toronto']) {
+      const offset = timezoneId === 'UTC' ? 'Z' : '-04:00';
+      for (const [clock, hours, days, date] of [['12:00',12,0,29],['03:30',1,1,28]]) {
+        const now = Date.parse(`2026-09-29T${clock}:00${offset}`);
+        const g = JSON.parse(gardenV4({now,bed:'daisy',growth:0.6}));
+        g.time.day = g.time.grown = Date.UTC(2026,8,date)/86400000;
+        const p = await pageFor(hours,{now,timezoneId,seed:{[KEY]:JSON.stringify(g),'bloom.run3':JSON.stringify(run)}});
+        const grown = (await data(p)).patches[0].growth;
+        assert.ok(Math.abs(grown-(0.6+days*0.03))<1e-9,`${timezoneId} ${clock} + ${hours}h`);
+        await p.reload();await p.waitForTimeout(300);
+        assert.equal((await data(p)).patches[0].growth,grown,'reopening never repeats growth');
+        await p.close();
+      }
+      console.log(`PASS explicit 04:00 boundary and no duplicate growth: ${timezoneId}`);
     }
     const small=await pageFor(168,{small:true,reduced:true});
     await small.screenshot({path:path.join(output,'week-away-small-reduced.png')});
