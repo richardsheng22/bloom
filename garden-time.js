@@ -18,7 +18,9 @@
   const finite = (n) => typeof n === 'number' && Number.isFinite(n);
 
   function dayIndex(t) {
-    const d = new Date(t - DAY_START_HOUR * 3600000);
+    const d = new Date(t);
+    // Shift the calendar date, not elapsed hours: DST days are not always 24 hours.
+    if (d.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
     return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
   }
   function fresh(now) {
@@ -35,7 +37,7 @@
   // nothing and moves nothing back, so no day's growth can ever be applied twice.
   function arrive(g, now) {
     const today = dayIndex(now), t = g.time;
-    if (today !== t.day) {
+    if (today > t.day) {
       const passed = Math.max(0, Math.min(30, today - t.day));
       for (const k of CHARACTER_KEYS) g.character[k] *= Math.pow(CHARACTER_DECAY, passed);
       t.day = today; t.turns = 0; t.planted = 0;
