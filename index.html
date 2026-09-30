@@ -207,7 +207,8 @@
     color: var(--ink);
     font-variant-numeric: tabular-nums lining-nums;
   }
-  .ff-wrap { display: flex; justify-content: flex-end; }
+  .ff-wrap { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+  #r-guide { width: 40px; height: 40px; font-size: 18px; }
   #ff {
     height: 38px;
     padding-inline: 13px;
@@ -297,23 +298,31 @@
   .over-garden b { display: block; font: 500 14px/1.15 var(--serif); color: var(--ink); }
   .over-garden small { display: block; font-size: 11.5px; color: var(--ink-soft); }
   #over { overflow-y: auto; }
-  /* How to play: a paper card over the garden, scrolling inside itself */
+  /* How to play: a small paged card of pictures, one for the garden and one for play */
   .t-guide { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 3; font: 600 19px/1 var(--serif); }
+  .guide-btn { font: 600 19px/1 var(--serif); }
   #guide { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: calc(env(safe-area-inset-top, 0px) + 14px) 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
     background: color-mix(in srgb, var(--ground) 70%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); animation: fade 320ms var(--ease-out); }
   #guide[hidden] { display: none; }
-  .guide-card { position: relative; width: min(100%, 440px); max-height: 100%; box-sizing: border-box; display: flex; flex-direction: column;
-    background: var(--arena); border: 1px solid var(--hairline); outline: 1.5px dashed var(--stitch); outline-offset: -9px; border-radius: 24px;
+  .guide-card { position: relative; width: min(100%, 360px); box-sizing: border-box; padding: 20px 20px 14px; text-align: center;
+    background: var(--arena); border: 1px solid var(--hairline); outline: 1.5px dashed var(--stitch); outline-offset: -9px; border-radius: 26px;
     box-shadow: 0 18px 50px rgba(110, 80, 50, 0.16), 0 2px 6px rgba(110, 80, 50, 0.08); animation: rise 420ms var(--ease-out); }
-  .guide-card h2 { margin: 0; padding: 20px 64px 8px 24px; font: 500 24px/1.15 var(--serif); color: var(--ink); }
-  #guide-close { position: absolute; right: 12px; top: 12px; font-size: 24px; }
-  .guide-body { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 0 24px 22px; text-align: left; color: var(--ink-soft); font-size: 14.5px; line-height: 1.45; }
-  .guide-body h3 { margin: 16px 0 4px; font: 500 17px/1.2 var(--serif); color: var(--ink); }
-  .guide-body p { margin: 0 0 6px; }
-  .guide-body ul { margin: 0 0 6px; padding-left: 18px; }
-  .guide-body li { margin: 3px 0; }
-  .guide-body b { color: var(--ink); font-weight: 600; }
-  .guide-body .lead { margin-top: 2px; font-size: 15px; }
+  #guide-close { position: absolute; right: 10px; top: 10px; font-size: 24px; }
+  .guide-card h2 { margin: 4px 44px 12px; font: 500 23px/1.15 var(--serif); color: var(--ink); text-wrap: balance; }
+  .guide-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; text-align: left; }
+  .guide-items li { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; min-height: 76px; }
+  .guide-items canvas, .guide-items .guide-svg { width: 76px; height: 76px; }
+  .guide-items .guide-svg { display: grid; place-items: center; }
+  .guide-items .guide-svg svg { width: 48px; height: 48px; }
+  .guide-items p { margin: 0; color: var(--ink); font-size: 15.5px; line-height: 1.35; text-wrap: pretty; }
+  .guide-nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 14px; }
+  .guide-nav .linkish { margin: 0; justify-self: start; }
+  .guide-nav .linkish.gone { visibility: hidden; }
+  #guide-next { justify-self: end; height: 44px; min-width: 96px; padding: 0 16px; font-size: 16px; }
+  .guide-dots { display: flex; gap: 5px; padding: 0 6px; }
+  @media (max-width: 360px) { .guide-card { padding-inline: 16px; } .guide-items li { grid-template-columns: 64px 1fr; } .guide-items canvas, .guide-items .guide-svg { width: 64px; height: 64px; } #guide-next { min-width: 84px; padding: 0 12px; } .guide-dots { gap: 4px; } .guide-dots i { width: 6px; height: 6px; } }
+  .guide-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--stitch); }
+  .guide-dots i.on { background: var(--bud-deep); }
   @media (max-height: 680px) {
     #over { padding: 12px; }
     .card { padding: 14px 20px 16px; }
@@ -656,7 +665,7 @@
       </div>
     </div>
     <p id="hint" aria-live="polite">Pull back anywhere and let go to launch</p>
-    <div class="ff-wrap"><button id="ff" aria-pressed="false" hidden>
+    <div class="ff-wrap"><button class="icon-btn guide-btn" id="r-guide" aria-label="How to play" title="How to play" aria-haspopup="dialog">?</button><button id="ff" aria-pressed="false" hidden>
       <svg viewBox="0 0 30 22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="12 4"><path d="M2 8h15a4 4 0 1 0-4-4"/><path d="M2 14h21a3.5 3.5 0 1 1-3.5 3.5"/><path d="M5 11h8"/></svg>Breeze</button></div>
   </footer>
 </div>
@@ -714,62 +723,13 @@
 
 <div id="guide" hidden>
   <div class="guide-card" role="dialog" aria-modal="true" aria-labelledby="guide-title">
-    <h2 id="guide-title">How Bloom works</h2>
-    <button id="guide-close" class="icon-btn" aria-label="Close the guide">×</button>
-    <div class="guide-body" tabindex="0">
-      <p class="lead">Two halves: a <b>run</b>, where you bloom buds around Erwu's basket, and her <b>garden</b>, which grows from everything you do in a run, and a little by itself each day.</p>
-
-      <h3>Playing a run</h3>
-      <ul>
-        <li><b>Aim and launch:</b> pull back anywhere on the screen and let go. A stream of pollen flies from Erwu's basket the other way.</li>
-        <li><b>Buds</b> need a number of hits to bloom (the dots or number on each). Pollen bounces off the rim and off other buds, then drifts home to Erwu.</li>
-        <li>After each turn, every bud moves <b>one ring closer</b> to Erwu, and a new ring arrives at the edge.</li>
-        <li>The first time a bud reaches her, <b>Erwu swats</b> it away, clearing everything touching her. Her swat comes back with the next full bloom. If a bud reaches her while the swat is used up, she curls up for a nap and the run ends.</li>
-        <li>You start with three pollen. The stream only grows when you collect <b>golden pollen heads</b> and make skilful shots (below), so they're worth aiming for.</li>
-      </ul>
-
-      <h3>The big flower</h3>
-      <ul>
-        <li>Blooming buds fills the <b>petal</b> of the flower they sit over.</li>
-        <li>When every petal is full: <b>Full bloom</b>. Every bud on the board loses half its hits, Erwu's swat comes back, and the garden gets a burst of growth.</li>
-      </ul>
-
-      <h3>Things on the board</h3>
-      <ul>
-        <li><b>Golden pollen heads:</b> one more pollen for good, from next turn. One that drifts in to Erwu counts too.</li>
-        <li><b>Loose petal:</b> your next shot splits in three.</li>
-        <li><b>Flower rings:</b> pollen that passes through turns golden and hits twice.</li>
-        <li><b>Mushrooms:</b> bouncy, and they can't be picked.</li>
-        <li><b>A bud with a seed pod:</b> bloom it for a rare seed for the garden.</li>
-      </ul>
-
-      <h3>Power-ups</h3>
-      <p>Hit a glowing medallion with pollen to use it.</p>
-      <ul>
-        <li><b>Dewdrop:</b> a shower soaks the buds around it and washes them back a ring.</li>
-        <li><b>Bee:</b> a swarm sets off after the buds nearest Erwu.</li>
-        <li><b>Sunbeam:</b> a beam sweeps half the flower.</li>
-        <li><b>Dandelion clock:</b> for the rest of the turn, every pollen that passes through it scatters a new way. Aim at it to spray the buds behind it.</li>
-      </ul>
-
-      <h3>Skilful shots</h3>
-      <ul>
-        <li><b>Bank shot:</b> a bud bloomed by pollen that reached it only off the rim earns one more pollen (twice a turn at most).</li>
-        <li><b>Chain:</b> the 7th, 11th, 15th… bloom of one shot sends seeds into your garden.</li>
-        <li><b>Stubborn bud</b> (gold ring): tough, but blooming it earns three more pollen.</li>
-        <li>Some turns are special: a gust shifts everything along, or on a butterfly turn every bloom earns a pollen.</li>
-      </ul>
-
-      <h3>The living garden</h3>
-      <ul>
-        <li><b>Flower beds:</b> tap an empty bed to plant it. <b>Grow this bed</b> sends most of your play's growth there; the others grow a little too. A bed takes about five days of ordinary play to be established.</li>
-        <li><b>Rare seeds</b> from seed buds wait in the <b>seed tin</b> until you plant them.</li>
-        <li><b>Wild flowers</b> grow from your play: blooms and misses send seeds into the lawn, and they take after the buds you bloom. Power-ups leave their mark too: ferns after the dew, buttercups after a sunbeam.</li>
-        <li><b>Days:</b> the garden grows a little on its own every day. Each day's first 25 turns count fully toward growth; after that they count less, so there's no need to play long. Missing a day costs nothing.</li>
-        <li><b>Seasons</b> follow the real calendar: spring bulbs, summer flowers, autumn colour, and a frosty winter when the beds rest.</li>
-        <li><b>Visitors</b> come by while you're away: birds, a rabbit, bees and, now and then, something rarer. Tap one to see who it is. Erwu sometimes leaves you a present.</li>
-        <li><b>Erwu</b> has her own day in the garden. Tap her to say hello.</li>
-      </ul>
+    <button id="guide-close" class="icon-btn" aria-label="Close">×</button>
+    <h2 id="guide-title"></h2>
+    <ul class="guide-items" id="guide-items"></ul>
+    <div class="guide-nav">
+      <button id="guide-back" class="linkish">Back</button>
+      <div class="guide-dots" id="guide-dots" aria-hidden="true"></div>
+      <button id="guide-next" class="wood">Next</button>
     </div>
   </div>
 </div>
@@ -795,7 +755,8 @@
   const el = {
     turn: $('#turn'), best: $('#best'), balls: $('#balls'), ballChip: $('#ball-chip'), hint: $('#hint'), paw: $('#paw'),
     ff: $('#ff'), sound: $('#sound'), tSound: $('#t-sound'), restart: $('#restart'),
-    tGuide: $('#t-guide'), guide: $('#guide'), guideClose: $('#guide-close'),
+    tGuide: $('#t-guide'), rGuide: $('#r-guide'), guide: $('#guide'), guideClose: $('#guide-close'), guideTitle: $('#guide-title'),
+    guideItems: $('#guide-items'), guideDots: $('#guide-dots'), guideBack: $('#guide-back'), guideNext: $('#guide-next'),
     over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
     garden: $('#garden'), banner: $('#banner'),
     title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
@@ -5082,151 +5043,152 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawPickup(it, now) {
-    const p = itemPos(it);
+  // `g` and `at` let the guide draw a pickup as an icon (its canvas, its own position and size).
+  function drawPickup(it, now, g = ctx, at = null) {
+    const p = at || itemPos(it);
     const born = Math.max(0, Math.min(1, (now - it.born) / 420));
     const breathe = 1 + Math.sin(now / 420 + it.id) * 0.06;
     const s = (reduced ? 1 : easeOutBack(born)) * (it.kind === 'mushroom' || it.kind === 'ring' ? 1 : breathe);
     if (s <= 0.01) return;
     const honey = hexRgb(C.honey), soft = hexRgb(C['honey-soft']);
-    ctx.save();
-    ctx.translate(p.x, p.y); ctx.scale(s, s);
+    g.save();
+    g.translate(p.x, p.y); g.scale(s, s);
     if (POWERS.includes(it.kind)) {
       // a power-up sits on a glowing medallion, so it reads as something to hit, not scenery
       const col = hexRgb(POWER_COL[it.kind]), mr = p.r * 1.05;
       if (!reduced) {
         const ph = ((now / 1600) + it.id * 0.37) % 1;
-        ctx.strokeStyle = rgb(col, 0.55 * (1 - ph)); ctx.lineWidth = Math.max(1.2, p.r * 0.1 * (1 - ph));
-        ctx.beginPath(); ctx.arc(0, 0, mr * (1 + ph * 0.6), 0, TAU); ctx.stroke();
+        g.strokeStyle = rgb(col, 0.55 * (1 - ph)); g.lineWidth = Math.max(1.2, p.r * 0.1 * (1 - ph));
+        g.beginPath(); g.arc(0, 0, mr * (1 + ph * 0.6), 0, TAU); g.stroke();
       }
-      const hg = ctx.createRadialGradient(0, 0, mr * 0.6, 0, 0, mr * 1.45);
+      const hg = g.createRadialGradient(0, 0, mr * 0.6, 0, 0, mr * 1.45);
       hg.addColorStop(0, rgb(col, 0.35)); hg.addColorStop(1, rgb(col, 0));
-      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, mr * 1.45, 0, TAU); ctx.fill();
-      const dg = ctx.createRadialGradient(-mr * 0.3, -mr * 0.35, 0, 0, 0, mr);
+      g.fillStyle = hg; g.beginPath(); g.arc(0, 0, mr * 1.45, 0, TAU); g.fill();
+      const dg = g.createRadialGradient(-mr * 0.3, -mr * 0.35, 0, 0, 0, mr);
       dg.addColorStop(0, '#FFFDF6'); dg.addColorStop(1, rgb(mixA(col, WHITE, 0.72)));
-      ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(0, 0, mr, 0, TAU); ctx.fill();
-      ctx.strokeStyle = rgb(col); ctx.lineWidth = Math.max(1.5, p.r * 0.12); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(0.8, p.r * 0.05);
-      ctx.beginPath(); ctx.arc(0, 0, mr * 0.84, 0, TAU); ctx.stroke();
-      ctx.scale(0.8, 0.8);
+      g.fillStyle = dg; g.beginPath(); g.arc(0, 0, mr, 0, TAU); g.fill();
+      g.strokeStyle = rgb(col); g.lineWidth = Math.max(1.5, p.r * 0.12); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = Math.max(0.8, p.r * 0.05);
+      g.beginPath(); g.arc(0, 0, mr * 0.84, 0, TAU); g.stroke();
+      g.scale(0.8, 0.8);
     }
     if (it.kind === 'orb' && artImage('play')) {
       // a painted golden seed head of pollen, turning
-      ctx.rotate(reduced ? 0 : now / 2400 + it.id);
-      paintPiece(ctx, 'play', 'centre', 0, p.r * 0.62, p.r * 1.25);
+      g.rotate(reduced ? 0 : now / 2400 + it.id);
+      paintPiece(g, 'play', 'centre', 0, p.r * 0.62, p.r * 1.25);
     } else if (it.kind === 'orb') {
       // a pollen cluster: one grain in the middle, six circling it
-      ctx.fillStyle = rgb(soft, 0.45);
-      ctx.beginPath(); ctx.arc(0, 0, p.r * 0.66, 0, TAU); ctx.fill();
-      ctx.strokeStyle = rgb(honey, 0.5); ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(0, 0, p.r * 0.66, 0, TAU); ctx.stroke();
-      ctx.save(); ctx.rotate(now / 2400 + it.id);
+      g.fillStyle = rgb(soft, 0.45);
+      g.beginPath(); g.arc(0, 0, p.r * 0.66, 0, TAU); g.fill();
+      g.strokeStyle = rgb(honey, 0.5); g.lineWidth = 1;
+      g.beginPath(); g.arc(0, 0, p.r * 0.66, 0, TAU); g.stroke();
+      g.save(); g.rotate(now / 2400 + it.id);
       for (let k = 0; k < 6; k++) {
         const a = k * TAU / 6;
-        ctx.fillStyle = rgb(honey, 0.85);
-        ctx.beginPath(); ctx.arc(Math.cos(a) * p.r * 0.42, Math.sin(a) * p.r * 0.42, Math.max(1.3, p.r * 0.08), 0, TAU); ctx.fill();
+        g.fillStyle = rgb(honey, 0.85);
+        g.beginPath(); g.arc(Math.cos(a) * p.r * 0.42, Math.sin(a) * p.r * 0.42, Math.max(1.3, p.r * 0.08), 0, TAU); g.fill();
       }
-      ctx.restore();
-      const og = ctx.createRadialGradient(-ballR * 0.3, -ballR * 0.35, ballR * 0.1, 0, 0, ballR * 1.05);
+      g.restore();
+      const og = g.createRadialGradient(-ballR * 0.3, -ballR * 0.35, ballR * 0.1, 0, 0, ballR * 1.05);
       og.addColorStop(0, '#FFF3D6'); og.addColorStop(1, rgb(honey));
-      ctx.fillStyle = og;
-      ctx.beginPath(); ctx.arc(0, 0, ballR * 1.05, 0, TAU); ctx.fill();
+      g.fillStyle = og;
+      g.beginPath(); g.arc(0, 0, ballR * 1.05, 0, TAU); g.fill();
     } else if (it.kind === 'petal') {
-      ctx.rotate(now / 1800);
+      g.rotate(now / 1800);
       const rnd = seeded(it.id * 5 + 1);
       for (let k = 0; k < 5; k++) {
-        bentPetal(ctx, 0, 0, k * TAU / 5 + (rnd() - 0.5) * 0.3 - Math.PI / 2, p.r * (0.62 + rnd() * 0.18), p.r * 0.24, (rnd() - 0.5) * 0.6, rgb(k % 2 ? soft : honey, 0.95));
+        bentPetal(g, 0, 0, k * TAU / 5 + (rnd() - 0.5) * 0.3 - Math.PI / 2, p.r * (0.62 + rnd() * 0.18), p.r * 0.24, (rnd() - 0.5) * 0.6, rgb(k % 2 ? soft : honey, 0.95));
       }
-      ctx.fillStyle = rgb(honey);
-      ctx.beginPath(); ctx.arc(0, 0, p.r * 0.14, 0, TAU); ctx.fill();
+      g.fillStyle = rgb(honey);
+      g.beginPath(); g.arc(0, 0, p.r * 0.14, 0, TAU); g.fill();
     } else if (it.kind === 'dew') {
       // a fat dewdrop, wobbling
       const w = 1 + Math.sin(now / 190 + it.id) * 0.05, r = p.r * 0.55;
-      ctx.scale(w, 2 - w);
-      const dg = ctx.createRadialGradient(-r * 0.3, -r * 0.1, r * 0.1, 0, r * 0.2, r * 1.2);
+      g.scale(w, 2 - w);
+      const dg = g.createRadialGradient(-r * 0.3, -r * 0.1, r * 0.1, 0, r * 0.2, r * 1.2);
       dg.addColorStop(0, '#FFFFFF'); dg.addColorStop(0.45, '#D6E9F5'); dg.addColorStop(1, '#88B6D6');
-      ctx.fillStyle = dg; ctx.strokeStyle = 'rgba(80,130,170,0.55)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(0, -r * 1.35);
-      ctx.bezierCurveTo(r * 0.5, -r * 0.6, r, -r * 0.1, r, r * 0.35);
-      ctx.arc(0, r * 0.35, r, 0, Math.PI);
-      ctx.bezierCurveTo(-r, -r * 0.1, -r * 0.5, -r * 0.6, 0, -r * 1.35);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.beginPath(); ctx.ellipse(-r * 0.35, r * 0.05, r * 0.16, r * 0.3, -0.4, 0, TAU); ctx.fill();
+      g.fillStyle = dg; g.strokeStyle = 'rgba(80,130,170,0.55)'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(0, -r * 1.35);
+      g.bezierCurveTo(r * 0.5, -r * 0.6, r, -r * 0.1, r, r * 0.35);
+      g.arc(0, r * 0.35, r, 0, Math.PI);
+      g.bezierCurveTo(-r, -r * 0.1, -r * 0.5, -r * 0.6, 0, -r * 1.35);
+      g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.9)';
+      g.beginPath(); g.ellipse(-r * 0.35, r * 0.05, r * 0.16, r * 0.3, -0.4, 0, TAU); g.fill();
     } else if (it.kind === 'dandelion') {
       // a full dandelion clock, nodding a little
-      ctx.rotate(reduced ? 0 : Math.sin(now / 900 + it.id) * 0.08);
-      ctx.translate(0, -p.r * 0.18);
-      drawClockHead(ctx, p.r * 0.72, CLOCK_SEEDS, now);
+      g.rotate(reduced ? 0 : Math.sin(now / 900 + it.id) * 0.08);
+      g.translate(0, -p.r * 0.18);
+      drawClockHead(g, p.r * 0.72, CLOCK_SEEDS, now);
     } else if (it.kind === 'bee') {
-      ctx.translate(0, Math.sin(now / 160 + it.id) * p.r * 0.1);
-      drawBee(ctx, p.r * 0.95, now + it.id * 97, 0);
+      g.translate(0, Math.sin(now / 160 + it.id) * p.r * 0.1);
+      drawBee(g, p.r * 0.95, now + it.id * 97, 0);
     } else if (it.kind === 'sun' && artImage('play')) {
       // the painted sun, turning slowly
-      ctx.rotate(reduced ? 0 : now / 3200);
-      paintPiece(ctx, 'play', 'sun', 0, p.r * 0.95, p.r * 1.9);
+      g.rotate(reduced ? 0 : now / 3200);
+      paintPiece(g, 'play', 'sun', 0, p.r * 0.95, p.r * 1.9);
     } else if (it.kind === 'sun') {
       // a little sun, rays turning
       const r = p.r * 0.38;
-      ctx.save(); ctx.rotate(now / 1600);
-      ctx.fillStyle = rgb(hexRgb(C.butter));
+      g.save(); g.rotate(now / 1600);
+      g.fillStyle = rgb(hexRgb(C.butter));
       for (let k = 0; k < 10; k++) {
         const a = k * TAU / 10, l = r * (k % 2 ? 1.55 : 1.85);
-        ctx.beginPath(); ctx.moveTo(Math.cos(a - 0.16) * r * 0.9, Math.sin(a - 0.16) * r * 0.9); ctx.lineTo(Math.cos(a) * l, Math.sin(a) * l); ctx.lineTo(Math.cos(a + 0.16) * r * 0.9, Math.sin(a + 0.16) * r * 0.9); ctx.fill();
+        g.beginPath(); g.moveTo(Math.cos(a - 0.16) * r * 0.9, Math.sin(a - 0.16) * r * 0.9); g.lineTo(Math.cos(a) * l, Math.sin(a) * l); g.lineTo(Math.cos(a + 0.16) * r * 0.9, Math.sin(a + 0.16) * r * 0.9); g.fill();
       }
-      ctx.restore();
-      ctx.globalCompositeOperation = 'lighter';
-      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
+      g.restore();
+      g.globalCompositeOperation = 'lighter';
+      const sg = g.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
       sg.addColorStop(0, rgb(hexRgb(C.butter), 0.4)); sg.addColorStop(1, rgb(hexRgb(C.butter), 0));
-      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, r * 2.2, 0, TAU); ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-      const cg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+      g.fillStyle = sg; g.beginPath(); g.arc(0, 0, r * 2.2, 0, TAU); g.fill();
+      g.globalCompositeOperation = 'source-over';
+      const cg = g.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
       cg.addColorStop(0, '#FFF6D8'); cg.addColorStop(1, rgb(hexRgb(C.honey)));
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+      g.fillStyle = cg; g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fill();
     } else if (it.kind === 'mushroom') {
       // a springy toadstool bumper
       const wob = it.wob || 0, sq = 1 + wob * 0.16;
-      ctx.translate(0, p.r * 0.55); ctx.scale(sq, 2 - sq); ctx.translate(0, -p.r * 0.55);
+      g.translate(0, p.r * 0.55); g.scale(sq, 2 - sq); g.translate(0, -p.r * 0.55);
       const r = p.r;
-      ctx.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.14);
-      ctx.beginPath(); ctx.ellipse(r * 0.08, r * 0.62, r * 0.7, r * 0.18, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#F7EEDC'; ctx.strokeStyle = rgb(hexRgb(C.walnut), 0.45); ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(-r * 0.3, r * 0.6); ctx.quadraticCurveTo(-r * 0.2, r * 0.1, -r * 0.22, -r * 0.05);
-      ctx.lineTo(r * 0.22, -r * 0.05); ctx.quadraticCurveTo(r * 0.2, r * 0.1, r * 0.3, r * 0.6); ctx.closePath(); ctx.fill(); ctx.stroke();
-      const cg = ctx.createLinearGradient(0, -r * 0.8, 0, 0);
+      g.fillStyle = rgb(hexRgb(C['leaf-dark']), 0.14);
+      g.beginPath(); g.ellipse(r * 0.08, r * 0.62, r * 0.7, r * 0.18, 0, 0, TAU); g.fill();
+      g.fillStyle = '#F7EEDC'; g.strokeStyle = rgb(hexRgb(C.walnut), 0.45); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(-r * 0.3, r * 0.6); g.quadraticCurveTo(-r * 0.2, r * 0.1, -r * 0.22, -r * 0.05);
+      g.lineTo(r * 0.22, -r * 0.05); g.quadraticCurveTo(r * 0.2, r * 0.1, r * 0.3, r * 0.6); g.closePath(); g.fill(); g.stroke();
+      const cg = g.createLinearGradient(0, -r * 0.8, 0, 0);
       cg.addColorStop(0, '#E8766C'); cg.addColorStop(1, '#C9544E');
-      ctx.fillStyle = cg;
-      ctx.beginPath(); ctx.moveTo(-r * 0.85, -r * 0.02);
-      ctx.bezierCurveTo(-r * 0.9, -r * 0.75, r * 0.9, -r * 0.8, r * 0.85, -r * 0.02);
-      ctx.quadraticCurveTo(0, r * 0.12, -r * 0.85, -r * 0.02); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#FFF8EA';
+      g.fillStyle = cg;
+      g.beginPath(); g.moveTo(-r * 0.85, -r * 0.02);
+      g.bezierCurveTo(-r * 0.9, -r * 0.75, r * 0.9, -r * 0.8, r * 0.85, -r * 0.02);
+      g.quadraticCurveTo(0, r * 0.12, -r * 0.85, -r * 0.02); g.fill(); g.stroke();
+      g.fillStyle = '#FFF8EA';
       for (const [dx, dy, rr] of [[-0.45, -0.3, 0.13], [0.05, -0.52, 0.15], [0.48, -0.26, 0.11], [0.1, -0.18, 0.08], [-0.2, -0.55, 0.07]]) {
-        ctx.beginPath(); ctx.ellipse(dx * r, dy * r, rr * r, rr * r * 0.8, 0, 0, TAU); ctx.fill();
+        g.beginPath(); g.ellipse(dx * r, dy * r, rr * r, rr * r * 0.8, 0, 0, TAU); g.fill();
       }
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.5, r * 0.22, r * 0.08, -0.5, 0, TAU); ctx.fill();
+      g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.ellipse(-r * 0.35, -r * 0.5, r * 0.22, r * 0.08, -0.5, 0, TAU); g.fill();
       if (it.pulse > 0.05) {
-        ctx.strokeStyle = rgb(hexRgb(C.butter), it.pulse * 0.8); ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, -r * 0.2, r * (1 + (1 - it.pulse) * 0.5), 0, TAU); ctx.stroke();
+        g.strokeStyle = rgb(hexRgb(C.butter), it.pulse * 0.8); g.lineWidth = 2;
+        g.beginPath(); g.arc(0, -r * 0.2, r * (1 + (1 - it.pulse) * 0.5), 0, TAU); g.stroke();
       }
     } else if (it.kind === 'ring') {
       // a wreath of tiny flowers to thread pollen through
       const r = p.r * 0.86, rnd = seeded(it.id * 11 + 3);
-      ctx.globalCompositeOperation = 'lighter';
-      const rg = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 1.25);
+      g.globalCompositeOperation = 'lighter';
+      const rg = g.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 1.25);
       rg.addColorStop(0, rgb(hexRgb(C.butter), 0)); rg.addColorStop(0.7, rgb(hexRgb(C.butter), 0.18 + it.pulse * 0.4)); rg.addColorStop(1, rgb(hexRgb(C.butter), 0));
-      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, r * 1.25, 0, TAU); ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = rgb(mix(C.sage, C.moss, 0.4)); ctx.lineWidth = Math.max(1.5, r * 0.12);
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke();
-      ctx.rotate(now / 5000 + it.id);
+      g.fillStyle = rg; g.beginPath(); g.arc(0, 0, r * 1.25, 0, TAU); g.fill();
+      g.globalCompositeOperation = 'source-over';
+      g.strokeStyle = rgb(mix(C.sage, C.moss, 0.4)); g.lineWidth = Math.max(1.5, r * 0.12);
+      g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke();
+      g.rotate(now / 5000 + it.id);
       const cols = [C['petal-bloom'], '#FFFDF5', C.butter, C.lavender];
       for (let k = 0; k < 8; k++) {
         const a = k * TAU / 8, x = Math.cos(a) * r, y = Math.sin(a) * r;
-        leafAt(ctx, x, y, a + Math.PI / 2 + 0.6, r * 0.3, r * 0.1, rgb(mix(C.sage, C.moss, 0.3)));
-        blossom(ctx, x, y, 5, r * 0.24, r * 0.12, cols[k % 4], k % 4 === 2 ? C.honey : C.butter, null, a, rnd);
+        leafAt(g, x, y, a + Math.PI / 2 + 0.6, r * 0.3, r * 0.1, rgb(mix(C.sage, C.moss, 0.3)));
+        blossom(g, x, y, 5, r * 0.24, r * 0.12, cols[k % 4], k % 4 === 2 ? C.honey : C.butter, null, a, rnd);
       }
     }
-    ctx.restore();
+    g.restore();
   }
   // A round little bee with flickering wings.
   function drawBee(g, s, now, heading) {
@@ -6210,7 +6172,12 @@
   el.app.addEventListener('lostpointercapture', () => { aim = null; });
 
   window.addEventListener('keydown', (e) => {
-    if (!el.guide.hidden) { if (e.key === 'Escape') closeGuide(); return; }
+    if (!el.guide.hidden) {
+      if (e.key === 'Escape') closeGuide();
+      else if (e.key === 'ArrowRight') guideStep(1);
+      else if (e.key === 'ArrowLeft') guideStep(-1);
+      return;
+    }
     if (e.key === 'Escape') {
       if (presentation === 'garden') {
         if (plantingDraft || replanting) { resetPlanting(); refreshInspection(); }
@@ -6267,11 +6234,113 @@
   el.ff.addEventListener('click', () => { timeScale = timeScale > 1 ? 1 : 3; updateHud(); });
   el.sound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
   el.tSound.addEventListener('click', () => { setSound(!soundOn); if (soundOn) tone(noteFreq(7), 0.04); });
-  // How to play: opened from the garden, closed with its button, Escape or a tap outside the card
-  function openGuide() { el.guide.hidden = false; el.app.inert = true; el.guideClose.focus({ preventScroll: true }); }
-  function closeGuide() { if (el.guide.hidden) return; el.guide.hidden = true; el.app.inert = false; el.tGuide.focus({ preventScroll: true }); }
-  el.tGuide.addEventListener('click', openGuide);
+  // ----- How to play: two short picture guides, the garden's and the play's, a few pages each.
+  // Every line has the real sprite beside it; the words say what happens, not the rules. -----
+  const TIN_SVG = document.querySelector('#seed-tin svg').outerHTML;
+  // icon painters: (g, size) on a square canvas, with the ground a little above the bottom
+  const sprite = (key, name, w = 0.8, y = 0.86, x = 0.5) => (g, s) => paintPiece(g, key, name, s * x, s * y, s * w);
+  const both = (...fs) => (g, s) => fs.forEach((f) => f(g, s));
+  const pickup = (kind, r = 0.34) => (g, s) => drawPickup({ kind, id: 3, born: -1e9, pulse: 0, wob: 0 }, performance.now(), g, { x: s / 2, y: s / 2, r: s * r });
+  // a pollen grain banking off the flower's edge: the rim, its dotted path, and the grain
+  const bank = (g, s) => {
+    g.strokeStyle = rgb(hexRgb(C.walnut), 0.7); g.lineWidth = s * 0.05; g.lineCap = 'round';
+    g.beginPath(); g.arc(s * 0.5, s * 1.55, s * 1.2, -Math.PI * 0.68, -Math.PI * 0.32); g.stroke();
+    g.strokeStyle = rgb(hexRgb(C.honey), 0.85); g.lineWidth = s * 0.03; g.setLineDash([s * 0.04, s * 0.05]);
+    g.beginPath(); g.moveTo(s * 0.14, s * 0.86); g.lineTo(s * 0.5, s * 0.38); g.lineTo(s * 0.8, s * 0.8); g.stroke(); g.setLineDash([]);
+    paintPiece(g, 'play', 'pollen', s * 0.82, s * 0.92, s * 0.24);
+  };
+  const goldRing = (g, s) => { g.strokeStyle = C.honey; g.lineWidth = s * 0.045; g.setLineDash([s * 0.09, s * 0.06]); g.beginPath(); g.arc(s / 2, s * 0.5, s * 0.42, 0, TAU); g.stroke(); g.setLineDash([]); };
+  const arrow = (g, s) => { g.strokeStyle = C.walnut; g.lineWidth = s * 0.035; g.lineCap = 'round'; g.beginPath(); g.moveTo(s * 0.44, s * 0.52); g.lineTo(s * 0.56, s * 0.52); g.moveTo(s * 0.52, s * 0.47); g.lineTo(s * 0.56, s * 0.52); g.lineTo(s * 0.52, s * 0.57); g.stroke(); };
+  const GUIDES = {
+    garden: [
+      { title: "Erwu's garden", items: [
+        { icon: sprite('erwu', 'sit-front', 0.62, 0.95), text: 'This is Erwu. Tap her to say hello.' },
+        { icon: sprite('garden', 'bed-full', 0.92, 0.82), text: 'Tap a flower bed to plant something lovely.' },
+        { svg: TIN_SVG, text: 'Rare seeds wait in the seed tin until you plant them.' },
+      ] },
+      { title: 'It grows with you', items: [
+        { icon: both(sprite('garden', 'clump-daisy', 0.5, 0.9, 0.3), sprite('garden', 'clump-forget', 0.5, 0.9, 0.7)), text: 'Every game you play sows wild flowers.' },
+        { icon: both(sprite('garden', 'bed-seedlings', 0.46, 0.7, 0.26), arrow, sprite('garden', 'bed-full', 0.46, 0.7, 0.74)), text: 'Beds fill in over a few days.' },
+        { icon: sprite('garden', 'clump-leafy', 0.72, 0.9), text: 'It grows a little on its own, too. No need to play for long.' },
+      ] },
+      { title: 'Through the year', items: [
+        { icon: both(sprite('garden', 'clump-crocus', 0.4, 0.62, 0.24), sprite('garden', 'clump-aster', 0.4, 0.62, 0.76), sprite('garden', 'clump-frost-grass', 0.4, 0.98, 0.5)), text: 'The seasons change with the real calendar.' },
+        { icon: sprite('visitors', 'cottontail-sit', 0.62, 0.9), text: 'Visitors drop by while you’re away. Tap one to say hi.' },
+        { icon: both(sprite('visitors', 'feather', 0.5, 0.75, 0.36), sprite('visitors', 'acorn', 0.3, 0.9, 0.72)), text: 'Sometimes Erwu leaves you a little present.' },
+      ] },
+    ],
+    run: [
+      { title: 'Help the buds bloom', items: [
+        { icon: sprite('erwu', 'peek', 0.84, 0.8), text: 'Pull back anywhere and let go to send pollen flying.' },
+        { icon: both(sprite('play', 'bud-rose', 0.38, 0.72, 0.24), arrow, sprite('play', 'open-rose', 0.42, 0.74, 0.76)), text: 'Keep hitting a bud and it bursts into bloom.' },
+        { icon: sprite('erwu', 'swat', 0.9, 0.86), text: 'Buds creep closer. Erwu bats one away, but the next sends her off for a nap.' },
+      ] },
+      { title: 'A bigger stream', items: [
+        { icon: sprite('play', 'petal-pink', 0.9, 0.72), text: 'Blooms fill the big flower’s petals. Fill them all for a full bloom!' },
+        { icon: pickup('orb', 0.42), text: 'Catch golden pollen for more pollen next time.' },
+        { icon: pickup('petal', 0.46), text: 'A loose petal splits your next shot in three.' },
+      ] },
+      { title: 'Friends on the board', items: [
+        { icon: pickup('ring', 0.42), text: 'Pollen through a flower ring turns golden and hits twice as hard.' },
+        { icon: pickup('mushroom', 0.4), text: 'Mushrooms are bouncy. Use them for trick shots.' },
+        { icon: both(sprite('play', 'bud-rose', 0.5, 0.78, 0.44), sprite('play', 'seed-pod', 0.2, 0.9, 0.76)), text: 'A bud with a seed pod hides a rare seed for the garden.' },
+      ] },
+      { title: 'Hit these with pollen', items: [
+        { icon: pickup('dew', 0.36), text: 'Dewdrop: a summer shower washes buds back.' },
+        { icon: pickup('bee', 0.36), text: 'Bee: a busy swarm lends a hand.' },
+        { icon: pickup('sun', 0.36), text: 'Sunbeam: a sweep of sunshine across half the flower.' },
+      ] },
+      { title: 'Little surprises', items: [
+        { icon: pickup('dandelion', 0.36), text: 'Dandelion clock: every pollen through it flies off somewhere new.' },
+        { icon: both(sprite('play', 'bud-tulip', 0.52, 0.8), goldRing), text: 'A bud in a gold ring is stubborn, but worth extra pollen.' },
+        { icon: bank, text: 'Bounce a shot off the edge for a bonus.' },
+      ] },
+      { title: 'Show off', items: [
+        { icon: both(sprite('play', 'open-tulip', 0.42, 0.62, 0.3), sprite('play', 'open-poppy', 0.42, 0.62, 0.7), sprite('play', 'open-peony', 0.42, 0.98, 0.5)), text: 'Lots of blooms in one go send seeds to the garden.' },
+        { icon: sprite('garden', 'bed-full', 0.92, 0.82), text: 'Everything you do here helps Erwu’s garden grow.' },
+      ] },
+    ],
+  };
+  let guide = null;
+  function paintIcon(cv, icon) {
+    const k = Math.max(2, DPR), s = 76;
+    cv.width = s * k; cv.height = s * k;
+    const g = cv.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0); g.clearRect(0, 0, s, s);
+    try { icon(g, s); } catch {}
+  }
+  function showGuidePage() {
+    const pages = GUIDES[guide.which], page = pages[guide.page], last = guide.page === pages.length - 1;
+    el.guideTitle.textContent = page.title;
+    el.guideItems.replaceChildren(...page.items.map((it) => {
+      const li = document.createElement('li');
+      if (it.svg) { const d = document.createElement('div'); d.className = 'guide-svg'; d.innerHTML = it.svg; d.setAttribute('aria-hidden', 'true'); li.append(d); }
+      else { const cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); paintIcon(cv, it.icon); li.append(cv); }
+      const p = document.createElement('p'); p.textContent = it.text; li.append(p);
+      return li;
+    }));
+    el.guideDots.replaceChildren(...pages.map((_, i) => { const d = document.createElement('i'); if (i === guide.page) d.className = 'on'; return d; }));
+    el.guideBack.classList.toggle('gone', guide.page === 0); el.guideBack.tabIndex = guide.page === 0 ? -1 : 0;
+    el.guideNext.textContent = last ? (guide.which === 'run' ? 'Let’s play' : 'Lovely') : 'Next';
+    el.guideNext.setAttribute('aria-label', last ? 'Close' : `Next, page ${guide.page + 2} of ${pages.length}`);
+  }
+  function openGuide(which) {
+    guide = { which, page: 0, from: document.activeElement };
+    el.guide.hidden = false; el.app.inert = true;
+    showGuidePage();
+    el.guideNext.focus({ preventScroll: true });
+  }
+  function closeGuide() {
+    if (el.guide.hidden) return;
+    el.guide.hidden = true; el.app.inert = false;
+    if (guide && guide.from && guide.from.focus) guide.from.focus({ preventScroll: true });
+    guide = null;
+  }
+  const guideStep = (d) => { const n = GUIDES[guide.which].length, next = guide.page + d; if (next >= n) closeGuide(); else if (next >= 0) { guide.page = next; showGuidePage(); } };
+  el.tGuide.addEventListener('click', () => openGuide('garden'));
+  el.rGuide.addEventListener('click', () => openGuide('run'));
   el.guideClose.addEventListener('click', closeGuide);
+  el.guideNext.addEventListener('click', () => guideStep(1));
+  el.guideBack.addEventListener('click', () => guideStep(-1));
   el.guide.addEventListener('click', (e) => { if (e.target === el.guide) closeGuide(); });
   el.again.addEventListener('click', () => { el.app.inert = false; newGame(); stage.focus({ preventScroll: true }); });
   el.toGarden.addEventListener('click', showTitle);
