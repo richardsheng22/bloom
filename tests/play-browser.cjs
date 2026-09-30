@@ -72,6 +72,21 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   const contact=await target.evaluate(()=>{const p=__play.itemPos(__play.items[0]),a=Math.atan2(p.y,p.x),t=__play.traceAim(a);return {kind:t.item?.kind,before:__play.snapshot()}});
   assert.equal(contact.kind,'mushroom');assert.deepEqual(await target.evaluate(()=>__play.snapshot()),contact.before);await target.close();
   console.log('PASS measured health labels at six sizes and mushroom occlusion without board mutation');
+  const lesson=await open({run:checkpoint({turn:1,items:[{kind:'dew',sector:0,ring:7}]}),extra:{'bloom.hinted3':true}});
+  // Merely creating the board or reading help never acknowledges a lesson.
+  assert.equal(await lesson.evaluate(()=>localStorage.getItem('bloom.hints1')),null);
+  await lesson.click('#play');await lesson.waitForFunction(()=>document.querySelector('#hint').textContent.includes('dewdrop'));
+  await lesson.click('#r-guide');await lesson.waitForTimeout(2300);
+  assert.equal(await lesson.evaluate(()=>JSON.parse(localStorage.getItem('bloom.hints1')||'{}').seen?.dew),undefined);
+  await lesson.keyboard.press('Escape');await lesson.waitForTimeout(2200);
+  assert.equal(await lesson.evaluate(()=>JSON.parse(localStorage.getItem('bloom.hints1')).seen.dew),true);
+  await lesson.reload();await lesson.waitForFunction(()=>!document.body.classList.contains('loading'));await lesson.click('#play');await lesson.waitForTimeout(100);
+  assert.doesNotMatch(await lesson.locator('#hint').innerText(),/dewdrop|Pull back/);await lesson.close();
+  const skipped=await open({run:checkpoint({turn:1,items:[{kind:'bee',sector:0,ring:7}]}),extra:{'bloom.hinted3':true}});await skipped.click('#play');
+  await skipped.waitForFunction(()=>document.querySelector('#hint').textContent.includes('bee'));await skipped.click('#visit-garden');
+  await skipped.waitForTimeout(2200);assert.equal(await skipped.evaluate(()=>JSON.parse(localStorage.getItem('bloom.hints1')||'{}').seen?.bee),undefined);
+  await skipped.click('#play');await skipped.waitForFunction(()=>document.querySelector('#hint').textContent.includes('bee'));await skipped.close();
+  console.log('PASS contextual hints acknowledge visible time, pause in help, survive interruption and stay quiet after reload');
   // Additional interaction checks are added with their implementation slices below.
   assert.deepEqual(errors,[]);console.log('PASS no page errors');
  }finally{await browser.close();await new Promise(r=>server.close(r));}

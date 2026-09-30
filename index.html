@@ -748,6 +748,7 @@
 <script src="garden-sound.js"></script>
 <script src="garden-state.js"></script>
 <script src="run-state.js"></script>
+<script src="game-hints.js"></script>
 <script src="garden-view.js"></script>
 <script src="erwu-behavior.js"></script>
 <script src="art-manifest.js"></script>
@@ -1042,7 +1043,8 @@
     dandelion: ['Dandelion clock', 'hit it with pollen: for the rest of the turn, every pollen that passes through it scatters a new way'],
     seedbud: ['A seed bud', 'open it to find a rare seed for your garden'],
   };
-  let seen = store.get('seen', {}), introQueue = [];
+  const hintPrefs = BloomHints.preferences(store.get('hints1', null), store.get('seen', {}), store.get('hinted3', false));
+  let contextualHint = null, hintSeconds = 0, introQueue = [];
   // This run's rare seed (a turn and a kind, or null) and what changed in the garden during it.
   let runSeed = null, runLog = null;
   let powersMissed = 0, powerTipShown = false;
@@ -1099,9 +1101,7 @@
     const add = (o) => {
       if (!free.length) return;
       items.push({ id: nextId++, sector: free.pop(), ring: RINGS, rf: RINGS, born: now, pulse: 0, spin: 0, ...o });
-      if (INTRO[o.kind] && !seen[o.kind]) { seen[o.kind] = true; store.set('seen', seen); introQueue.push(o.kind); }
-      // players who met power-ups before they were medallions get the how-to once too
-      else if (POWERS.includes(o.kind) && !seen.powers) { seen.powers = true; store.set('seen', seen); introQueue.push('powers'); }
+
     };
     // a stubborn bud: one, as tough as three, in a gold ring; blooming it pays STUBBORN_PAY pollen
     if (special.kind === 'lone') {
@@ -1123,7 +1123,7 @@
       const bud = items.find((i) => i.kind === 'shape' && i.ring === RINGS && !i.dead);
       if (bud) {
         bud.seed = runSeed.kind; runSeed.spawned = true;
-        if (!seen.seedbud) { seen.seedbud = true; store.set('seen', seen); introQueue.push('seedbud'); }
+
       }
     }
   }
@@ -2990,12 +2990,27 @@
     if (restartArmed) return;
     if (!runSession.writable || runSession.issue) { el.hint.className = ''; el.hint.textContent = gardenMessage(); return; }
     if (state === 'flying' && shot) {
-      el.hint.className = 'count';
-      el.hint.textContent = shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '';
+      el.hint.className = contextualHint ? '' : 'count';
+      el.hint.textContent = contextualHint?.text || (shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '');
     } else if (state === 'ready') {
       el.hint.className = '';
-      el.hint.textContent = targetCaption(aimedItem) || (!hinted ? 'Pull back anywhere and let go to launch'
-        : gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : ''));
+      el.hint.textContent = contextualHint?.text || targetCaption(aimedItem) || gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : '');
+    }
+  }
+
+  function updateHint(dt) {
+    const visible = presentation === 'run' && !guide && !gardenRequested && !restartArmed && runSession.writable && !runSession.issue;
+    const candidate = visible ? BloomHints.select({state,items,turn,pawReady,target:aimedItem,aiming:!!aim,elapsed:shot?.t||0},hintPrefs.seen) : null;
+    const stillHere = contextualHint && (contextualHint.itemId == null || items.some(i=>i.id===contextualHint.itemId&&!i.dead));
+    const retain = visible && stillHere && hintSeconds < 6 &&
+      ((state==='ready' && !aim && contextualHint.id!=='speed' && contextualHint.id!=='health') ||
+       (state==='flying' && contextualHint.id==='speed') ||
+       (aimedItem?.id===contextualHint.itemId && contextualHint.id==='health'));
+    const next = retain ? contextualHint : candidate;
+    if(next?.id!==contextualHint?.id || next?.itemId!==contextualHint?.itemId) {contextualHint=next;hintSeconds=0;updateHud();}
+    if(contextualHint && el.hint.textContent===contextualHint.text) {
+      hintSeconds+=dt;
+      if(hintSeconds>=2 && !hintPrefs.seen[contextualHint.id]){hintPrefs.seen[contextualHint.id]=true;store.set('hints1',hintPrefs);}
     }
   }
 
@@ -3013,6 +3028,7 @@
     shot = { angle, petal: petalNext, toLaunch: ballCount, launched: 0, timer: 0, hits: 0, t: 0, seeds: 0, flowers: 0, blooms: 0, banks: 0, closeCall: false };
     petalNext = false;
     gardenNote = '';
+    contextualHint=null;hintSeconds=0;
     timeScale = 1;
     cat.mood = 'watch';
     stamenFx = 1; launchFx = 1;
@@ -3672,7 +3688,7 @@
     powersMissed++;
     if (powersMissed >= 3 && !powerTipShown && (store.get('powersUsed', 0) < 5)) {
       powerTipShown = true;
-      introQueue.push('powers');
+      // The contextual selector explains a live power-up when one is available.
     }
   }
   // Each power-up has its own colour: its medallion's rim, and the burst when it is used.
@@ -4058,6 +4074,7 @@
 
     const nextTarget = state === 'ready' && aim?.angle != null ? traceAim(aim.angle).item : null;
     if (nextTarget !== aimedItem) { aimedItem = nextTarget; updateHud(); }
+    updateHint(dt);
 
     if (state === 'flying' && shot) {
       const sdt = dt * timeScale;
@@ -6002,6 +6019,8 @@
       }
       for (const b of blooms) drawBloom(b);
       drawHealth();
+      const teaching = !aim && contextualHint?.itemId != null ? items.find(i=>i.id===contextualHint.itemId&&!i.dead) : null;
+      if(teaching){const p=itemPos(teaching);ctx.save();ctx.strokeStyle=C.moss;ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(p.x,p.y,p.r+5,0,TAU);ctx.stroke();ctx.restore();}
       ctx.restore();
     }
     drawFlights();
@@ -6342,11 +6361,11 @@
     run: [
       { title: 'Help the buds bloom', items: [
         { icon: sprite('erwu', 'peek', 0.84, 0.8), text: 'Pull back anywhere and let go to send pollen flying.' },
-        { icon: both(sprite('play', 'bud-rose', 0.38, 0.72, 0.24), arrow, sprite('play', 'open-rose', 0.42, 0.74, 0.76)), text: 'Keep hitting a bud and it bursts into bloom.' },
-        { icon: sprite('erwu', 'swat', 0.9, 0.86), text: 'Buds creep closer. Erwu bats one away, but the next sends her off for a nap.' },
+        { icon: both(sprite('play', 'bud-rose', 0.38, 0.72, 0.24), arrow, sprite('play', 'open-rose', 0.42, 0.74, 0.76)), text: 'A bud’s number is the hits it still needs. Bring it to zero to open it.' },
+        { icon: sprite('erwu', 'swat', 0.9, 0.86), text: 'Buds spiral closer after each shot. The inward marks show the next danger. Erwu’s swat clears those reaching her and the next inner ring; another arrival sends her for a nap.' },
       ] },
       { title: 'A bigger stream', items: [
-        { icon: sprite('play', 'petal-pink', 0.9, 0.72), text: 'Blooms fill the big flower’s petals. Fill them all for a full bloom!' },
+        { icon: sprite('play', 'petal-pink', 0.9, 0.72), text: 'Fill every petal for Full bloom: it takes at least half the hits off every bud and restores Erwu’s swat.' },
         { icon: pickup('orb', 0.42), text: 'Catch golden pollen for more pollen next time.' },
         { icon: pickup('petal', 0.46), text: 'A loose petal splits your next shot in three.' },
       ] },
