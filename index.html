@@ -5356,7 +5356,7 @@
   // up or down the lawn. Frames are blended with an exact cross-dissolve: each at its own
   // weight, added together off screen, so where both frames agree she stays solid and a paw only
   // one frame has fades with that frame, instead of lingering at full strength over the next.
-  let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null, turnFacing = { facing: 1, since: -1e9 };
+  let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null, turnFacing = { facing: 1, since: -1e9, from: [] }, lastWalkLayers = [];
   const TURN_MS = 200;
   // Toward and away from us, the sheets hold half a stride (four frames); the other half is the
   // same frames mirrored, which swaps her left and right paws. The diagonal views face right like
@@ -5404,21 +5404,34 @@
         const from = walkView.from, fi = Math.floor(((erwu.phase / TAU) % 1 + 1) % 1 * WALK_FRAMES[from]) % WALK_FRAMES[from];
         layers = [walkLayer(from, fi, 1 - k, sideways(from) && erwu.facing < 0), walkLayer(view, i, k, flip)];
       }
-      // turning round side-on: she narrows to a sliver and widens again the other way, rather
-      // than mirroring in a single frame
-      if (erwu.facing !== turnFacing.facing) turnFacing = { facing: erwu.facing, since: now };
-      const tk = reduced ? 1 : Math.min(1, (now - turnFacing.since) / TURN_MS), sx = sideways(view) && tk < 1 ? Math.max(0.12, Math.abs(Math.cos(tk * Math.PI))) : 1;
-      if (sx < 1 && tk < 0.5) for (const l of layers) l.flip = !l.flip;
+      // Preserve her volume during a reversal. Snapshot the displayed layers so a
+      // simultaneous view change (or another turn) starts from what was actually visible.
+      if (erwu.facing !== turnFacing.facing) turnFacing = { facing: erwu.facing, since: now, from: lastWalkLayers };
+      const tk = reduced ? 1 : Math.min(1, (now - turnFacing.since) / TURN_MS);
+      if (tk < 1 && turnFacing.from.length) {
+        const blend = tk * tk * (3 - 2 * tk);
+        layers = [...turnFacing.from.map(l => ({ ...l, weight: l.weight * (1 - blend) })),
+          ...layers.map(l => ({ ...l, weight: l.weight * blend }))];
+      }
+      // Merge repeated layers to keep interrupted turns bounded.
+      const merged = new Map();
+      for (const l of layers) {
+        const key = l.name + ':' + l.flip, previous = merged.get(key);
+        if (previous) previous.weight += l.weight;
+        else merged.set(key, { ...l });
+      }
+      layers = [...merged.values()];
+      lastWalkLayers = layers;
       ctx.save(); ctx.globalAlpha *= alpha;
       const fw = ART.erwu.frames[walkName(view, i)], across = view === 'side' ? side[2] * unit : fw[2] * walkH / fw[3];
-      groundShadow(ctx, erwu.at.x, erwu.at.y, (sideways(view) ? across * 0.8 * (0.5 + sx / 2) : walkH * 0.75), 0.2);
+      groundShadow(ctx, erwu.at.x, erwu.at.y, (sideways(view) ? across * 0.8 : walkH * 0.75), 0.2);
       ctx.restore();
-      ctx.save(); ctx.translate(erwu.at.x, 0); ctx.scale(sx, 1); ctx.translate(-erwu.at.x, 0);
       paintWalk(layers, erwu.at.x, erwu.at.y, walkH, alpha);
-      ctx.restore();
       lastWalk = view === 'side' ? null : { ...walkLayer(view, i, 1, flip), t: now };
       return true;
     }
+    lastWalkLayers = [];
+    turnFacing = { facing: erwu.facing, since: -1e9, from: [] };
     let name = paintedErwuPose(pose, nest), floor = erwu.at.y;
     if (nest) { const b = ERWU_BASKET[pose] || ['peek', 0.5]; floor = size * b[1]; }
     const f = name && ART.erwu.frames[name];

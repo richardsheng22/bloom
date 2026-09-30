@@ -4,7 +4,7 @@ const { chromium } = require(process.env.BLOOM_PLAYWRIGHT || 'playwright');
 const fs = require('node:fs'), http = require('node:http'), cp = require('node:child_process');
 const path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), out = process.env.BLOOM_EVIDENCE || '/tmp/bloom-erwu-render';
-const hook = "window.__art={drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,get cat(){return cat},catPose,basketPose,paintedErwuPose,bedArtVariant,drawBed,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
+const hook = "window.__art={drawPaintedErwu,ctx,drawCat,drawCatCurled,drawCatSeated,drawCatSide,draw,erwu,get cat(){return cat},catPose,basketPose,paintedErwuPose,bedArtVariant,drawBed,world:erwuWorld,paintPiece,drawCardCat,cardCat:()=>document.querySelector('#card-cat'),atlasReady:()=>!!(artImage('erwu')&&artImage('garden')&&artImage('lawn'))};";
 const marker = '  window.claude?.hot?.snapshot?';
 const { KEY, gardenV4 } = require('./fixtures/garden-v4.cjs');
 
@@ -33,6 +33,39 @@ const { KEY, gardenV4 } = require('./fixtures/garden-v4.cjs');
       await p.goto(`http://127.0.0.1:${server.address().port}/${before ? 'before' : ''}`);
       return p;
     }
+    const turnPage = await open({ width: 1000, height: 720 });
+    await turnPage.waitForFunction(() => __art.atlasReady());
+    const turns = await turnPage.evaluate(() => {
+      const a=__art, samples=[];
+      const board=document.createElement('canvas'); board.width=1500; board.height=720;
+      const g=board.getContext('2d'); g.fillStyle='#FBF6EA'; g.fillRect(0,0,1500,720);
+      let row=0;
+      a.ctx.save(); a.ctx.setTransform(1,0,0,1,0,0);
+      for (const view of ['side','diag-front','diag-back']) {
+        Object.assign(a.erwu,{view,facing:1,phase:0,at:{x:150,y:190}});
+        a.drawPaintedErwu('walk',10000,65,1);
+        a.drawPaintedErwu('walk',10500,65,1);
+        a.erwu.facing=-1;
+        for(const t of [11000,11050,11100,11150,11200]) {
+          const scales=[], original=a.ctx.scale;
+          a.ctx.scale=function(x,y){scales.push([x,y]);return original.call(this,x,y)};
+          a.ctx.clearRect(0,0,300,240);
+          a.drawPaintedErwu('walk',t,65,1);a.ctx.scale=original;
+          const column=(t-11000)/50;
+          g.drawImage(a.ctx.canvas,0,0,300,240,column*300,row*240,300,240);
+          g.fillStyle='#514943';g.font='16px sans-serif';g.fillText(view+' '+(t-11000)+'ms',column*300+25,row*240+225);
+          samples.push({view,t,scales});
+        }
+        row++;
+      }
+      a.ctx.restore();
+      board.style='position:fixed;inset:0;width:1000px;height:480px;z-index:99999'; document.body.append(board);
+      return samples;
+    });
+    assert.ok(turns.every(s=>s.scales.every(([x])=>Math.abs(x)===1)), 'production turns never squash');
+    await turnPage.screenshot({path:path.join(out,'turn-volume.png')});
+    console.log('TURN volume checks', turns.length);
+    await turnPage.close();
     for (const before of (process.env.BLOOM_BEFORE_REF ? [true, false] : [false])) {
       const p = await open({ width: 1000, height: 720 }, before);
       await p.evaluate(() => {
