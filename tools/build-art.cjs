@@ -21,6 +21,7 @@ const root = path.resolve(__dirname, '..');
 // poses sheet sets her colour; every walk is recoloured to match it, scaled to one height and
 // anchored on its torso. Pose regions are set by hand around each figure (the sheet isn't an
 // exact grid), in the same order and with the same names as before, so the game needs no change.
+const has = (file) => fs.existsSync(path.join(root, 'assets', file));
 const V3 = (n) => `erwu-v3/${n}.png`, frames = (prefix) => [0, 1, 2, 3, 4, 5, 6, 7].map((i) => `${prefix}${i}`);
 const ERWU = [
   { file: V3('poses'), collect: 'erwu', regions: {
@@ -36,11 +37,21 @@ const ERWU = [
   ...['front', 'back'].map((view) => ({ file: V3(`walk-${view}`), match: 'erwu', walk: true, fit: 240,
     anchorTop: 0.3, grid: { cols: 4, rows: 1, names: frames(`walk-${view}-`).slice(0, 4) } })),
   // Each diagonal source is one frame: first four exact crops, last four opposite-leg edits.
-  ...['front', 'back'].flatMap((view) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
-    file: V3(`diag-${view}-${n}`), match: 'erwu', walk: true, fit: 240,
-    grid: { cols: 1, rows: 1, names: [`walk-diag-${view}-${n - 1}`] },
-  }))),
-  { file: V3('basket-actions'), match: 'erwu', grid: { cols: 2, rows: 1, names: ['swat', 'delighted'] } },
+  // Until all eight of a view are in assets/erwu-v3, that view comes from its eight-frame sheet
+  // (whose first row the crops are).
+  ...['front', 'back'].flatMap((view) => {
+    const single = [1, 2, 3, 4, 5, 6, 7, 8];
+    if (single.every((n) => has(V3(`diag-${view}-${n}`)))) return single.map((n) => ({
+      file: V3(`diag-${view}-${n}`), match: 'erwu', walk: true, fit: 240,
+      grid: { cols: 1, rows: 1, names: [`walk-diag-${view}-${n - 1}`] },
+    }));
+    return [{ file: V3(`walk-diag-${view}`), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames(`walk-diag-${view}-`) } }];
+  }),
+  // her swat and her delight, chest-high, cropped above the basket rim (its front is drawn over
+  // her): redrawn in v3 when that sheet is there, else the play-pieces sheet's
+  has(V3('basket-actions'))
+    ? { file: V3('basket-actions'), match: 'erwu', grid: { cols: 2, rows: 1, names: ['swat', 'delighted'] } }
+    : { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
 ];
 // The living-garden sheets (see .scratch/living-garden/ART-PROMPTS.md). Grid sheets are cut
 // by `grid`: every shape on the sheet belongs to the cell its centre falls in, so a tall grass
