@@ -17,29 +17,27 @@ const root = path.resolve(__dirname, '..');
 // beds from different sheets are drawn at one size; `collect`/`match` recolour a sheet to the
 // colour of another (the walk was generated paler than the poses); `fit` scales every piece
 // to one height.
+// Erwu, redrawn from photographs of her (v3, assets/erwu-v3; see .scratch/erwu-redraw-v3). The
+// poses sheet sets her colour; every walk is recoloured to match it, scaled to one height and
+// anchored on its torso. Pose regions are set by hand around each figure (the sheet isn't an
+// exact grid), in the same order and with the same names as before, so the game needs no change.
+const V3 = (n) => `erwu-v3/${n}.png`, frames = (prefix) => [0, 1, 2, 3, 4, 5, 6, 7].map((i) => `${prefix}${i}`);
 const ERWU = [
-  { file: 'erwu-sprite-v2.png', collect: 'erwu', regions: {
-    'sit-front': [34, 42, 256, 272], 'sit-drowsy': [318, 42, 240, 272], 'sit-content': [578, 42, 240, 272], curl: [830, 126, 280, 188],
-    sniff: [6, 378, 284, 176], stalk: [291, 378, 295, 176], pounce: [578, 342, 264, 208], stretch: [850, 318, 268, 256],
-    loaf: [22, 634, 248, 200], 'sit-side': [298, 566, 196, 280], 'belly-up': [490, 618, 360, 228], yawn: [851, 618, 263, 228],
-    peek: [22, 898, 240, 144], 'peek-glance': [294, 890, 236, 148], 'peek-turn': [566, 890, 240, 152], 'peek-sleepy': [838, 910, 256, 132],
-    'look-up': [630, 1054, 192, 272], 'sit-grumpy': [866, 1074, 244, 256], 'lie-side': [6, 1114, 353, 204], 'loaf-side': [360, 1114, 250, 204],
+  { file: V3('poses'), collect: 'erwu', regions: {
+    'sit-front': [42, 8, 248, 257], 'sit-drowsy': [424, 8, 180, 257], 'sit-content': [764, 8, 178, 256], curl: [1054, 74, 291, 188],
+    sniff: [6, 285, 350, 171], stalk: [357, 310, 335, 143], pounce: [699, 255, 350, 196], stretch: [1071, 260, 315, 205],
+    loaf: [64, 506, 231, 179], 'sit-side': [357, 453, 280, 241], 'belly-up': [689, 538, 378, 144], yawn: [1118, 460, 177, 238],
+    peek: [86, 706, 190, 146], 'peek-glance': [418, 699, 188, 154], 'peek-turn': [766, 692, 183, 161], 'peek-sleepy': [1110, 708, 205, 145],
+    'look-up': [20, 847, 234, 248], 'sit-grumpy': [373, 853, 191, 251], 'lie-side': [581, 923, 484, 150], 'loaf-side': [1070, 883, 292, 200],
   } },
-  // two rows of four; each frame is anchored on its nose so the body holds still
-  { file: 'erwu-walk-v2.png', match: 'erwu', walk: true, regions: Object.fromEntries([
-    [16, 156, 412, 236], [444, 152, 412, 240], [884, 152, 408, 240], [1320, 152, 420, 240],
-    [20, 500, 412, 228], [448, 500, 412, 228], [884, 504, 412, 228], [1316, 500, 424, 232]].map((r, i) => [`walk-${i}`, r])) },
-  // walking toward us and away, four frames each: half a stride, one paw stepping while the other
-  // holds. The game mirrors them for the other half, so the tail is hidden or hangs centred and
-  // the light is even. Processed like the side walk: coloured to match her poses, every frame
-  // scaled to one height and anchored on its torso.
-  { file: 'erwu-walk-front-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-front-${i}`) } },
-  { file: 'erwu-walk-back-4.png', match: 'erwu', walk: true, grid: { cols: 4, rows: 1, names: [0, 1, 2, 3].map((i) => `walk-back-${i}`) } },
-  // walking diagonally toward us and away, facing right: one image per frame, each turned from
-  // the side walk's frame of the same number (so the legs keep its order), coloured and anchored
-  // like the other walks and `fit` to the side walk's height
-  ...['front', 'back'].flatMap((v) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-    { file: `erwu-diag-${v}-${n}.png`, match: 'erwu', walk: true, fit: 240, grid: { cols: 1, rows: 1, names: [`walk-diag-${v}-${n - 1}`] } }))),
+  // side-on, two rows of four: one stride
+  { file: V3('walk-side'), match: 'erwu', walk: true, grid: { cols: 4, rows: 2, names: frames('walk-') } },
+  // toward us, away, and diagonally toward and away (facing right): eight frames each, drawn as a
+  // whole stride, so the game plays them as they are rather than mirroring half of them
+  { file: V3('walk-front'), match: 'erwu', walk: true, fit: 240, anchorTop: 0.3, grid: { cols: 4, rows: 2, names: frames('walk-front-') } },
+  { file: V3('walk-back'), match: 'erwu', walk: true, fit: 240, anchorTop: 0.3, grid: { cols: 4, rows: 2, names: frames('walk-back-') } },
+  { file: V3('walk-diag-front'), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames('walk-diag-front-') } },
+  { file: V3('walk-diag-back'), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames('walk-diag-back-') } },
   // her swat and her delight, chest-high, from the play-pieces sheet; cropped above the painted
   // rim there, since her own basket's front is drawn over her
   { file: 'play-pieces.png', regions: { swat: [756, 818, 345, 206], delighted: [1102, 824, 296, 200] } },
@@ -220,12 +218,14 @@ const PLAY_BASKET = { cx: 178, cy: 925, rx: 125, ry: 50, outerRx: 153, outerRy: 
         // A walk must hold still: the generated frames differ a little in size (the second row
         // is drawn ~4% smaller) and drift sideways. Scale every frame to the tallest, and anchor
         // each on its torso (the centroid of its upper body) with the feet on the ground line.
+        // Seen straight on, a tail held out to one side pulls that centroid over, so those views
+        // anchor on the head and ears alone (`anchorTop`: how much of the figure, from the top).
         const H = Math.max(...made.map((p) => p.h));
         for (const p of made) {
           const k = H / p.h, w = Math.round(p.w * k), sc = document.createElement('canvas'); sc.width = w; sc.height = H;
           const sg = sc.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(p.canvas, 0, 0, w, H);
           const d = sg.getImageData(0, 0, w, H).data; let cx = 0, n = 0;
-          for (let y = 0; y < H * 0.6; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 128) { cx += x; n++; }
+          for (let y = 0; y < H * (sheet.anchorTop || 0.6); y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 128) { cx += x; n++; }
           Object.assign(p, { canvas: sc, w, h: H, ax: cx / n, ay: H });
         }
       }

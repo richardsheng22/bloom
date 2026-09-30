@@ -5438,13 +5438,15 @@
   // one frame has fades with that frame, instead of lingering at full strength over the next.
   let walkCanvas = null, walkView = { view: 'side', from: null, since: -1e9 }, lastWalk = null, turnFacing = { facing: 1, since: -1e9, from: [] }, lastWalkLayers = [];
   const TURN_MS = 200;
-  // Toward and away from us, the sheets hold half a stride (four frames); the other half is the
-  // same frames mirrored, which swaps her left and right paws. The diagonal views face right like
-  // the side walk, and are mirrored the same way when she faces left.
-  const WALK_FRAMES = { side: 8, 'diag-front': 8, 'diag-back': 8, front: 8, back: 8 }, WALK_HALF = { front: 4, back: 4 };
+  // Every view is a stride of eight frames. A toward or away sheet may hold only half a stride
+  // (four frames); then the other half is the same frames mirrored, which swaps her left and right
+  // paws. The diagonal views face right like the side walk, and are mirrored the same way when
+  // she faces left.
+  const WALK_FRAMES = { side: 8, 'diag-front': 8, 'diag-back': 8, front: 8, back: 8 };
+  const walkHalf = (view) => (view === 'front' || view === 'back') && !ART.erwu.frames[`walk-${view}-4`] ? 4 : 0;
   const sideways = (view) => view === 'side' || view === 'diag-front' || view === 'diag-back';
-  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${WALK_HALF[view] ? i % WALK_HALF[view] : i}`;
-  const walkLayer = (view, i, weight, flip) => ({ name: walkName(view, i), weight, flip: WALK_HALF[view] && i >= WALK_HALF[view] ? !flip : flip });
+  const walkName = (view, i) => view === 'side' ? `walk-${i}` : `walk-${view}-${walkHalf(view) ? i % walkHalf(view) : i}`;
+  const walkLayer = (view, i, weight, flip) => ({ name: walkName(view, i), weight, flip: walkHalf(view) && i >= walkHalf(view) ? !flip : flip });
   function paintWalk(layers, x, y, h, alpha) {
     const parts = layers.filter((l) => l.weight > 0.01 && ART.erwu.frames[l.name]).map((l) => {
       const f = ART.erwu.frames[l.name], k = h / f[3], a = f[4] * k, b = (f[2] - f[4]) * k;
