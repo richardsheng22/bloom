@@ -13,17 +13,22 @@ The game opens in Erwu's garden, drawn after the real one: a round rose bed with
 The leaf button brings you back to the garden without resetting your run. During a shot it waits for the turn to finish; tap it again to cancel. After a run ends, **Back to the garden** lets you linger, and **Play again** explicitly starts the next run.
 
 - **Aim:** pull back anywhere on the screen like a slingshot, then let go. Letting go near where you started cancels the shot.
-- **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Pollen pips under a bud (or a number, for tough ones) show the hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
+- **Buds:** tulips, rosebuds, peonies, poppies and bellflowers. Every bud has a steady, upright number showing its hits left; hits make it wobble and loosen, a bud with one hit left glows, and the last hit opens it into its own flower before the petals flutter away.
 - **Pollen clusters** give you one more ball. The **petal** pickup splits your next shot three ways.
-- **Power-ups** (from turn 4) sit on glowing, pulsing medallions: hit one with pollen to use it. They grow with your pollen, so they matter all run. A **sunbeam** sweeps half the flower, striking every bud it passes; a **dewdrop** brings a summer shower that soaks the buds around it and washes them back a ring; a **bee** sets a swarm on the buds nearest Erwu. Each leaves its mark in the garden too. If several drift past unused, the game gently reminds you how they work.
-- **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** (at most one a turn) bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Each new thing gets a short introduction the first time it appears.
-- **Buds** are drawn as compact flower heads with their count at their foot, so a crowded board stays readable.
+- **Power-ups** (from turn 4) sit on glowing, pulsing medallions: hit one with pollen to use it. They grow with your pollen, so they matter all run. A **sunbeam** sweeps half the flower, striking every bud it passes; a **dewdrop** brings a summer shower that soaks the buds around it and washes them back a ring; a **bee** sets a swarm on the buds nearest Erwu. Each leaves its mark in the garden too. A **dandelion clock** scatters passing pollen for the rest of the shot. A short caption explains a live power-up when it becomes useful.
+- **Later stages:** buds toughen faster. From turn 8, **flower rings** turn any pollen that threads them golden, so it hits twice. From turn 10, **mushrooms** (at most one a turn) bounce pollen and can't be picked; one that reaches Erwu hops out into the garden. Contextual captions highlight the object they explain; opening help or leaving the run keeps unfinished lessons pending.
+- **Buds** are drawn as compact flower heads with a small paper health label nearby, so a crowded board stays readable.
 - **Times of day:** every 25 turns the time of day moves on: morning, afternoon, golden evening and starlight, then a new morning. The light changes, and the run takes the real season's light and air (spring petals, summer pollen, autumn leaves, winter snow).
 - **Special turns:** from turn 12, every 10-15 turns one turn is different: **a gust of wind** shifts everything one place round the flower, **a stubborn bud** comes alone but tough, or **a butterfly turn** gives an extra pollen for each bloom (up to five).
 - **Bank shots:** bloom a bud with pollen that got there only by bouncing off the rim, past no other bud, and it earns a pollen (twice a turn at most).
 - **Chains:** the 7th, 11th, 15th… bloom of one launch bursts into golden seeds that plant a flower in the garden. A count under the flower shows the blooms as they come.
 - **Full bloom:** blooming buds fills the petal behind them with colour. When all ten petals are full, every bud loses half its remaining hits, and the whole garden gets a boost.
-- **Erwu's swat:** once per run, Erwu bats away a bud that reaches her. Full bloom recharges it.
+- **Erwu's swat:** when ready, Erwu clears the buds reaching her and the next inner ring. Full bloom recharges it. A small chevron on an inner bud’s label marks the next ordinary inward advance; clear or push it back to avoid using the swat.
+
+- **Aim readout:** while pulling back, the caption names the first object in the pollen’s path, including mushrooms that block a bud. It does not predict later bounces.
+- **Speed:** longer shots reveal **Speed · 1× / 3×**. It stays in the footer and remembers your choice, including when selected before a shot. Both settings use the same simulation steps and a 22-second simulation-time safety limit.
+- **Help:** the picture guide pauses the run, keeps keyboard focus inside, and resumes when closed. Garden calendar time continues normally.
+- **Save recovery:** a damaged run opens the garden with an explanation. Starting over preserves the rejected save in one recovery slot. If storage cannot preserve it, or the save is from a newer version, play is labelled temporary and the original is retained.
 
 ## Erwu
 
@@ -39,7 +44,7 @@ The leaf button brings you back to the garden without resetting your run. During
 - Tap an empty bed and choose lavender, daisies or cosmos, or a rare seed from your seed tin. A preview shows how it will look in flower; **Plant** confirms and **Cancel** changes nothing.
 - The bed you planted last grows as you play: a little every turn, a little more for every bud you bloom, and a clear boost at full bloom. Other planted beds grow slowly alongside. Tap a bed and **Grow this bed** to choose which one you're growing. Now and then a bloom's seed flies to it during a run. The garden grows by days, not turns: a common bed takes about five days of ordinary play and a rare one about a week, and every planted bed grows a little on its own each day.
 - Beds go from *just planted* to *growing*, *flowering* and finally *established*. The garden screen says which bed you're growing and how far along it is, and the end of a run says what changed.
-- **Replant** a bed any time. Nothing is thrown away: whatever was growing waits in your seed tin, just as grown, to be planted again.
+- **Replant** a bed any time. Rare plants and common plants at 5% growth or more wait in your seed tin, just as grown, to be planted again. A common planting below 5% is currently replaced without a tin entry.
 - Beds stay in their places while you choose what to grow. Arrange and furniture editing were retired after owner review.
 
 ## Rare seeds

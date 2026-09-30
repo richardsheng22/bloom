@@ -1,0 +1,9 @@
+PASS 1.0 starts bare and leaves older saves untouched
+PASS ownership, growth on its own, resume, copy: 0h
+PASS ownership, growth on its own, resume, copy: 12h
+PASS ownership, growth on its own, resume, copy: 72h
+PASS ownership, growth on its own, resume, copy: 168h
+PASS ownership, growth on its own, resume, copy: 720h
+PASS reduced motion, small phone, mid-shot background/resume, the day's turns
+PASS failed writes, recovery from the backup, unreadable saves untouched, no runtime errors
+Evidence: /tmp/bloom-review-sep30/garden-diagnostic

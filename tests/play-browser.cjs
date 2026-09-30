@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {gardenV4}=require('./fixtures/garden-v4.cjs');
 const root=path.resolve(__dirname,'..'),out=process.env.BLOOM_EVIDENCE||'/tmp/bloom-play';
 const checkpoint=(extra={})=>({v:3,turn:8,ballCount:12,petalNext:false,pawReady:true,charges:Array(10).fill(0),items:[{kind:'shape',sector:5,ring:4,hp:18,maxHp:18,sp:0,ci:0},{kind:'orb',sector:1,ring:7}],...extra});
-const hook=`window.__play={freeze:false,get state(){return state},get presentation(){return presentation},get shot(){return shot},get items(){return items},get balls(){return balls},get geometry(){return {R,coreR,ballR,CX,CY}},traceAim,itemPos,collideShape,bounceOff,set randomSeed(v){shotRandom=seeded(v)},snapshot:serialize,launch,update,draw,markReady,restore,newGame,afterAdvance,get labels(){return typeof healthLabels==='undefined'?[]:healthLabels},get target(){return typeof aimedItem==='undefined'?null:aimedItem},get timeScale(){return timeScale},set timeScale(v){timeScale=v}};`;
+const hook=`window.__play={freeze:false,get state(){return state},get presentation(){return presentation},get shot(){return shot},get items(){return items},get balls(){return balls},get geometry(){return {R,coreR,ballR,CX,CY}},get aim(){return aim},set aim(v){aim=v},traceAim,itemPos,collideShape,bounceOff,set randomSeed(v){shotRandom=seeded(v)},snapshot:serialize,launch,update,draw,markReady,restore,newGame,afterAdvance,get labels(){return typeof healthLabels==='undefined'?[]:healthLabels},get target(){return typeof aimedItem==='undefined'?null:aimedItem},get timeScale(){return timeScale},set timeScale(v){timeScale=v}};`;
 (async()=>{
  fs.mkdirSync(out,{recursive:true});
  const server=http.createServer((req,res)=>{
@@ -15,8 +15,9 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
  }).listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));
  const browser=await chromium.launch({headless:true,executablePath:process.env.BLOOM_CHROMIUM,args:['--no-sandbox']});
  const errors=[];
- async function open({run=checkpoint(),width=390,height=844,extra={},failRecovery=false,expectError=false,motion='reduce'}={}){
+ async function open({run=checkpoint(),width=390,height=844,extra={},failRecovery=false,expectError=false,motion='reduce',now=null}={}){
   const p=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true,timezoneId:'America/Toronto',reducedMotion:motion});
+  if(now)await p.clock.setFixedTime(new Date(now));
   p.on('pageerror',e=>{if(!expectError)errors.push(e.message)});
   await p.addInitScript(({run,garden,extra,failRecovery})=>{
    if(!sessionStorage.getItem('fixture')){sessionStorage.setItem('fixture','1');localStorage.setItem('bloom.garden4',garden);if(run!==null)localStorage.setItem('bloom.run3',typeof run==='string'?run:JSON.stringify(run));for(const[k,v]of Object.entries(extra))localStorage.setItem(k,JSON.stringify(v));}
@@ -46,7 +47,11 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
    await modal.keyboard.press('Escape');assert.equal(await modal.evaluate(()=>document.querySelector('#app').inert),true);
    assert.equal(await modal.evaluate(()=>document.activeElement.id),'t-guide');
   }
-  await modal.click('#play');await shot(modal);await modal.waitForFunction(()=>__play.state==='flying');await modal.click('#r-guide');
+  await modal.click('#play');
+  await modal.mouse.move(195,650);await modal.mouse.down();await modal.mouse.move(140,690);
+  await modal.evaluate(()=>document.querySelector('#r-guide').click());await modal.keyboard.press('Escape');await modal.mouse.up();
+  assert.equal(await modal.evaluate(()=>__play.state),'ready');
+  await shot(modal);await modal.waitForFunction(()=>__play.state==='flying');await modal.click('#r-guide');
   const paused=await modal.evaluate(()=>({shot:__play.shot,balls:__play.balls,items:__play.items}));
   await modal.waitForTimeout(1200);assert.deepEqual(await modal.evaluate(()=>({shot:__play.shot,balls:__play.balls,items:__play.items})),paused);
   await modal.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
@@ -62,7 +67,7 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   console.log('PASS modal focus, inert restoration, shot/background pause and deferred game over');
   const dense=Array.from({length:20},(_,i)=>({kind:'shape',sector:i%10,ring:i<10?1:4,hp:[1,2,3,4,18,99,100,999,1000,1234][i%10],maxHp:1234,sp:i%5,ci:i%4,...(i===14?{seed:'moonflower',stubborn:true}:{})}));
   // Stable measured labels at normal CSS scale, including all low-health values.
-  for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[1024,768]]){
+  for(const [width,height] of [[320,568],[360,640],[375,667],[390,844],[430,932],[568,320],[768,1024],[1024,768]]){
    const q=await open({width,height,run:checkpoint({items:dense})});await q.click('#play');await q.waitForTimeout(800);
    const labels=await q.evaluate(()=>__play.labels);assert.equal(labels.length,dense.length);
    for(let i=0;i<labels.length;i++){assert.equal(labels[i].h,18);for(let j=0;j<i;j++){const a=labels[i],b=labels[j];assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,`overlapping labels ${width}: ${i},${j}`);}}
@@ -70,8 +75,15 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   }
   const target=await open({run:checkpoint({items:[{kind:'mushroom',sector:0,ring:2},{kind:'shape',sector:9,ring:4,hp:18,maxHp:18,sp:1,ci:0}]})});await target.click('#play');
   const contact=await target.evaluate(()=>{const p=__play.itemPos(__play.items[0]),a=Math.atan2(p.y,p.x),t=__play.traceAim(a);return {kind:t.item?.kind,before:__play.snapshot()}});
-  assert.equal(contact.kind,'mushroom');assert.deepEqual(await target.evaluate(()=>__play.snapshot()),contact.before);await target.close();
-  console.log('PASS measured health labels at six sizes and mushroom occlusion without board mutation');
+  assert.equal(contact.kind,'mushroom');assert.deepEqual(await target.evaluate(()=>__play.snapshot()),contact.before);
+  const aimed=await target.evaluate(()=>{const p=__play.itemPos(__play.items[0]),a=Math.atan2(p.y,p.x);__play.items[0].dead=true;__play.aim={angle:a,target:a};__play.update(.01);return __play.target?.hp;});
+  assert.equal(aimed,18);assert.match(await target.locator('#hint').innerText(),/18/);await target.close();
+  console.log('PASS measured health labels at eight sizes and mushroom occlusion without board mutation');
+  for(const [turn,month,motion] of [[1,3,'reduce'],[10,6,'no-preference'],[30,9,'reduce'],[60,12,'no-preference'],[100,3,'no-preference']]){
+   const seasonal=await open({now:`2026-${String(month).padStart(2,'0')}-15T16:00:00Z`,motion,run:checkpoint({turn,charges:Array(10).fill(1),items:turn===1?dense.slice(0,3).map(i=>({...i,ring:7,hp:2,maxHp:2})):dense}),extra:{'bloom.hinted3':true,'bloom.speedSeen':true}});
+   await seasonal.click('#play');await seasonal.waitForTimeout(800);assert.equal(await seasonal.evaluate(()=>__play.labels.length),turn===1?3:20);
+   await seasonal.screenshot({path:path.join(out,`turn-${turn}-month-${month}.png`)});await seasonal.close();
+  }
   const lesson=await open({run:checkpoint({turn:1,items:[{kind:'dew',sector:0,ring:7}]}),extra:{'bloom.hinted3':true}});
   // Merely creating the board or reading help never acknowledges a lesson.
   assert.equal(await lesson.evaluate(()=>localStorage.getItem('bloom.hints1')),null);
@@ -91,8 +103,8 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   assert.match(await speedPage.locator('#ff').innerText(),/1×/);await speedPage.click('#ff');assert.equal(await speedPage.evaluate(()=>__play.state),'ready');
   await speedPage.reload();await speedPage.waitForFunction(()=>!document.body.classList.contains('loading'));await speedPage.click('#play');assert.match(await speedPage.locator('#ff').innerText(),/3×/);
   const boxes=await speedPage.evaluate(()=>['#ff','#r-guide','#hint','#paw'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}}));
-  for(const b of boxes)assert.ok(b.x>=0&&b.x+b.w<=320);assert.ok(boxes[0].h>=44);assert.ok(boxes[1].x+boxes[1].w<=boxes[0].x);
-  await speedPage.screenshot({path:path.join(out,'speed-320.png')});await speedPage.close();
+  for(const b of boxes)assert.ok(b.x>=0&&b.x+b.w<=320);assert.ok(boxes[0].h>=44);assert.ok(boxes[1].x+boxes[1].w<=boxes[0].x);assert.ok(boxes[3].x+boxes[3].w<=boxes[1].x);
+  await speedPage.waitForTimeout(800);await speedPage.screenshot({path:path.join(out,'speed-320.png')});await speedPage.close();
   for(const motion of ['reduce','no-preference'])for(const power of ['dew','bee','sun','dandelion','timeout']){
    const results=[];
    for(const speed of [1,3]){

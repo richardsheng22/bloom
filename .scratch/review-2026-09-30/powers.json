@@ -1,0 +1,102 @@
+[
+  {
+    "kind": "sun",
+    "errors": [],
+    "turn": 61,
+    "remainingOriginalShapes": 21,
+    "pawReady": false,
+    "charges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.5,
+      0,
+      0,
+      0
+    ],
+    "removedPickup": true
+  },
+  {
+    "kind": "dew",
+    "errors": [],
+    "turn": 61,
+    "remainingOriginalShapes": 21,
+    "pawReady": false,
+    "charges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.5,
+      0,
+      0,
+      0
+    ],
+    "removedPickup": true
+  },
+  {
+    "kind": "bee",
+    "errors": [],
+    "turn": 61,
+    "remainingOriginalShapes": 21,
+    "pawReady": false,
+    "charges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.5,
+      0,
+      0,
+      0
+    ],
+    "removedPickup": true
+  },
+  {
+    "kind": "dandelion",
+    "errors": [],
+    "turn": 61,
+    "remainingOriginalShapes": 21,
+    "pawReady": false,
+    "charges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.5,
+      0,
+      0,
+      0
+    ],
+    "removedPickup": true
+  },
+  {
+    "kind": "fullbloom",
+    "errors": [],
+    "turn": 61,
+    "remainingOriginalShapes": 0,
+    "pawReady": true,
+    "charges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "removedPickup": true
+  }
+]

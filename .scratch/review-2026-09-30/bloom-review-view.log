@@ -1,0 +1,11 @@
+PASS layout, inspection, keyboard, exact resume: 320x568
+PASS layout, inspection, keyboard, exact resume: 375x667
+PASS layout, inspection, keyboard, exact resume: 390x844
+PASS layout, inspection, keyboard, exact resume: 430x932
+PASS layout, inspection, keyboard, exact resume: 568x320
+PASS layout, inspection, keyboard, exact resume: 1024x768
+PASS safe-area reservations, resize, wild plants stay untouchable, bed taps, dismissal, immediate play, pointer cancellation, queued return/cancel
+PASS queued game over and explicit new run
+PASS ordinary game-over garden entry does not create a new run
+PASS queued return during advancing/full bloom
+PASS no page errors. Evidence: /tmp/bloom-review-sep30/view

@@ -1,0 +1,27 @@
+TURN volume checks 15
+AFTER { stable: true, painted: 6940, msPerPose: 0.07 }
+PASS painted expressions and plant traits {
+  reduced: false,
+  runBlink: 'peek-sleepy',
+  hello: 'sit-drowsy',
+  nestHello: 'peek-sleepy',
+  awake: 'sit-front',
+  yawn: 'stretch',
+  reds: [ 141.6000000000014, 35375.99999999976, 255481.19999999917 ],
+  followsLight: true,
+  rimStable: true,
+  reversible: true
+}
+PASS painted expressions and plant traits {
+  reduced: true,
+  runBlink: 'peek-sleepy',
+  hello: 'sit-drowsy',
+  nestHello: 'peek-sleepy',
+  awake: 'sit-front',
+  yawn: 'stretch',
+  reds: [ 141.6000000000014, 35375.99999999976, 255481.19999999917 ],
+  followsLight: true,
+  rimStable: true,
+  reversible: true
+}
+PASS stable rendering and phone screenshots without page errors

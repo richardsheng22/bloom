@@ -1,0 +1,11 @@
+PASS 1.0 starts bare and leaves older saves untouched
+PASS ownership, growth on its own, resume, copy: 0h
+AssertionError [ERR_ASSERTION]: bed growth after 12h: 0.63
+    at /home/developer/bloom/tests/garden-browser.cjs:86:14 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

@@ -1,0 +1,5 @@
+PASS package holds exactly the 27 listed files (6113 KB)
+PASS offline: bundled fonts and painted art load, nothing leaves the package
+PASS offline: a bed is planted and saved
+PASS offline: a run plays (turn 3)
+PASS no page errors. Evidence: /tmp/bloom-review-sep30/offline

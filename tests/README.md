@@ -67,3 +67,11 @@ The current art review additionally loads the painted atlas, renders its sixteen
 per-suite logs, console errors, Chromium/Node versions, final screenshots and traces in
 `build/browser-evidence` (override with `BLOOM_EVIDENCE`). CI uploads these even on failure.
 The persistence fixture uses explicit Toronto/UTC contexts and named calendar boundaries.
+
+## Play readability, help and playback speed
+
+`node tests/play-browser.cjs` exercises damaged-run recovery, modal focus/pause, pointer cancellation, contextual captions, measured labels, first-contact aiming and speed persistence. Its HTTP server injects private inspection and controlled-simulation hooks; those hooks are not included in `index.html` or the offline payload.
+
+The dense health fixture covers eight viewport sizes, including all six existing interaction-suite sizes. Seasonal fixtures capture turns 1/10/30/60/100 with full petals, rare/stubborn buds and both motion modes. Inspect `health-320.png`, `health-568.png`, `speed-320.png` and the `turn-*-month-*.png` images alongside the geometric assertions.
+
+Speed checks freeze animation scheduling and advance the real update function. They seed the shot RNG independently of decoration, collect each power-up, compare completed shots at 1× and 3×, and force a stalled ball to exercise the 22-second simulation cutoff. Exact hit counts, board state and rewards must agree; display-frame counts permit rounding of at most two frames. These checks establish playback equivalence, not long-run difficulty balance.

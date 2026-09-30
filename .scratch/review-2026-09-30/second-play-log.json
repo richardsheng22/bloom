@@ -1,0 +1,138 @@
+[
+  {
+    "turn": 1,
+    "balls": 3,
+    "duration": 1.486,
+    "breeze": false,
+    "shapes": 2,
+    "nearest": 7
+  },
+  {
+    "turn": 2,
+    "balls": 3,
+    "duration": 1.488,
+    "breeze": false,
+    "shapes": 4,
+    "nearest": 6
+  },
+  {
+    "turn": 3,
+    "balls": 3,
+    "duration": 1.488,
+    "breeze": false,
+    "shapes": 6,
+    "nearest": 6
+  },
+  {
+    "turn": 4,
+    "balls": 3,
+    "duration": 1.49,
+    "breeze": false,
+    "shapes": 8,
+    "nearest": 5
+  },
+  {
+    "turn": 5,
+    "balls": 3,
+    "duration": 5.551,
+    "breeze": true,
+    "shapes": 10,
+    "nearest": 4
+  },
+  {
+    "turn": 6,
+    "balls": 7,
+    "duration": 1.636,
+    "breeze": false,
+    "shapes": 4,
+    "nearest": 5
+  },
+  {
+    "turn": 7,
+    "balls": 7,
+    "duration": 1.651,
+    "breeze": false,
+    "shapes": 5,
+    "nearest": 5
+  },
+  {
+    "turn": 8,
+    "balls": 7,
+    "duration": 1.766,
+    "breeze": false,
+    "shapes": 6,
+    "nearest": 5
+  },
+  {
+    "turn": 9,
+    "balls": 8,
+    "duration": 1.651,
+    "breeze": false,
+    "shapes": 9,
+    "nearest": 5
+  },
+  {
+    "turn": 10,
+    "balls": 8,
+    "duration": 5.969,
+    "breeze": true,
+    "shapes": 11,
+    "nearest": 4
+  },
+  {
+    "turn": 11,
+    "balls": 10,
+    "duration": 1.981,
+    "breeze": false,
+    "shapes": 12,
+    "nearest": 4
+  },
+  {
+    "turn": 12,
+    "balls": 11,
+    "duration": 1.836,
+    "breeze": false,
+    "shapes": 15,
+    "nearest": 3
+  },
+  {
+    "turn": 13,
+    "balls": 11,
+    "duration": 2,
+    "breeze": false,
+    "shapes": 16,
+    "nearest": 3
+  },
+  {
+    "turn": 14,
+    "balls": 11,
+    "duration": 0.392,
+    "breeze": false,
+    "shapes": 17,
+    "nearest": 2
+  },
+  {
+    "turn": 15,
+    "balls": 12,
+    "duration": 1.849,
+    "breeze": false,
+    "shapes": 21,
+    "nearest": 1
+  },
+  {
+    "turn": 16,
+    "balls": 13,
+    "duration": 2.215,
+    "breeze": false,
+    "shapes": 19,
+    "nearest": 2
+  },
+  {
+    "turn": 17,
+    "balls": 14,
+    "duration": 3.503,
+    "breeze": false,
+    "shapes": 23,
+    "nearest": 1
+  }
+]

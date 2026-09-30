@@ -158,7 +158,7 @@
 
   footer {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr;
     align-items: center;
     gap: 6px;
     min-height: 88px;
@@ -216,7 +216,8 @@
   #r-guide { width: 40px; height: 40px; font-size: 18px; }
   #ff {
     height: 44px;
-    padding-inline: 11px;
+    padding-inline: 10px;
+    white-space: nowrap;
     border: 1px solid var(--hairline);
     border-radius: 19px;
     background: var(--chip);
@@ -231,7 +232,7 @@
     cursor: pointer;
     touch-action: manipulation;
   }
-  #ff svg { width: 22px; height: 16px; color: #8DB3D0; }
+  #ff svg { width: 18px; height: 16px; color: #8DB3D0; }
   #ff[aria-pressed="true"] { background: #EAF2F8; outline-color: #6E9CBF; }
   #ff[aria-pressed="true"] svg { color: #6E9CBF; }
   #ff[aria-pressed="true"] svg path { animation: gust 900ms linear infinite; }
@@ -556,6 +557,12 @@
     #title .t-note { min-height: 28px; margin-top: 7px; }
   }
   @media (orientation: landscape) and (max-height: 500px) {
+    #app { max-width: 900px; grid-template-columns: minmax(0,1fr) 200px; grid-template-rows: auto 1fr; gap: 8px 12px; }
+    #app #stage { grid-column: 1; grid-row: 1 / 3; }
+    #app header { grid-column: 2; grid-row: 1; grid-template-columns: 1fr 1fr; }
+    #app header .tools { grid-column: 1 / -1; justify-content: center; padding-top: 3px; }
+    #app footer { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+    #app #hint { order: -1; min-height: 36px; }
     #title { max-width: 900px; grid-template-columns: minmax(0, 1fr) minmax(230px, 0.9fr); grid-template-rows: auto 1fr; gap: 0 14px; padding-block: calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-bottom, 0px) + 8px); }
     #title .t-top { grid-column: 2; min-height: 44px; }
     #title .logo, #title.settled .logo { font-size: 32px; }
@@ -831,6 +838,7 @@
     const r = stage.getBoundingClientRect();
     CX = r.left + r.width / 2; CY = r.top + r.height / 2;
     R = Math.max(40, Math.min(Math.min(W, 560) / 2 - 8, r.height / 2 - 4));
+    if(W>H && H<=500)R=Math.min(R,r.width/2-4);
     coreR = R * 0.175;
     ballR = Math.max(3.5, R * 0.03);
     maxShape = R * 0.095;
@@ -1034,21 +1042,11 @@
   // a dewdrop that splashes, a bee that helps, a sunbeam that cuts a line, and a dandelion clock
   // that scatters the stream.
   const POWERS = ['dew', 'bee', 'sun', 'dandelion'];
-  const INTRO = {
-    mushroom: ['Mushrooms', "bouncy, and they can't be picked"],
-    ring: ['Flower rings', 'pollen through a ring turns golden and hits twice'],
-    powers: ['Power-ups', 'hit a glowing medallion with pollen to use it'],
-    dew: ['Dewdrop', 'hit it with pollen for a summer shower: buds around it are soaked and washed back'],
-    bee: ['Bee', 'hit it with pollen to set a swarm loose on the buds nearest Erwu'],
-    sun: ['Sunbeam', 'hit it with pollen: a beam sweeps half the flower'],
-    dandelion: ['Dandelion clock', 'hit it with pollen: for the rest of the turn, every pollen that passes through it scatters a new way'],
-    seedbud: ['A seed bud', 'open it to find a rare seed for your garden'],
-  };
+  const INTRO = {}; // Seasonal and run celebrations; teaching lives in BloomHints.
   const hintPrefs = BloomHints.preferences(store.get('hints1', null), store.get('seen', {}), store.get('hinted3', false));
   let contextualHint = null, hintSeconds = 0, introQueue = [];
   // This run's rare seed (a turn and a kind, or null) and what changed in the garden during it.
   let runSeed = null, runLog = null;
-  let powersMissed = 0, powerTipShown = false;
   // ----- Variety in a long run. The light follows the real season (garden-time.js); every 25
   // turns the time of day moves on (morning, afternoon, golden evening, starlight, then a new
   // morning), with a small card. From turn 12, every 10-15 turns one turn is special: a gust
@@ -1178,7 +1176,7 @@
     cat = freshCat();
     // Seed pacing is part of the garden, so it survives from run to run.
     runSeed = BloomBeds.planRun(garden); runLog = { beds: bedStages(), seeds: [] };
-    powersMissed = 0; powerTipShown = false; runBestShown = false; combo = null;
+    runBestShown = false; combo = null;
     special = { next: 12, kind: null, last: null, bonus: 0 };
     saveGarden();
     spawnRing(1);
@@ -3110,7 +3108,7 @@
         const q = itemPos(it);
         const a = Math.atan2(q.y, q.x);
         plant('mushroom', a + Math.PI, 0.45, 1.1, 2, { x: q.x, y: q.y });
-      } else { it.dead = true; if (POWERS.includes(it.kind)) powerMissed(); }
+      } else { it.dead = true; }
     }
     if (reached) {
       if (!pawReady) { items = items.filter((i) => !i.dead); return gameOver(); }
@@ -3685,15 +3683,6 @@
       const s = R * (0.08 + Math.random() * 0.16), l = b.r * 1.3 * pt.l;
       particles.push({ type: 'flutter', x: b.x + Math.cos(pt.a) * l * 0.5, y: b.y + Math.sin(pt.a) * l * 0.5, vx: Math.cos(pt.a) * s, vy: Math.sin(pt.a) * s - R * 0.1,
         rot: pt.a, vr: (Math.random() - 0.5) * 3, ph: Math.random() * TAU, fs: 5 + Math.random() * 6, life: 1, decay: 0.75, size: l * 0.5, wid: pt.w, bend: pt.bend, col });
-    }
-  }
-  // Power-ups that drift past unused: after three in a run, and until a few have been used,
-  // a gentle reminder of how they work (once a run).
-  function powerMissed() {
-    powersMissed++;
-    if (powersMissed >= 3 && !powerTipShown && (store.get('powersUsed', 0) < 5)) {
-      powerTipShown = true;
-      // The contextual selector explains a live power-up when one is available.
     }
   }
   // Each power-up has its own colour: its medallion's rim, and the burst when it is used.
@@ -4741,10 +4730,11 @@
   function drawHealth() {
     const buds = items.filter(it=>!it.dead && it.kind==='shape');
     healthLabels = [];
+    const positions = new Map(buds.map(it=>[it,itemPos(it)]));
     ctx.save(); ctx.font = '600 12px "Bricolage Grotesque", sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const it of buds) {
-      const p = itemPos(it), w = Math.max(18, Math.ceil(ctx.measureText(String(it.hp)).width)+8), h = 18;
+      const p = itemPos(it), w = Math.max(18, Math.ceil(ctx.measureText(String(it.hp)).width)+8+(it.ring<=1?8:0)), h = 18;
       // Stable anchors, with a short stem when a neighbour requires an offset.
       const outward = Math.atan2(p.y,p.x);
       const candidates = [[Math.cos(outward)*(p.r+11),Math.sin(outward)*(p.r+11)],[0,p.r*.8],[0,-p.r-8],[-p.r- w/2,0],[p.r+w/2,0],[-w/2,p.r+9],[w/2,p.r+9],[0,p.r+19],[0,-p.r-20]];
@@ -4757,7 +4747,7 @@
         cost += Math.max(0,Math.min(r.x+w,catX)-Math.max(r.x,-catX))*Math.max(0,Math.min(r.y+h,catY)-Math.max(r.y,-catY))*200;
         for (const q of healthLabels) cost += Math.max(0,Math.min(r.x+w+2,q.x+q.w+2)-Math.max(r.x,q.x))*Math.max(0,Math.min(r.y+h+2,q.y+q.h+2)-Math.max(r.y,q.y))*100;
         for (const other of buds) if(other!==it) {
-          const q=itemPos(other), nx=Math.max(r.x,Math.min(q.x,r.x+w)), ny=Math.max(r.y,Math.min(q.y,r.y+h));
+          const q=positions.get(other), nx=Math.max(r.x,Math.min(q.x,r.x+w)), ny=Math.max(r.y,Math.min(q.y,r.y+h));
           cost += Math.max(0,q.r*.72-Math.hypot(q.x-nx,q.y-ny))*20;
         }
         cost += Math.max(0,Math.abs(r.x+w/2)+w/2-R)*1000;
@@ -4776,7 +4766,8 @@
       ctx.fillStyle='#FFF8E8';ctx.strokeStyle=it.ring<=1?C['bud-deep']:C.walnut;
       ctx.lineWidth=it===aimedItem?1.8:.8;
       ctx.beginPath();ctx.roundRect(best.x,best.y,w,h,6);ctx.fill();ctx.stroke();
-      ctx.fillStyle=C.walnut;ctx.fillText(String(it.hp),x,y+.5);
+      ctx.fillStyle=C.walnut;ctx.fillText(String(it.hp),x+(it.ring<=1?4:0),y+.5);
+      if(it.ring<=1){ctx.strokeStyle=C.walnut;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(best.x+3,y-2);ctx.lineTo(best.x+6,y+1);ctx.lineTo(best.x+9,y-2);ctx.stroke();}
     }
     ctx.restore();
   }
