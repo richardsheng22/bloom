@@ -1196,6 +1196,7 @@
   function onScenery(q, sc) {
     if (!sc) return false;
     const pad = R * 0.06, tall = R * 0.16;
+    if (q.y < sc.back + R * 0.03) return true; // up in the hedge and trees behind the lawn
     return [sc.fountain, sc.deadwood].some((f) => Math.abs(q.x - f.x) < f.width / 2 + pad && q.y > f.y - f.height - pad && q.y - tall < f.y + pad);
   }
   const runScenery = () => paintedScenery({ cx: CX, cy: CY });
@@ -1206,14 +1207,18 @@
     if (q && q.a === p.a && q.d === p.d) return q.at;
     const sc = runScenery(), home = plantWorld(p);
     let at = home;
-    if (onScenery(home, sc)) {
-      // round its ring first, then a little further out or in; never into the header or footer
+    if (onScenery(home, sc) || !inRunLawn(home)) {
+      // round its ring first, then rings a little further out or in, down to the flower's edge
+      // (there's always open lawn beside it); never into the header or footer
+      const rings = [p.d];
+      for (let k = 1; k < 30; k++) for (const d of [p.d + k * 0.1, p.d - k * 0.1]) if (d >= 1.06 && d <= Math.max(p.d, 2.6)) rings.push(d);
       at = null;
-      for (let i = 1; i < 240 && !at; i++) {
-        const ring = Math.floor(i / 40), turn = i % 40;
-        const a = p.a + (turn % 2 ? 1 : -1) * Math.ceil(turn / 2) * 0.05, d = Math.max(1.06, p.d + (ring % 2 ? 1 : -1) * Math.ceil(ring / 2) * 0.12);
-        const q = { x: Math.cos(a) * d * R, y: Math.sin(a) * d * R };
-        if (!onScenery(q, sc) && inRunLawn(q)) at = q;
+      for (const d of rings) {
+        for (let turn = 0; turn < 60 && !at; turn++) {
+          const a = p.a + (turn % 2 ? 1 : -1) * Math.ceil(turn / 2) * 0.05, q = { x: Math.cos(a) * d * R, y: Math.sin(a) * d * R };
+          if (!onScenery(q, sc) && inRunLawn(q)) at = q;
+        }
+        if (at) break;
       }
       at = at || home;
     }
@@ -1511,13 +1516,14 @@
     const w = Math.min(W, img.naturalWidth * k * 1.15), h = Math.min(H, img.naturalHeight * k * 1.15);
     return { x: (W - w) / 2, y: (H - h) / 2, w, h };
   }
-  // The backdrop's fountain and log, in scene coordinates, so the layout keeps clear of them
-  // and Erwu walks to where they are painted.
+  // The backdrop's fountain and log, and the back edge of its lawn, in scene coordinates, so
+  // the layout keeps clear of them and Erwu walks to where they are painted.
   function paintedScenery(sc) {
     const r = plateRect();
     if (!r || !sc) return undefined;
     const at = (q, wf, hf) => ({ x: r.x + q.x * r.w - sc.cx, y: r.y + q.y * r.h - sc.cy, width: r.w * wf, height: r.h * hf });
     return { fountain: at(ART.lawn.fountain, ART.lawn.fountain.width * 0.8, 0.21), deadwood: at(ART.lawn.log, ART.lawn.log.width, 0.1),
+      back: r.y + (ART.lawn.back ?? 0.2) * r.h - sc.cy,
       // beds in flower stand tall (sunflowers most of all): keep wild plants well clear above them
       clear: { side: 18, up: 64, roseUp: sc.nest * 1.4 } };
   }
@@ -2144,6 +2150,7 @@
       if ([m.fountain, m.deadwood].some((f) => Math.abs(x - f.x) < f.width / 2 + pad && y > f.y - f.height - pad && y < f.y + pad)) return false;
       if (((x - r.x) / (r.rx + pad)) ** 2 + ((y - r.y) / (r.ry + pad)) ** 2 < 1) return false;
       if (y > m.path.top - pad && Math.abs(x) < m.path.width + pad * 0.5) return false;
+      if (m.back != null && y < m.back + 4) return false;
       return Math.abs(x) < sc.width / 2 - 4 && Math.abs(y) < sc.height / 2 - 4 && Math.hypot(x, y) > sc.nest + pad;
     };
   }
@@ -2706,6 +2713,7 @@
         const x = side * (gardenScene.width / 2 - 10 - rnd() * 14), y = (rnd() - 0.5) * Math.max(0, gardenScene.height - 54);
         if (settled.some((q) => { const at = plantXY(q); return Math.hypot(at.x - x, at.y - y) < u * 2; })) continue;
         if (anchors.some((a) => Math.abs(a.x - x) < a.width / 2 + 16 && Math.abs(a.y - y) < a.height / 2 + 24)) continue;
+        if (gardenScene.scenery && y < gardenScene.scenery.back + 4) continue;
         n++;
         g.strokeStyle = rgb(hexRgb(C.moss), 0.2 + garden.rest * 0.45); g.lineWidth = 1.2;
         for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x + i, y); g.quadraticCurveTo(x + i * 2, y - 6, x + i * 3.5 + side * 2, y - 10 - rnd() * 4); g.stroke(); }

@@ -132,6 +132,8 @@
       deadwood: painted.deadwood ? { ...painted.deadwood } : { x: Math.min(scene.width / 2 - fh * 0.55 - 6, Math.max(x * 0.76, rx * 0.74 + fh * 0.55)), y: Math.min(-h * 0.05, n * 0.35 - ry * 0.75), width: fh * 1.1, height: fh * 0.42 },
       // the stepping-stone path from the front of the lawn up to the rose bed
       path: { top: n * 0.35 + ry + 6, width: 24 },
+      // where a painted lawn ends at the hedge and trees behind; nothing grows above it
+      back: Number.isFinite(painted.back) ? painted.back : null,
     };
   }
   // Wild plants from play spread across the whole lawn: a plant's saved distance chooses
@@ -151,6 +153,7 @@
       if ([m.fountain, m.deadwood].some(f => Math.abs(x - f.x) < f.width / 2 + 10 && y > f.y - f.height - 6 && y - 22 < f.y + 8)) return false;
       if (((x - r.x) / (r.rx + 10 + side)) ** 2 + ((y - r.y) / (r.ry + 10 + (y < r.y ? roseUp : 0))) ** 2 < 1) return false;
       if (y > m.path.top - 6 && Math.abs(x) < m.path.width) return false;
+      if (m.back != null && y < m.back + 4) return false;
       return Math.abs(x) < scene.width / 2 - 8 && y > -scene.height / 2 + 26 && y < scene.height / 2 - 4;
     };
     for (let step = 0; step < 160; step++) {

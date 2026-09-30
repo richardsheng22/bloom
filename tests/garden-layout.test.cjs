@@ -114,3 +114,17 @@ test('a painted backdrop can place the fountain and the log; the rest of the lay
   assert.notEqual(m.fountain, scenery.fountain, 'a copy, so callers cannot move the scenery');
   assert.deepEqual([m.roses, m.path], [plain.roses, plain.path]);
 });
+
+test('with a painted lawn, no wild plant stands above its back edge, in the hedge and trees', () => {
+  const V = require('../garden-view.js');
+  for (const [w, h] of [[320, 420], [358, 470], [398, 520]]) {
+    const scene = V.layout({ left: 0, top: 0, width: w, height: h }), back = -h * 0.3;
+    const scenery = { fountain: { x: -w * 0.3, y: -h * 0.24, width: w * 0.2, height: h * 0.2 }, deadwood: { x: w * 0.3, y: -h * 0.25, width: w * 0.24, height: h * 0.09 }, back };
+    assert.equal(L.landmarks({ ...scene, scenery }).back, back);
+    assert.equal(L.landmarks(scene).back, null, 'the drawn lawn has no back edge');
+    for (let i = 0; i < 120; i++) {
+      const q = L.projectPlant({ a: i * 0.53, d: 1.05 + (i % 9) * 0.19 }, { ...scene, scenery });
+      assert.ok(q.y >= back, `plant ${i} at y ${q.y.toFixed(1)} above the lawn's edge ${back} at ${w}x${h}`);
+    }
+  }
+});
