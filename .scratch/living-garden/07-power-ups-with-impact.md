@@ -53,3 +53,15 @@ Other changes:
 - Visuals: a sweeping beam with a warm glow over the swept half; a cool wash, rain streaks and ripples for the shower; three or five bees.
 - Bot runs (aiming at the nearest bud, fast-forwarded) ended at turns 60, 65, 77 and 97 (mean 75) against 88 and 90 before: within the 25% allowed, though a single run varies widely.
 - Checked late in a run (turn 45, 52 pollen): each power-up visibly took a large share of the board's hits.
+
+## The dandelion clock (2026-09-30)
+
+The owner asked for a power-up that spreads the stream of pollen at random, and approved the dandelion clock.
+
+- **Using it:** hitting its medallion leaves a seed head standing where it was, for the rest of the turn.
+- **The scatter:** every pollen that passes through the clock is sent off at a new random angle, up to 60° either way. Each one knocks a couple of seeds loose. A stream aimed at the clock sprays across the buds behind it.
+- **How it looks:** the head goes bald as it's used, and a dashed ring shows where it scatters.
+- **End of turn:** the last seeds blow away, and two land in the garden as wildflowers, flying there like chain seeds.
+- **Code:** `dandelionClock`, `scatterBall`, `blowClocks` and `drawClockHead` in `index.html`.
+- **What it doesn't do:** it adds no character key to the save, since that would make old saves fail validation. `BloomTime.note` ignores the unknown key.
+- **Frequency:** it joins the other three in the same 22% chance of a power-up on a turn, so each of the four now appears a little less often.
