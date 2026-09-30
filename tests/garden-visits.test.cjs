@@ -85,3 +85,22 @@ test('most openings after a day away have something new, and traces fade', () =>
 test('Erwu\'s presents follow the season', () => {
   for (const [season, items] of Object.entries(V.GIFTS)) assert.ok(items.length && T.SEASONS.includes(season));
 });
+
+test("Erwu's present goes onto her shelf when picked up; old saves have an empty shelf", () => {
+  const G = require('../garden-state.js');
+  const g = G.fresh(Date.UTC(2026, 9, 1), 5);
+  delete g.fresh;
+  assert.ok(V.valid(g), 'a garden without a shelf is valid');
+  assert.equal(V.pickUp(g), null, 'nothing to pick up');
+  for (const items of Object.values(V.GIFTS)) for (const item of items) assert.ok(V.KEEPSAKES[item], `${item} has a name`);
+  g.visits.gift = { item: 'acorn', until: Date.UTC(2026, 9, 5) };
+  assert.equal(V.pickUp(g), 'acorn');
+  assert.equal(g.visits.gift, null);
+  g.visits.gift = { item: 'acorn', until: Date.UTC(2026, 9, 9) };
+  V.pickUp(g);
+  assert.deepEqual(g.visits.shelf, { acorn: 2 });
+  assert.equal(V.shelfCount(g), 2);
+  assert.ok(V.valid(g) && G.valid(G.snapshot(g)), 'a shelf saves and reads back');
+  g.visits.shelf = { acorn: 0 };
+  assert.ok(!V.valid(g), 'a broken shelf is rejected');
+});

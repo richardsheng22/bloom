@@ -35,6 +35,12 @@
     lunamoth: { cls: 'rare', months: [5, 7], parts: ['night'], place: 'fountain', name: 'A luna moth' },
     fox: { cls: 'rare', parts: ['dusk'], place: 'lawn-edge', trace: 'fox-tracks', name: 'A fox' },
   });
+  // Erwu's keepsakes: every present she can bring, with its name. Tapping one in the garden puts
+  // it on her shelf (`visits.shelf`, a count per kind; older saves have none and read as empty).
+  const KEEPSAKES = Object.freeze({
+    feather: 'A blue jay feather', pebble: 'A smooth pebble', 'daisy-head': 'A daisy', 'cosmos-head': 'A cosmos flower',
+    'maple-leaf': 'A maple leaf', 'oak-leaf': 'An oak leaf', acorn: 'An acorn', 'pine-cone': 'A pine cone',
+  });
   // Erwu's presents by season.
   const GIFTS = Object.freeze({
     spring: ['daisy-head', 'feather', 'pebble'], summer: ['cosmos-head', 'feather', 'pebble'],
@@ -74,8 +80,19 @@
       Object.keys(v.next).every((k) => CAST[k] && Number.isFinite(v.next[k])) && Object.keys(v.seen).every((k) => CAST[k] && Number.isSafeInteger(v.seen[k])) &&
       Array.isArray(v.traces) && v.traces.every((x) => x && CAST[x.kind] && typeof x.trace === 'string' && Number.isFinite(x.until)) &&
       (v.gift === null || (typeof v.gift.item === 'string' && Number.isFinite(v.gift.until))) &&
-      (v.present === null || (CAST[v.present.kind] && Number.isFinite(v.present.until)));
+      (v.present === null || (CAST[v.present.kind] && Number.isFinite(v.present.until))) &&
+      (v.shelf === undefined || (!!v.shelf && typeof v.shelf === 'object' && Object.keys(v.shelf).every((k) => KEEPSAKES[k] && Number.isSafeInteger(v.shelf[k]) && v.shelf[k] > 0)));
   }
+  // Picking up Erwu's present: it goes onto her shelf. Returns the keepsake's kind, or null.
+  function pickUp(g) {
+    const v = g.visits, gift = v.gift;
+    if (!gift || !KEEPSAKES[gift.item]) return null;
+    v.shelf = v.shelf || {};
+    v.shelf[gift.item] = (v.shelf[gift.item] || 0) + 1;
+    v.gift = null;
+    return gift.item;
+  }
+  const shelfCount = (g) => Object.values((g.visits && g.visits.shelf) || {}).reduce((a, n) => a + n, 0);
   function note(v, kind, t, first, allocate, g) {
     v.seen[kind] = (v.seen[kind] || 0) + 1;
     if (CAST[kind].cls === 'rare') v.next[kind] = t + RARE.rest;
@@ -141,5 +158,5 @@
     v.checked = now;
     return out.present || out.traces.length || out.gift ? out : null;
   }
-  return { CAST, GIFTS, RATE, RARE, SLOT, MAX_AWAY, fresh, valid, arrive, roll, eligible };
+  return { CAST, GIFTS, RATE, RARE, SLOT, MAX_AWAY, KEEPSAKES, fresh, valid, arrive, roll, eligible, pickUp, shelfCount };
 });

@@ -72,3 +72,10 @@ Owner feedback: the "A stubborn bud" card appeared, but nothing showed which bud
   - Tested: a launch aimed just off a mushroom's centre made 10–13 blooms off the mushroom, with two paid. Aimed dead-centre, it comes straight back, like the rim.
 - **Erwu's swat is once per game.** It used to come back with every full bloom, so a long game had several. Returning to the garden never recharged it: a saved game keeps a used swat.
 - **The launch hint** ("Pull back anywhere…") fades by itself after 7 seconds on the game screen, as well as after your first launch.
+- With the swat once per game, three bot runs lasted 112, 86 and 66 turns. The six runs before had a median of 102, so games are somewhat shorter, within the usual spread.
+
+## Erwu's keepsake shelf (2026-09-30)
+
+- Tapping Erwu's present in the garden picks it up. It flies to a new shelf button under the sound switch, with a chime and a purr.
+- The shelf button opens "Erwu's keepsakes": the eight things she can bring, each shown with how many you have. Ones not found yet are faint shapes.
+- **Saving:** it's stored as `visits.shelf`, a count per keepsake. Saves without it are still valid, and older versions of the game ignore it. `BloomVisits.pickUp` and `shelfCount` are tested.

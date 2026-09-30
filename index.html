@@ -578,6 +578,22 @@
   /* Beds and the seed tin. Choices are chips in the scene's own style, not a form. */
   .tin-button { position: absolute; right: 2px; top: 4px; min-width: 48px; height: 48px; display: grid; place-items: center; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
   .tin-button[hidden] { display: none; }
+  /* Erwu's keepsake shelf: a round button under the garden's sound switch */
+  .shelf-button { position: fixed; left: calc(env(safe-area-inset-left, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 3; }
+  .shelf-button[hidden] { display: none; }
+  .shelf-button svg { width: 30px; height: 30px; }
+  .shelf-button b { position: absolute; right: -3px; top: -3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--bud-deep); color: #fff; font: 600 11px/17px var(--font); }
+  .shelf-button b[hidden] { display: none; }
+  .shelf-button.pulse svg { animation: bump 700ms var(--spring) 2; }
+  /* the keepsake shelf: a grid of what she's brought, with faint shapes for what's still to come */
+  .guide-items.shelf { grid-template-columns: repeat(4, 1fr); gap: 10px 6px; text-align: center; }
+  .guide-items.shelf li { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 0; }
+  .guide-items.shelf canvas { width: 60px; height: 60px; }
+  .guide-items.shelf p { font-size: 12px; line-height: 1.2; color: var(--ink-soft); }
+  .guide-items.shelf p b { color: var(--ink); font-weight: 600; }
+  .guide-items.shelf li.missing p { opacity: 0.6; }
+  .guide-lead { margin: -4px 8px 12px; color: var(--ink-soft); font-size: 14px; }
+  .guide-lead:empty { display: none; }
   /* the garden's own sound switch (the run's is in its header); both set the same preference */
   .t-sound { position: fixed; left: calc(env(safe-area-inset-left, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 3; }
   .tin-button svg { width: 34px; height: 34px; filter: drop-shadow(0 2px 2px rgba(110,80,50,.18)); }
@@ -684,6 +700,7 @@
     <button id="erwu-touch" aria-label="Say hello to Erwu" title="Say hello to Erwu"></button>
     <button id="t-sound" class="icon-btn t-sound" aria-label="Garden sounds" aria-pressed="false" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.5 4.5 0 0 1 0 6"/><path class="on" d="M18.5 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
     <button id="t-guide" class="icon-btn t-guide" aria-label="How to play" title="How to play" aria-haspopup="dialog">?</button>
+    <button id="shelf-btn" class="icon-btn shelf-button" aria-label="Erwu's keepsakes" title="Erwu's keepsakes" aria-haspopup="dialog" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="21" width="24" height="3.2" rx="1.2" fill="#B98C62" stroke="#7E5A3C" stroke-width="1.1"/><path d="M8 24.5v3M24 24.5v3" stroke="#7E5A3C" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="10.5" cy="18.6" rx="3.2" ry="2.4" fill="#A8743F" stroke="#6E4E33" stroke-width=".9"/><path d="M8 17.6c1-2 4-2 5 0" fill="#7A5634" stroke="#6E4E33" stroke-width=".8"/><path d="M17 20.6 22.5 9.5" stroke="#4E78B8" stroke-width="2.4" stroke-linecap="round"/><path d="M18.6 17.4l3-6" stroke="#E8EEF6" stroke-width=".9" stroke-linecap="round"/><circle cx="24.6" cy="18.8" r="2.1" fill="#C9C2B4" stroke="#8B8374" stroke-width=".8"/></svg><b id="shelf-count"></b></button>
     <button id="seed-tin" class="tin-button" aria-label="Seed tin" title="Seed tin" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="16" rx="3" fill="#C7A27A" stroke="#8A6444" stroke-width="1.4"/><rect x="5" y="7" width="22" height="5" rx="2" fill="#E3C79C" stroke="#8A6444" stroke-width="1.4"/><path d="M16 14.5c2.2 1.9 3.1 3.7 3.1 5.4a3.1 3.1 0 0 1-6.2 0c0-1.7.9-3.5 3.1-5.4Z" fill="#6E8A4A"/></svg><b id="tin-count"></b></button>
     <p class="sr-only">Tap a flower bed to plant it. Wild plants grow on their own as you play.</p>
     <p id="erwu-says" class="sr-only" role="status"></p>
@@ -725,6 +742,7 @@
   <div class="guide-card" role="dialog" aria-modal="true" aria-labelledby="guide-title">
     <button id="guide-close" class="icon-btn" aria-label="Close">×</button>
     <h2 id="guide-title"></h2>
+    <p class="guide-lead" id="guide-lead"></p>
     <ul class="guide-items" id="guide-items"></ul>
     <div class="guide-nav">
       <button id="guide-back" class="linkish">Back</button>
@@ -756,7 +774,7 @@
     turn: $('#turn'), best: $('#best'), balls: $('#balls'), ballChip: $('#ball-chip'), hint: $('#hint'), paw: $('#paw'),
     ff: $('#ff'), sound: $('#sound'), tSound: $('#t-sound'), restart: $('#restart'),
     tGuide: $('#t-guide'), rGuide: $('#r-guide'), guide: $('#guide'), guideClose: $('#guide-close'), guideTitle: $('#guide-title'),
-    guideItems: $('#guide-items'), guideDots: $('#guide-dots'), guideBack: $('#guide-back'), guideNext: $('#guide-next'),
+    guideItems: $('#guide-items'), guideLead: $('#guide-lead'), shelfBtn: $('#shelf-btn'), shelfCount: $('#shelf-count'), guideDots: $('#guide-dots'), guideBack: $('#guide-back'), guideNext: $('#guide-next'),
     over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
     garden: $('#garden'), banner: $('#banner'),
     title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
@@ -2613,7 +2631,7 @@
     }
     return { x: 0, y: m.path.top + 20 };
   }
-  let visitorShown = null, giftBeat = -1;
+  let visitorShown = null, giftBeat = -1, giftSpot = null;
   const visitorFrame = (n) => ART && ART.visitors && ART.visitors.frames[n];
   function currentVisitor(sc, m) {
     const p = garden.visits && garden.visits.present, look = p && VISITOR_LOOK[p.kind];
@@ -2642,8 +2660,10 @@
       paintPiece(ctx, 'visitors', x.trace, at.x, at.y + w * 0.25, w, false, 0.9);
     });
     const gift = garden.visits && garden.visits.gift;
+    giftSpot = null;
     if (gift && visitorFrame(gift.item)) {
       const gx = m.roses.x + 30, gy = m.roses.y + m.roses.ry + 16;
+      giftSpot = { x: gx, y: gy - sc.nest * 0.12, r: Math.max(26, sc.nest * 0.45) };
       groundShadow(ctx, gx, gy, sc.nest * 0.4, 0.12);
       paintPiece(ctx, 'visitors', gift.item, gx, gy, sc.nest * 0.36 * depthAt(gy));
       // a slow glint, so a present among fallen leaves is still found
@@ -2682,6 +2702,33 @@
     paintPiece(ctx, 'visitors', name, x, y, visitorFrame(name)[2] * unit, flip, alpha);
   }
   // A tap near the visitor says who it is.
+  // Erwu's present: tapped, it goes onto her keepsake shelf, with a glint flying to the shelf.
+  function tapGift(x, y) {
+    if (!giftSpot || Math.hypot(x - giftSpot.x, y - giftSpot.y) > giftSpot.r) return false;
+    const at = giftSpot, item = BloomVisits.pickUp(garden);
+    if (!item) return false;
+    saveGarden(); gardenDirty = true; giftSpot = null;
+    gardenNote = `${BloomVisits.KEEPSAKES[item]} for Erwu's shelf.`;
+    el.tNote.textContent = gardenMessage();
+    [9, 12, 16].forEach((n, i) => tone(noteFreq(n), 0.03, 'sine', 0.6, i * 0.08));
+    haptic(1); purr();
+    refreshShelf(true);
+    const r = el.shelfBtn.getBoundingClientRect();
+    if (!reduced && r.width) {
+      const to = { x: r.left + r.width / 2 - CX, y: r.top + r.height / 2 - CY }, from = { x: gardenScene.cx - CX + at.x, y: gardenScene.cy - CY + at.y };
+      flights.push({ x0: from.x, y0: from.y, to, t: 0, dur: 0.8, col: hexRgb(C.honey), trail: [] });
+      for (let i = 0; i < 5; i++) glint(from.x + (Math.random() - 0.5) * 20, from.y - Math.random() * 16, 0.9);
+    }
+    return true;
+  }
+  function refreshShelf(pulse = false) {
+    const n = BloomVisits.shelfCount(garden);
+    el.shelfBtn.hidden = n === 0 || presentation !== 'garden';
+    el.shelfCount.textContent = n > 1 ? String(n) : '';
+    el.shelfCount.hidden = n < 2;
+    el.shelfBtn.setAttribute('aria-label', `Erwu's keepsakes: ${n} on her shelf`);
+    if (pulse) { el.shelfBtn.classList.remove('pulse'); void el.shelfBtn.offsetWidth; el.shelfBtn.classList.add('pulse'); }
+  }
   function tapVisitor(x, y) {
     if (!visitorShown || visitorShown.leaving || !gardenScene) return false;
     if (Math.hypot(x - visitorShown.x, y - (visitorShown.y - gardenScene.nest * 0.3)) > gardenScene.nest * 0.9) return false;
@@ -3325,6 +3372,7 @@
   function refreshTinButton() {
     const n = garden.seeds.length;
     el.seedTin.hidden = !arrangementAvailable || (n === 0 && !BloomBeds.found(garden).length);
+    refreshShelf();
     el.tinCount.textContent = n || '';
     el.tinCount.hidden = !n;
     el.seedTin.setAttribute('aria-label', n ? `Seed tin, ${n} to plant` : 'Seed tin');
@@ -6229,6 +6277,7 @@
     clearAim();
     if (!tapped || presentation !== 'garden' || !gardenScene) return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
+    if (tapGift(e.clientX - gardenScene.cx, e.clientY - gardenScene.cy)) return;
     if (tapVisitor(e.clientX - gardenScene.cx, e.clientY - gardenScene.cy)) return;
     // Wild plants grow on their own; tapping the lawn just closes whatever is open.
     closeInspection();
@@ -6271,7 +6320,7 @@
       { title: 'Through the year', items: [
         { icon: both(sprite('garden', 'clump-crocus', 0.4, 0.62, 0.24), sprite('garden', 'clump-aster', 0.4, 0.62, 0.76), sprite('garden', 'clump-frost-grass', 0.4, 0.98, 0.5)), text: 'The seasons change with the real calendar.' },
         { icon: sprite('visitors', 'cottontail-sit', 0.62, 0.9), text: 'Visitors drop by while you’re away. Tap one to say hi.' },
-        { icon: both(sprite('visitors', 'feather', 0.5, 0.75, 0.36), sprite('visitors', 'acorn', 0.3, 0.9, 0.72)), text: 'Sometimes Erwu leaves you a little present.' },
+        { icon: both(sprite('visitors', 'feather', 0.5, 0.75, 0.36), sprite('visitors', 'acorn', 0.3, 0.9, 0.72)), text: 'Erwu sometimes leaves you a present. Tap it to keep it on her shelf.' },
       ] },
     ],
     run: [
@@ -6306,6 +6355,19 @@
       ] },
     ],
   };
+  // Erwu's keepsake shelf, as a one-page card in the guide's frame
+  function shelfPage() {
+    const shelf = (garden.visits && garden.visits.shelf) || {}, n = BloomVisits.shelfCount(garden);
+    return { title: "Erwu's keepsakes", lead: n ? `Presents she's brought you: ${n} so far.` : 'Presents she brings you end up here.', shelf: true,
+      items: Object.entries(BloomVisits.KEEPSAKES).map(([k, name]) => ({ k, name, count: shelf[k] || 0 })) };
+  }
+  function paintKeepsake(cv, k, have) {
+    const k2 = Math.max(2, DPR), s = 60;
+    cv.width = s * k2; cv.height = s * k2;
+    const g = cv.getContext('2d'); g.setTransform(k2, 0, 0, k2, 0, 0);
+    paintPiece(g, 'visitors', k, s / 2, s * 0.84, s * (k === 'feather' ? 0.8 : 0.62));
+    if (!have) { g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(190,172,150,0.9)'; g.fillRect(0, 0, s, s); g.globalCompositeOperation = 'destination-in'; g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, 0, s, s); }
+  }
   let guide = null;
   function paintIcon(cv, icon) {
     const k = Math.max(2, DPR), s = 76;
@@ -6314,9 +6376,18 @@
     try { icon(g, s); } catch {}
   }
   function showGuidePage() {
-    const pages = GUIDES[guide.which], page = pages[guide.page], last = guide.page === pages.length - 1;
+    const pages = guide.which === 'shelf' ? [shelfPage()] : GUIDES[guide.which], page = pages[guide.page], last = guide.page === pages.length - 1;
     el.guideTitle.textContent = page.title;
-    el.guideItems.replaceChildren(...page.items.map((it) => {
+    el.guideLead.textContent = page.lead || '';
+    el.guideItems.classList.toggle('shelf', !!page.shelf);
+    if (page.shelf) el.guideItems.replaceChildren(...page.items.map((it) => {
+      const li = document.createElement('li'), cv = document.createElement('canvas'), p = document.createElement('p');
+      li.className = it.count ? '' : 'missing'; cv.setAttribute('aria-hidden', 'true'); paintKeepsake(cv, it.k, it.count > 0);
+      if (it.count) { p.textContent = it.name.replace(/^An? /, ''); if (it.count > 1) { const b = document.createElement('b'); b.textContent = ` ×${it.count}`; p.append(b); } }
+      else { p.textContent = '?'; p.setAttribute('aria-label', 'Not found yet'); }
+      li.append(cv, p); return li;
+    }));
+    else el.guideItems.replaceChildren(...page.items.map((it) => {
       const li = document.createElement('li');
       if (it.svg) { const d = document.createElement('div'); d.className = 'guide-svg'; d.innerHTML = it.svg; d.setAttribute('aria-hidden', 'true'); li.append(d); }
       else { const cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); paintIcon(cv, it.icon); li.append(cv); }
@@ -6325,7 +6396,8 @@
     }));
     el.guideDots.replaceChildren(...pages.map((_, i) => { const d = document.createElement('i'); if (i === guide.page) d.className = 'on'; return d; }));
     el.guideBack.classList.toggle('gone', guide.page === 0); el.guideBack.tabIndex = guide.page === 0 ? -1 : 0;
-    el.guideNext.textContent = last ? (guide.which === 'run' ? 'Let’s play' : 'Lovely') : 'Next';
+    el.guideDots.hidden = pages.length < 2;
+    el.guideNext.textContent = last ? (guide.which === 'run' ? 'Let’s play' : guide.which === 'shelf' ? 'Close' : 'Lovely') : 'Next';
     el.guideNext.setAttribute('aria-label', last ? 'Close' : `Next, page ${guide.page + 2} of ${pages.length}`);
   }
   function openGuide(which) {
@@ -6340,9 +6412,10 @@
     if (guide && guide.from && guide.from.focus) guide.from.focus({ preventScroll: true });
     guide = null;
   }
-  const guideStep = (d) => { const n = GUIDES[guide.which].length, next = guide.page + d; if (next >= n) closeGuide(); else if (next >= 0) { guide.page = next; showGuidePage(); } };
+  const guideStep = (d) => { const n = guide.which === 'shelf' ? 1 : GUIDES[guide.which].length, next = guide.page + d; if (next >= n) closeGuide(); else if (next >= 0) { guide.page = next; showGuidePage(); } };
   el.tGuide.addEventListener('click', () => openGuide('garden'));
   el.rGuide.addEventListener('click', () => openGuide('run'));
+  el.shelfBtn.addEventListener('click', () => openGuide('shelf'));
   el.guideClose.addEventListener('click', closeGuide);
   el.guideNext.addEventListener('click', () => guideStep(1));
   el.guideBack.addEventListener('click', () => guideStep(-1));
