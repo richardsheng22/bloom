@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {gardenV4}=require('./fixtures/garden-v4.cjs');
 const root=path.resolve(__dirname,'..'),out=process.env.BLOOM_EVIDENCE||'/tmp/bloom-play';
 const checkpoint=(extra={})=>({v:3,turn:8,ballCount:12,petalNext:false,pawReady:true,charges:Array(10).fill(0),items:[{kind:'shape',sector:5,ring:4,hp:18,maxHp:18,sp:0,ci:0},{kind:'orb',sector:1,ring:7}],...extra});
-const hook=`window.__play={freeze:false,get state(){return state},get presentation(){return presentation},get shot(){return shot},get items(){return items},get balls(){return balls},get geometry(){return {R,coreR,ballR,CX,CY}},snapshot:serialize,launch,update,draw,markReady,restore,newGame,afterAdvance,get labels(){return typeof healthLabels==='undefined'?[]:healthLabels},get target(){return typeof aimedItem==='undefined'?null:aimedItem},get timeScale(){return timeScale},set timeScale(v){timeScale=v}};`;
+const hook=`window.__play={freeze:false,get state(){return state},get presentation(){return presentation},get shot(){return shot},get items(){return items},get balls(){return balls},get geometry(){return {R,coreR,ballR,CX,CY}},traceAim,itemPos,collideShape,bounceOff,snapshot:serialize,launch,update,draw,markReady,restore,newGame,afterAdvance,get labels(){return typeof healthLabels==='undefined'?[]:healthLabels},get target(){return typeof aimedItem==='undefined'?null:aimedItem},get timeScale(){return timeScale},set timeScale(v){timeScale=v}};`;
 (async()=>{
  fs.mkdirSync(out,{recursive:true});
  const server=http.createServer((req,res)=>{
@@ -60,6 +60,18 @@ const hook=`window.__play={freeze:false,get state(){return state},get presentati
   await ending.click('#play');await ending.evaluate(()=>{__play.items[0].ring=0;__play.afterAdvance()});await ending.click('#r-guide');
   await ending.waitForTimeout(500);assert.ok(await ending.locator('#over').isHidden());await ending.keyboard.press('Escape');await ending.locator('#over').waitFor({state:'visible'});await ending.close();
   console.log('PASS modal focus, inert restoration, shot/background pause and deferred game over');
+  const dense=Array.from({length:20},(_,i)=>({kind:'shape',sector:i%10,ring:i<10?1:4,hp:[1,2,3,4,18,99,100,999,1000,1234][i%10],maxHp:1234,sp:i%5,ci:i%4,...(i===14?{seed:'moonflower',stubborn:true}:{})}));
+  // Stable measured labels at normal CSS scale, including all low-health values.
+  for(const [width,height] of [[320,568],[360,640],[390,844],[430,932],[768,1024],[1024,768]]){
+   const q=await open({width,height,run:checkpoint({items:dense})});await q.click('#play');await q.waitForTimeout(800);
+   const labels=await q.evaluate(()=>__play.labels);assert.equal(labels.length,dense.length);
+   for(let i=0;i<labels.length;i++){assert.equal(labels[i].h,18);for(let j=0;j<i;j++){const a=labels[i],b=labels[j];assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,`overlapping labels ${width}: ${i},${j}`);}}
+   await q.screenshot({path:path.join(out,`health-${width}.png`)});await q.close();
+  }
+  const target=await open({run:checkpoint({items:[{kind:'mushroom',sector:0,ring:2},{kind:'shape',sector:9,ring:4,hp:18,maxHp:18,sp:1,ci:0}]})});await target.click('#play');
+  const contact=await target.evaluate(()=>{const p=__play.itemPos(__play.items[0]),a=Math.atan2(p.y,p.x),t=__play.traceAim(a);return {kind:t.item?.kind,before:__play.snapshot()}});
+  assert.equal(contact.kind,'mushroom');assert.deepEqual(await target.evaluate(()=>__play.snapshot()),contact.before);await target.close();
+  console.log('PASS measured health labels at six sizes and mushroom occlusion without board mutation');
   // Additional interaction checks are added with their implementation slices below.
   assert.deepEqual(errors,[]);console.log('PASS no page errors');
  }finally{await browser.close();await new Promise(r=>server.close(r));}

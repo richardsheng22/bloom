@@ -158,9 +158,10 @@
 
   footer {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    min-height: 54px;
+    gap: 6px;
+    min-height: 88px;
   }
   .chips { display: flex; gap: 6px; align-items: center; }
   .chip {
@@ -195,7 +196,11 @@
     font-size: 13.5px;
     color: var(--ink-soft);
     text-align: center;
-    max-width: 24ch;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 36px;
+    max-width: 42ch;
+    justify-self: center;
     text-wrap: balance;
     line-height: 1.35;
   }
@@ -2989,8 +2994,8 @@
       el.hint.textContent = shot.hits ? `${shot.hits} ${shot.hits === 1 ? 'hit' : 'hits'}` : '';
     } else if (state === 'ready') {
       el.hint.className = '';
-      el.hint.textContent = !hinted ? 'Pull back anywhere and let go to launch'
-        : gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : '');
+      el.hint.textContent = targetCaption(aimedItem) || (!hinted ? 'Pull back anywhere and let go to launch'
+        : gardenMessage() || (petalNext ? 'Petal ready: this shot splits in three' : ''));
     }
   }
 
@@ -4051,6 +4056,9 @@
       else aim.angle += angleDiff(aim.target, aim.angle) * Math.min(1, dt * 20);
     }
 
+    const nextTarget = state === 'ready' && aim?.angle != null ? traceAim(aim.angle).item : null;
+    if (nextTarget !== aimedItem) { aimedItem = nextTarget; updateHud(); }
+
     if (state === 'flying' && shot) {
       const sdt = dt * timeScale;
       shot.t += dt;
@@ -4671,6 +4679,76 @@
     }
   }
 
+  let healthLabels = [], aimedItem = null;
+  // Probe the real collision shapes without changing a live ball or board object.
+  // Half-pixel sampling bounds the first-contact uncertainty below one screen pixel.
+  function traceAim(angle) {
+    const dx = Math.cos(angle), dy = Math.sin(angle), start = coreR + ballR + 2;
+    for (let len = 0; len < R * 2; len += 0.5) {
+      const x = dx * (start + len), y = dy * (start + len);
+      if (x*x + y*y >= (R-ballR)**2) return { x, y, len, hit: true, item: null };
+      for (const it of items) {
+        if (it.dead) continue;
+        const p = itemPos(it), probe = { x, y, vx: dx, vy: dy };
+        const hit = it.kind === 'shape' ? collideShape(probe, it)
+          : it.kind === 'mushroom' ? bounceOff(probe, p.x, p.y-p.r*0.1, p.r*0.8)
+          : Math.hypot(x-p.x,y-p.y) < (it.kind === 'ring' ? p.r*0.72 : p.r*(POWERS.includes(it.kind)?1:0.7)+ballR);
+        if (hit) return { x, y, len, hit: true, item: it };
+      }
+    }
+    return { x: dx*R, y: dy*R, len: R-start, hit: false, item: null };
+  }
+  function targetCaption(it) {
+    if (!it) return '';
+    if (it.kind === 'shape') {
+      const name = budKind(it).k === 'bell' ? 'Bellflower' : budKind(it).k;
+      return `${name[0].toUpperCase()+name.slice(1)} · ${it.hp} ${it.hp===1?'hit':'hits'} left${it.ring<=1 ? (pawReady?' · swat if it reaches Erwu':' · keep it from Erwu') : ''}`;
+    }
+    return ({orb:'Golden pollen · one more next shot',petal:'Loose petal · next shot splits in three',mushroom:'Mushroom · pollen bounces off',ring:'Flower ring · pollen hits twice',dew:'Dewdrop · washes nearby buds back',bee:'Bee · helps the nearest buds',sun:'Sunbeam · sweeps half the flower',dandelion:'Dandelion · scatters passing pollen'})[it.kind] || '';
+  }
+  function drawHealth() {
+    const buds = items.filter(it=>!it.dead && it.kind==='shape');
+    healthLabels = [];
+    ctx.save(); ctx.font = '600 12px "Bricolage Grotesque", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const it of buds) {
+      const p = itemPos(it), w = Math.max(18, Math.ceil(ctx.measureText(String(it.hp)).width)+8), h = 18;
+      // Stable anchors, with a short stem when a neighbour requires an offset.
+      const outward = Math.atan2(p.y,p.x);
+      const candidates = [[Math.cos(outward)*(p.r+11),Math.sin(outward)*(p.r+11)],[0,p.r*.8],[0,-p.r-8],[-p.r- w/2,0],[p.r+w/2,0],[-w/2,p.r+9],[w/2,p.r+9],[0,p.r+19],[0,-p.r-20]];
+      for(const distance of [p.r+18,p.r+30,p.r+44])for(const offset of [0,-.45,.45,-.9,.9,Math.PI])candidates.push([Math.cos(outward+offset)*distance,Math.sin(outward+offset)*distance]);
+      let best = null, score = Infinity;
+      for (const [dx,dy] of candidates) {
+        const r = {x:p.x+dx-w/2,y:p.y+dy-h/2,w,h,id:it.id};
+        let cost = Math.hypot(dx,dy)*.03;
+        const catX=coreR*1.8, catY=coreR*1.45;
+        cost += Math.max(0,Math.min(r.x+w,catX)-Math.max(r.x,-catX))*Math.max(0,Math.min(r.y+h,catY)-Math.max(r.y,-catY))*200;
+        for (const q of healthLabels) cost += Math.max(0,Math.min(r.x+w+2,q.x+q.w+2)-Math.max(r.x,q.x))*Math.max(0,Math.min(r.y+h+2,q.y+q.h+2)-Math.max(r.y,q.y))*100;
+        for (const other of buds) if(other!==it) {
+          const q=itemPos(other), nx=Math.max(r.x,Math.min(q.x,r.x+w)), ny=Math.max(r.y,Math.min(q.y,r.y+h));
+          cost += Math.max(0,q.r*.72-Math.hypot(q.x-nx,q.y-ny))*20;
+        }
+        cost += Math.max(0,Math.abs(r.x+w/2)+w/2-R)*1000;
+        if(cost<score){score=cost;best=r;}
+      }
+      healthLabels.push(best);
+      const x=best.x+w/2, y=best.y+h/2;
+      ctx.strokeStyle=C.walnut; ctx.lineWidth=.8;
+      if(Math.hypot(x-p.x,y-p.y)>p.r+5){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(x,y);ctx.stroke();}
+      if (it.ring<=1) {
+        // Inward chevron communicates danger even without colour.
+        const a=Math.atan2(-p.y,-p.x), d=p.r+5;
+        ctx.save();ctx.translate(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d);ctx.rotate(a);
+        ctx.strokeStyle=C['bud-deep'];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-3,-3);ctx.lineTo(1,0);ctx.lineTo(-3,3);ctx.stroke();ctx.restore();
+      }
+      ctx.fillStyle='#FFF8E8';ctx.strokeStyle=it.ring<=1?C['bud-deep']:C.walnut;
+      ctx.lineWidth=it===aimedItem?1.8:.8;
+      ctx.beginPath();ctx.roundRect(best.x,best.y,w,h,6);ctx.fill();ctx.stroke();
+      ctx.fillStyle=C.walnut;ctx.fillText(String(it.hp),x,y+.5);
+    }
+    ctx.restore();
+  }
+
   function drawAim(now) {
     if (!aim || aim.angle == null) return;
     const angle = aim.angle;
@@ -4679,18 +4757,8 @@
     for (const a of dirs) {
       const dx = Math.cos(a), dy = Math.sin(a);
       const start = coreR + ballR + 2;
-      let x = dx * start, y = dy * start, len = 0, hit = false;
-      while (len < R * 2) {
-        x += dx * 3; y += dy * 3; len += 3;
-        if (x * x + y * y > (R - ballR) ** 2) { hit = true; break; }
-        let blocked = false;
-        for (const it of items) {
-          if ((it.kind !== 'shape' && it.kind !== 'mushroom') || it.dead) continue;
-          const p = itemPos(it);
-          if ((x - p.x) ** 2 + (y - p.y) ** 2 < (p.r * (it.kind === 'mushroom' ? 0.8 : 0.9) + ballR) ** 2) { blocked = true; break; }
-        }
-        if (blocked) { hit = true; break; }
-      }
+      const trace = traceAim(a);
+      const { x, y, len, hit } = trace;
       const gap = Math.max(10, R * 0.06);
       const off = (now / 1000 * 30) % gap;
       // a soft vine grows out along the path, unfurling leaves as it goes,
@@ -4940,26 +5008,6 @@
       fg.addColorStop(0, rgb(WHITE, it.pulse * 0.55)); fg.addColorStop(1, rgb(WHITE, 0));
       ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, cy, r * 0.8, 0, TAU); ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
-    }
-    if (it.hp > 4) {
-      // the count on a small round badge above the flower, like a pressed-flower label
-      // painted, it sits at the foot of the head, inside the bud's own spot
-      const br = Math.max(8, r * (head ? (it.hp > 99 ? 0.44 : 0.38) : it.hp > 99 ? 0.5 : 0.42)), bx = 0, byy = head ? r * 0.72 : -r * 0.98;
-      ctx.fillStyle = 'rgba(70,50,40,0.18)'; ctx.beginPath(); ctx.arc(bx + 0.8, byy + 1.4, br, 0, TAU); ctx.fill();
-      ctx.fillStyle = it.stubborn ? rgb(mixA(hexRgb(C.honey), hexRgb(C.walnut), 0.18)) : rgb(mixA(mixA(base, deep, 0.55), hexRgb(C.walnut), 0.35)); ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,248,232,0.9)'; ctx.lineWidth = Math.max(1.2, br * 0.14); ctx.beginPath(); ctx.arc(bx, byy, br * 0.86, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = rgb(hexRgb(C.walnut), 0.45); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.stroke();
-      const size = br * (it.hp > 99 ? 0.95 : 1.12);
-      ctx.font = `600 ${size}px ${SERIF}`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#FFFDF6'; ctx.fillText(it.hp, bx, byy + size * 0.06);
-    } else if (it.hp > 1) {
-      for (let i = 0; i < it.hp; i++) {
-        const x = (i - (it.hp - 1) / 2) * r * 0.2;
-        const py = head ? r * 0.98 : r * 0.93;
-        ctx.fillStyle = rgb(hexRgb(C.honey)); ctx.beginPath(); ctx.arc(x, py, Math.max(1.3, r * 0.075), 0, TAU); ctx.fill();
-        ctx.fillStyle = 'rgba(255,248,230,0.8)'; ctx.beginPath(); ctx.arc(x - r * 0.02, py - r * 0.02, Math.max(0.5, r * 0.028), 0, TAU); ctx.fill();
-      }
     }
     ctx.restore();
   }
@@ -5953,6 +6001,7 @@
         if (it.kind === 'shape') { drawBud(it, now); if (it.seed) drawSeedPod(it, now); } else drawPickup(it, now);
       }
       for (const b of blooms) drawBloom(b);
+      drawHealth();
       ctx.restore();
     }
     drawFlights();
