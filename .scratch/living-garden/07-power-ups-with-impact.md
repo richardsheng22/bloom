@@ -65,3 +65,4 @@ The owner asked for a power-up that spreads the stream of pollen at random, and 
 - **Code:** `dandelionClock`, `scatterBall`, `blowClocks` and `drawClockHead` in `index.html`.
 - **What it doesn't do:** it adds no character key to the save, since that would make old saves fail validation. `BloomTime.note` ignores the unknown key.
 - **Frequency:** it joins the other three in the same 22% chance of a power-up on a turn, so each of the four now appears a little less often.
+- **Bot runs** (aiming at the nearest bud, 8× speed): 87, 87, 29 and 149 turns, with no page errors. A dandelion was on the board in three of the four. That's within the unchanged game's spread of 33–180 turns (median 60, ticket 12); single runs vary too much to measure a small effect.
