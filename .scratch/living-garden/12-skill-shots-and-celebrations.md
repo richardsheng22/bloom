@@ -55,3 +55,11 @@ Recommendation: start requests with (1) and add (2) as the lasting reward, so re
 
   Banks averaged about 4 pollen a run for this bot, which never aims for the rim. Runs may be somewhat longer; the owner's play is the real check. If they are, the bank reward is the only rule change left to trim.
 - Captured in play: the bloom counter, "Close one!" with Erwu reaching out, and a chain with the gold counter.
+
+## The stubborn bud, made visible (2026-09-30)
+
+Owner feedback: the "A stubborn bud" card appeared, but nothing showed which bud it meant, and nothing seemed to change.
+- **What it was:** that turn's new row was one bud about twice as tough as usual, instead of two to seven buds. It was drawn like any other bud, and the older buds were still on the board, so the only effect was fewer new buds.
+- **The look:** a slowly turning gold ring with a soft glow behind it, and a gold count badge.
+- **The reward:** blooming it pays **3 extra pollen** for the next turn, with a gold burst, a four-note chime and a delighted Erwu. The card now says so: "the one in the gold ring: bloom it for 3 extra pollen".
+- **Saving:** a run in progress saves the mark, so it survives a reload.

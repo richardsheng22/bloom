@@ -67,7 +67,8 @@ const gardenJSON = ({ hoursAway = 0, bed = null, visited = false } = {}) => gard
     await p.waitForTimeout(700);
     assert.equal((await info(p)).pose, 'front');
     assert.deepEqual(await at(p), stopped);
-    assert.equal(await p.locator('#inspection-name').innerText(), 'Erwu');
+    assert.match(await p.locator('#erwu-says').textContent(), /^Erwu: ./, 'she answers in a bubble');
+    assert.ok(await p.locator('#garden-inspection').isHidden(), 'no caption under the garden');
     await p.screenshot({ path: path.join(out, 'hello.png') });
     await p.waitForTimeout(2500);
     assert.notEqual((await info(p)).pose, 'front', 'then she carries on');

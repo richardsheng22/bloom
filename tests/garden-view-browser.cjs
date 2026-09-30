@@ -41,7 +41,7 @@ const run={v:3,turn:8,ballCount:10,petalNext:true,pawReady:false,charges:[1,0,0,
   for(const [width,height]of [[320,568],[375,667],[390,844],[430,932],[568,320],[1024,768]]){
    const p=await setup(width,height);const before=await snapshot(p),owned=await plants(p);
    await assertBounds(p);await p.screenshot({path:path.join(out,`garden-${width}x${height}.png`)});
-   await p.locator('#erwu-touch').tap();assert.equal(await p.locator('#inspection-name').innerText(),'Erwu');assert.deepEqual(await snapshot(p),before);
+   await p.locator('#erwu-touch').tap();assert.match(await p.locator('#erwu-says').textContent(),/^Erwu: ./);assert.ok(await p.locator('#garden-inspection').isHidden());assert.deepEqual(await snapshot(p),before);
    // Only the beds open (Arrange and the furnishings were retired); a bed opens from the
    // keyboard too, without moving or rescaling the garden. Escape closes it without touching the run.
    assert.equal(await p.locator('#arrange, #edit-selected, #arrange-panel').count(),0);

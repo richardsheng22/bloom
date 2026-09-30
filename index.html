@@ -659,13 +659,14 @@
     <button id="t-sound" class="icon-btn t-sound" aria-label="Garden sounds" aria-pressed="false" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4.5 4.5 0 0 1 0 6"/><path class="on" d="M18.5 6.5a8 8 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
     <button id="seed-tin" class="tin-button" aria-label="Seed tin" title="Seed tin" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="16" rx="3" fill="#C7A27A" stroke="#8A6444" stroke-width="1.4"/><rect x="5" y="7" width="22" height="5" rx="2" fill="#E3C79C" stroke="#8A6444" stroke-width="1.4"/><path d="M16 14.5c2.2 1.9 3.1 3.7 3.1 5.4a3.1 3.1 0 0 1-6.2 0c0-1.7.9-3.5 3.1-5.4Z" fill="#6E8A4A"/></svg><b id="tin-count"></b></button>
     <p class="sr-only">Tap a flower bed to plant it. Wild plants grow on their own as you play.</p>
+    <p id="erwu-says" class="sr-only" role="status"></p>
   </div>
   <div class="t-bottom">
     <div id="garden-detail-space">
       <p id="garden-invitation">Say hello to Erwu, or tap a flower bed.</p>
       <section id="garden-inspection" hidden aria-labelledby="inspection-name">
         <div class="inspection-copy"><h2 id="inspection-name"></h2><p id="inspection-description"></p></div>
-        <button id="inspection-close" class="icon-btn" aria-label="Close plant or Erwu details">×</button>
+        <button id="inspection-close" class="icon-btn" aria-label="Close details">×</button>
         <div id="bed-actions" hidden>
           <div id="bed-choices" role="group" aria-label="Choose what to grow"></div>
           <div class="bed-buttons">
@@ -720,7 +721,7 @@
     cardCat: $('#card-cat'), haptic: $('#haptic'), app: $('#app'),
     visitGarden: $('#visit-garden'), scene: $('#garden-scene'), erwuTouch: $('#erwu-touch'),
     inspection: $('#garden-inspection'), inspectionName: $('#inspection-name'), inspectionDescription: $('#inspection-description'),
-    inspectionClose: $('#inspection-close'), invitation: $('#garden-invitation'),
+    inspectionClose: $('#inspection-close'), invitation: $('#garden-invitation'), erwuSays: $('#erwu-says'),
     arrangementTargets: $('#arrangement-targets'),
     seedHud: $('#seed-hud'), seedCount: $('#seed-count'), bedLive: $('#bed-live'),
     seedTin: $('#seed-tin'), tinCount: $('#tin-count'), bedActions: $('#bed-actions'), bedChoices: $('#bed-choices'),
@@ -1027,7 +1028,7 @@
   const lightKey = () => { const c = calendar(); return `${presentation}:${c.name}:${Math.round(c.blend * 4)}:${presentation === 'run' ? timeAt(turn) : BloomTime.dayPart(seasonClock())}`; };
   const SPECIALS = {
     gust: ['A gust of wind', 'everything shifts along one place'],
-    lone: ['A stubborn bud', 'just one this turn, and a tough one'],
+    lone: ['A stubborn bud', 'the one in the gold ring: bloom it for 3 extra pollen'],
     flutter: ['Butterfly turn', 'every bloom this turn earns an extra pollen'],
   };
   let special = { next: 12, kind: null, last: null, bonus: 0 };
@@ -1051,10 +1052,10 @@
       // players who met power-ups before they were medallions get the how-to once too
       else if (POWERS.includes(o.kind) && !seen.powers) { seen.powers = true; store.set('seen', seen); introQueue.push('powers'); }
     };
-    // a stubborn bud: one, as tough as three
+    // a stubborn bud: one, as tough as three, in a gold ring; blooming it pays STUBBORN_PAY pollen
     if (special.kind === 'lone') {
       const hp = Math.max(3, Math.round(hpFor(t) * 2.2));
-      add({ kind: 'shape', hp, maxHp: hp, pulse: 0, spin: 0, sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4) });
+      add({ kind: 'shape', hp, maxHp: hp, pulse: 0, spin: 0, sp: Math.floor(Math.random() * BUDS.length), ci: Math.floor(Math.random() * 4), stubborn: true });
     }
     for (let i = 0; i < (special.kind === 'lone' ? 0 : n); i++) {
       const hp = hpFor(t);
@@ -1079,7 +1080,7 @@
   function serialize() {
     return {
       v: 3, turn, ballCount, petalNext, pawReady, charges: [...charges],
-      items: items.filter((i) => !i.dead).map(({ kind, sector, ring, hp, maxHp, sp, ci, seed }) => ({ kind, sector, ring, hp, maxHp, sp, ci, ...(seed ? { seed } : {}) })),
+      items: items.filter((i) => !i.dead).map(({ kind, sector, ring, hp, maxHp, sp, ci, seed, stubborn }) => ({ kind, sector, ring, hp, maxHp, sp, ci, ...(seed ? { seed } : {}), ...(stubborn ? { stubborn } : {}) })),
       ...(runSeed ? { seed: { ...runSeed } } : {}), log: runLog, special: { next: special.next, kind: special.kind, last: special.last, bonus: special.bonus },
     };
   }
@@ -1182,7 +1183,43 @@
   const gardenSize = () => garden.plants.reduce((t, p) => t + p.g, 0);
   const gardenTier = () => { const t = gardenSize(); return GARDEN_TIERS.filter((x) => t >= x).length; };
   const plantWorld = (p) => ({ x: Math.cos(p.a) * p.d * R, y: Math.sin(p.a) * p.d * R });
-  const plantXY = (p) => presentation === 'garden' && gardenScene ? BloomGardenLayout.projectPlant(p, gardenScene) : plantWorld(p);
+  const plantXY = (p) => presentation === 'garden' && gardenScene ? BloomGardenLayout.projectPlant(p, gardenScene) : runPlantXY(p);
+  // During a run a plant stands by its saved angle and distance around the flower, over the same
+  // painted backdrop as the garden. One that would stand on the painted fountain or log slides
+  // round its ring until it's clear (display only; the saved place never changes).
+  let runSpots = { key: '', at: new Map() };
+  // inside the lawn a run shows, below the header and above the footer
+  function inRunLawn(q) {
+    const u = R * 0.065, sx = CX + q.x, sy = CY + q.y;
+    return sx >= u && sx <= W - u && sy <= gBottom && sy - u * 3.2 >= gTop;
+  }
+  function onScenery(q, sc) {
+    if (!sc) return false;
+    const pad = R * 0.06, tall = R * 0.16;
+    return [sc.fountain, sc.deadwood].some((f) => Math.abs(q.x - f.x) < f.width / 2 + pad && q.y > f.y - f.height - pad && q.y - tall < f.y + pad);
+  }
+  const runScenery = () => paintedScenery({ cx: CX, cy: CY });
+  function runPlantXY(p) {
+    const key = `${W}x${H}:${R}:${CX},${CY}:${gTop},${gBottom}:${!!artImage('lawn')}`;
+    if (runSpots.key !== key) runSpots = { key, at: new Map() };
+    let q = runSpots.at.get(p.id);
+    if (q && q.a === p.a && q.d === p.d) return q.at;
+    const sc = runScenery(), home = plantWorld(p);
+    let at = home;
+    if (onScenery(home, sc)) {
+      // round its ring first, then a little further out or in; never into the header or footer
+      at = null;
+      for (let i = 1; i < 240 && !at; i++) {
+        const ring = Math.floor(i / 40), turn = i % 40;
+        const a = p.a + (turn % 2 ? 1 : -1) * Math.ceil(turn / 2) * 0.05, d = Math.max(1.06, p.d + (ring % 2 ? 1 : -1) * Math.ceil(ring / 2) * 0.12);
+        const q = { x: Math.cos(a) * d * R, y: Math.sin(a) * d * R };
+        if (!onScenery(q, sc) && inRunLawn(q)) at = q;
+      }
+      at = at || home;
+    }
+    runSpots.at.set(p.id, { a: p.a, d: p.d, at });
+    return at;
+  }
   const sceneOrigin = () => presentation === 'garden' && gardenScene ? { x: gardenScene.cx, y: gardenScene.cy } : { x: CX, y: CY };
 
   let greetPending = false, runChangedBeds = [], shownRest = null, visitNews = null;
@@ -1274,6 +1311,7 @@
       const sx = CX + x, sy = CY + y;
       if (sx < u || sx > W - u || sy > gBottom || sy - u * 3.2 < gTop) continue;
       if (Math.hypot(x, y - u * 2.4) < R * 1.05) continue;
+      if (onScenery({ x, y }, runScenery())) continue;
       if (garden.plants.some((p) => { const q = plantWorld(p); return Math.hypot(q.x - x, q.y - y) < gap; })) continue;
       return { a, d };
     }
@@ -1645,12 +1683,19 @@
       const v = rnd(), phase = BloomTime.plantPhase(p.k, seasonClock());
       let name = (p.g < 0.25 || phase === 'leaves') && p.k !== 'grass' && p.k !== 'mushroom' && p.k !== 'fern' ? 'clump-leafy'
         : p.k === 'daisy' && v < 0.3 ? 'clump-wild' : p.k === 'grass' && v < 0.35 ? 'clump-leafy' : `clump-${p.k}`;
-      // the season's own clumps (living-garden ticket 09): frosted grass over winter, seedheads
-      // and turning leaves in autumn, bulbs coming up among the spring leaves
+      // the season's own clumps (living-garden ticket 09). The painted summer clumps are green
+      // and in flower, so from September the whole wild garden turns: grown flowers become
+      // asters, coneflowers, sedum and cosmos, and the young, the grasses and the leaves become
+      // seedheads and russet shrubs. In winter nothing is hidden: every plant stands as frosted
+      // grass, bare twigs, holly or a hellebore. In spring, bulbs come up among the leaves.
       const season = BloomTime.season(seasonClock()).name, has = (n) => !!ART.garden.frames[n];
-      if (season === 'winter' && has('clump-frost-grass') && (p.k === 'grass' || p.k === 'fern' || name === 'clump-leafy')) name = v < 0.8 ? 'clump-frost-grass' : 'clump-twigs';
-      else if (season === 'autumn' && phase === 'leaves' && has('clump-seedgrass') && !NON_FLOWERS.has(p.k)) name = ['clump-seedgrass', 'clump-coneflower', 'clump-autumn-shrub', 'clump-sedum'][Math.floor(v * 4)];
-      else if (season === 'spring' && phase === 'leaves' && v < 0.45 && has('clump-crocus') && !NON_FLOWERS.has(p.k)) name = ['clump-crocus', 'clump-daffodil', 'clump-snowdrop', 'clump-forget-spring'][Math.floor(v / 0.45 * 4)];
+      const grown = p.g >= 0.25 && !NON_FLOWERS.has(p.k);
+      if (season === 'winter' && has('clump-frost-grass')) {
+        name = grown ? (v < 0.2 ? 'clump-hellebore' : v < 0.35 ? 'clump-holly' : v < 0.65 ? 'clump-twigs' : 'clump-frost-grass') : v < 0.7 ? 'clump-frost-grass' : 'clump-twigs';
+      } else if (season === 'autumn' && has('clump-seedgrass') && p.k !== 'mushroom') {
+        name = grown ? (p.k === 'cosmos' ? 'clump-cosmos' : ['clump-aster', 'clump-coneflower', 'clump-sedum', 'clump-cosmos'][Math.floor(v * 4)])
+          : v < 0.65 ? 'clump-seedgrass' : 'clump-autumn-shrub';
+      } else if (season === 'spring' && phase === 'leaves' && v < 0.45 && has('clump-crocus') && !NON_FLOWERS.has(p.k)) name = ['clump-crocus', 'clump-daffodil', 'clump-snowdrop', 'clump-forget-spring'][Math.floor(v / 0.45 * 4)];
       // tulips, peonies and poppies before their own clumps were painted
       if (!ART.garden.frames[name]) name = { 'clump-tulip': 'clump-sweetpea', 'clump-peony': 'clump-rose', 'clump-poppy': 'clump-wild' }[name] || name;
       if (ART.garden.frames[name]) {
@@ -2616,7 +2661,9 @@
     if (presentation === 'garden' && gardenScene) drawYard(g);
     // plants that have just woken pop up in the live layer before joining the painted garden
     const clockNow = seasonClock();
-    const visible = new Set(garden.plants.filter((p) => !dormant(p, paintedRest) && BloomTime.plantPhase(p.k, clockNow) !== 'rest').map((p) => p.id));
+    // over winter the painted garden shows every plant as its winter clump; drawn plants rest
+    const winterClumps = !!(artImage('garden') && ART.garden.frames['clump-frost-grass']);
+    const visible = new Set(garden.plants.filter((p) => !dormant(p, paintedRest) && (winterClumps || BloomTime.plantPhase(p.k, clockNow) !== 'rest')).map((p) => p.id));
     if (lastVisible && !reduced) for (const id of visible) if (!lastVisible.has(id) && !waking.has(id)) waking.set(id, performance.now());
     lastVisible = visible;
     const settled = garden.plants.filter((p) => p.live == null && visible.has(p.id) && !waking.has(p.id));
@@ -3041,7 +3088,7 @@
         .concat(visitorShown && !visitorShown.leaving && !visitorShown.high && VISITOR_LOOK[visitorShown.kind].ground ? [{ id: 'visitor', x: visitorShown.x, y: visitorShown.y, landed: true }] : []) };
   }
   const catnipGrown = () => garden.patches.some((p) => p.anchor && p.flower === 'catnip' && p.growth >= 0.55);
-  let titleT = 0, settleTimer = 0, overTimer = 0, inspectedErwu = false;
+  let titleT = 0, settleTimer = 0, overTimer = 0;
   let scenePress = null;
   let inspectedObject = null;
   const bloomingCount = () => garden.plants.filter((p) => p.g >= 0.68 && !['grass', 'clover', 'fern', 'mushroom'].includes(p.k)).length;
@@ -3064,7 +3111,7 @@
     scenePress = null;
   }
   function closeInspection(focus = false) {
-    inspectedErwu = false; inspectedObject = null;
+    inspectedObject = null;
     resetPlanting(); tinOpen = false; tinSeed = null;
     el.title.classList.remove('bedding'); el.bedActions.hidden = true; refreshArrangementTargets();
     el.inspection.hidden = true; el.invitation.hidden = false;
@@ -3082,19 +3129,20 @@
       if (!item) { closeInspection(); return; }
       el.inspectionName.textContent = BloomGardenLayout.label(garden,item);
       el.inspectionDescription.textContent = BloomGardenLayout.kinds[item.kind].description;
-    } else if (inspectedErwu) {
-      el.inspectionName.textContent = 'Erwu';
-      el.inspectionDescription.textContent = 'A quiet moment together.';
     } else closeInspection();
   }
+  // Saying hello: she stops and looks at you, and answers in a small paper bubble over her head
+  // (drawn with her, in drawErwuGarden) instead of a caption under the garden.
+  const ERWU_SAYS = ['Mrrp?', 'Prrrr…', 'Mrow!', '♡', 'Mm?', '…purr', 'Oh, it’s you.', 'Mrrow?'];
+  let erwuSaid = null;
   function greetErwu() {
     if (presentation !== 'garden') return;
-    inspectedObject = null;
+    if (!el.inspection.hidden) closeInspection();
     clearTimeout(settleTimer); el.title.classList.add('settled');
-    inspectedErwu = true;
-    el.invitation.hidden = true; el.inspection.hidden = false;
     BloomErwu.tap(erwu);
-    refreshInspection();
+    const lines = ERWU_SAYS.filter((l) => !erwuSaid || l !== erwuSaid.text), text = lines[Math.floor(Math.random() * lines.length)];
+    erwuSaid = { text, t0: performance.now() };
+    el.erwuSays.textContent = `Erwu: ${text}`;
   }
   // Invisible tap targets over the flower beds, the only things tapped in the garden. The seed
   // tin marks them when a seed is chosen.
@@ -3116,7 +3164,7 @@
   function inspectObject(item) {
     if (!item) return;
     const seed = tinSeed;
-    inspectedErwu = false; inspectedObject = item.id; tinOpen = false; tinSeed = null;
+    inspectedObject = item.id; tinOpen = false; tinSeed = null;
     resetPlanting();
     if (item.kind === 'flower-patch') {
       if (seed) choosePlanting(item, { seed });
@@ -3197,7 +3245,7 @@
   function openTin() {
     if (presentation !== 'garden') return;
     clearTimeout(settleTimer); el.title.classList.add('settled');
-    inspectedErwu = false; inspectedObject = null; resetPlanting();
+    inspectedObject = null; resetPlanting();
     tinOpen = true; tinSeed = garden.seeds.length === 1 ? garden.seeds[0].id : null;
     el.invitation.hidden = true; el.inspection.hidden = false;
     refreshInspection(); refreshArrangementTargets();
@@ -3415,8 +3463,18 @@
   // Other moments get their own small celebrations: a bloom count that grows during a shot, a
   // close call near Erwu, a filled petal, a new best mid-run, and a cleared board. -----
   let hitBall = null, combo = null, runBestShown = false;
-  const BANK_MAX = 2, CHAIN_FIRST = 7, CHAIN_EVERY = 4;
+  const BANK_MAX = 2, CHAIN_FIRST = 7, CHAIN_EVERY = 4, STUBBORN_PAY = 3;
   function celebrateBloom(it, p) {
+    if (it.stubborn) {
+      // the stubborn bud gives in: its pollen, a gold burst and a delighted Erwu
+      pending += STUBBORN_PAY;
+      bursts.push({ x: p.x, y: p.y, col: hexRgb(C.honey), t: 0 });
+      for (let i = 0; i < 8 && !reduced; i++) { const a = i / 8 * TAU; glint(p.x + Math.cos(a) * p.r * 1.4, p.y + Math.sin(a) * p.r * 1.4, 1.1); }
+      addFloat(p.x, p.y - p.r * 1.4, `Stubborn bud! +${STUBBORN_PAY}`, 'honey', 1.15);
+      [5, 9, 12, 16].forEach((n, i) => tone(noteFreq(n), 0.035, 'triangle', 0.4, i * 0.07));
+      haptic(2);
+      cat.happy = Math.max(cat.happy, 1); cat.bounce = 1;
+    }
     if (!shot) return;
     shot.blooms++;
     combo = { n: shot.blooms, t: 0, gold: false };
@@ -4542,6 +4600,7 @@
     const born = Math.max(0, Math.min(1, (now - it.born) / 520));
     const grow = reduced ? 1 : easeOutBack(born);
     if (grow <= 0.01) return;
+    if (it.stubborn) drawStubbornRing(it, p, now, grow);
     const kind = budKind(it), rnd = seeded(it.id * 97 + 13);
     const base = budColor(it), deep = hexRgb(C['bud-deep']);
     const light = mixA(base, WHITE, 0.42), shade = mixA(base, deep, 0.3);
@@ -4709,7 +4768,7 @@
       // painted, it sits at the foot of the head, inside the bud's own spot
       const br = Math.max(8, r * (head ? (it.hp > 99 ? 0.44 : 0.38) : it.hp > 99 ? 0.5 : 0.42)), bx = 0, byy = head ? r * 0.72 : -r * 0.98;
       ctx.fillStyle = 'rgba(70,50,40,0.18)'; ctx.beginPath(); ctx.arc(bx + 0.8, byy + 1.4, br, 0, TAU); ctx.fill();
-      ctx.fillStyle = rgb(mixA(mixA(base, deep, 0.55), hexRgb(C.walnut), 0.35)); ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.fill();
+      ctx.fillStyle = it.stubborn ? rgb(mixA(hexRgb(C.honey), hexRgb(C.walnut), 0.18)) : rgb(mixA(mixA(base, deep, 0.55), hexRgb(C.walnut), 0.35)); ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(255,248,232,0.9)'; ctx.lineWidth = Math.max(1.2, br * 0.14); ctx.beginPath(); ctx.arc(bx, byy, br * 0.86, 0, TAU); ctx.stroke();
       ctx.strokeStyle = rgb(hexRgb(C.walnut), 0.45); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(bx, byy, br, 0, TAU); ctx.stroke();
       const size = br * (it.hp > 99 ? 0.95 : 1.12);
@@ -4746,6 +4805,19 @@
   }
   // A seed bud carries a little acorn-shaped pod at its base, with a twinkle:
   // told apart by shape as well as colour.
+  // The stubborn bud: a slowly turning gold ring behind it (its count badge is gold too).
+  function drawStubbornRing(it, p, now, grow) {
+    const k = reduced ? 1 : 0.75 + 0.25 * Math.sin(now / 420 + it.id), r = p.r * 1.38 * grow;
+    ctx.save(); ctx.translate(p.x, p.y);
+    const glow = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.25);
+    glow.addColorStop(0, rgb(hexRgb(C.butter), 0.28 * k)); glow.addColorStop(1, rgb(hexRgb(C.butter), 0));
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, r * 1.25, 0, TAU); ctx.fill();
+    ctx.rotate(reduced ? 0 : now / 2400);
+    ctx.strokeStyle = rgb(hexRgb(C.honey), 0.85); ctx.lineWidth = Math.max(1.6, p.r * 0.11); ctx.lineCap = 'round';
+    ctx.setLineDash([p.r * 0.34, p.r * 0.2]);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
   function drawSeedPod(it, now) {
     const p = itemPos(it), k = it.born && now < it.born + 400 ? Math.max(0, (now - it.born) / 400) : 1;
     if (k <= 0.01) return;
@@ -5488,12 +5560,43 @@
         ctx.fillText('z', zx + s * (t * 0.5 + Math.sin(t * 6 + i) * 0.08), zy - s * t * 0.9);
       }
     }
+    if (erwuSaid) drawErwuBubble(now, nestR);
     if (debugErwu) {
       const i = BloomErwu.info(erwu);
       ctx.save(); ctx.font = `11px ${FONT}`; ctx.fillStyle = 'rgba(63,51,38,0.85)'; ctx.textAlign = 'left';
       [`${i.action} · ${i.step} · ${i.pose}`, i.reason, `at ${i.at}`, i.cooldowns.join(' ')].forEach((l, n) => ctx.fillText(l, -gardenScene.width / 2 + 4, -gardenScene.height / 2 + 14 + n * 13));
       ctx.restore();
     }
+  }
+  // What she said when you said hello, over her head for a couple of seconds: a paper bubble
+  // with a small tail toward her, rising a little as it appears and fading as it goes.
+  const BUBBLE_MS = 2600;
+  function drawErwuBubble(now, nestR) {
+    const age = now - erwuSaid.t0;
+    if (age > BUBBLE_MS || presentation !== 'garden') { erwuSaid = null; return; }
+    const head = erwuHead(), s = erwuSize(nestR), ink = hexRgb(C.walnut);
+    const pop = reduced ? 1 : easeOutBack(Math.min(1, age / 240)), fade = Math.min(1, (BUBBLE_MS - age) / 400);
+    const fs = Math.max(13, Math.round(s * 0.3));
+    ctx.save();
+    ctx.font = `500 ${fs}px ${SERIF}`;
+    const tw = ctx.measureText(erwuSaid.text).width, bw = tw + fs * 1.3, bh = fs * 1.75;
+    // above her head, kept inside the garden
+    const half = gardenScene ? gardenScene.width / 2 - 6 : W / 2;
+    let x = Math.max(-half + bw / 2, Math.min(half - bw / 2, head.x)), y = head.y - s * 0.35 - bh / 2 - (reduced ? 0 : (1 - pop) * 6);
+    if (inBasket()) y = -s * 0.85 - bh / 2;
+    ctx.globalAlpha *= fade;
+    ctx.translate(x, y); ctx.scale(pop, pop);
+    ctx.fillStyle = rgb(hexRgb(C.ground), 0.96); ctx.strokeStyle = rgb(ink, 0.45); ctx.lineWidth = 1.2;
+    ctx.shadowColor = 'rgba(80,60,40,0.18)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+    const tx = Math.max(-bw / 2 + 10, Math.min(bw / 2 - 10, head.x - x));
+    ctx.beginPath(); ctx.roundRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
+    ctx.moveTo(tx - 5, bh / 2 - 1); ctx.lineTo(tx, bh / 2 + 7); ctx.lineTo(tx + 5, bh / 2 - 1);
+    ctx.fill(); ctx.shadowColor = 'transparent'; ctx.stroke();
+    // cover the tail's seam with the bubble's own colour
+    ctx.fillStyle = rgb(hexRgb(C.ground), 1); ctx.fillRect(tx - 4, bh / 2 - 2.2, 8, 2.4);
+    ctx.fillStyle = rgb(ink, 0.92); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(erwuSaid.text, 0, 1);
+    ctx.restore();
   }
   // Entering the garden: she's asleep in her basket, unless there's a reason to get up.
   function erwuEnter() {
