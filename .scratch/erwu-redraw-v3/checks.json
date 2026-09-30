@@ -1,0 +1,56 @@
+{
+  "sheets": [
+    {
+      "sheet": "model",
+      "frame": 0,
+      "count": 4,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "sheet": "poses",
+      "frame": 0,
+      "count": 20,
+      "width": 1402,
+      "height": 1122
+    },
+    {
+      "sheet": "walk-side",
+      "frame": 0,
+      "count": 8,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "sheet": "walk-front",
+      "frame": 0,
+      "count": 8,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "sheet": "walk-back",
+      "frame": 0,
+      "count": 8,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "sheet": "walk-diag-front",
+      "frame": 0,
+      "count": 8,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "sheet": "walk-diag-back",
+      "frame": 0,
+      "count": 8,
+      "width": 1774,
+      "height": 887
+    }
+  ],
+  "pageErrors": [],
+  "playback": true,
+  "mobileOverflow": false
+}
