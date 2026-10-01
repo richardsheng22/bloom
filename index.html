@@ -117,7 +117,7 @@
     flex-direction: column;
     align-items: center;
   }
-  .turn b {
+  .turn > b {
     font-family: var(--serif);
     font-variation-settings: "SOFT" 100, "opsz" 144;
     font-size: clamp(50px, 15vw, 68px);
@@ -1035,11 +1035,13 @@
   let cat = freshCat();
   let nextId = 1;
 
+  const RAMP = { from: 12, rate: 0.006 };
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
-    // Past turn 60 the buds toughen a little more each turn (1.24x by turn 100, 1.54x by 150),
-    // so a long run builds towards an ending instead of levelling out.
-    const late = 1 + Math.max(0, t - 60) * 0.006;
+    // From turn 12 the buds toughen a little more each turn (1.2x by turn 30, 1.5x by 55, 1.8x by
+    // 80), so a run builds towards an ending around turn 60-70 instead of levelling out; the first
+    // turns are untouched (owner tuning, 2026-10-01: a median of 86 was too long).
+    const late = 1 + Math.max(0, t - RAMP.from) * RAMP.rate;
     const base = (0.46 * t + 0.34 * ballCount) * late;
     let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.55)));
     if (t > 6 && Math.random() < 0.12) h = Math.round(h * 1.8);
@@ -1050,6 +1052,7 @@
   // a dewdrop that splashes, a bee that helps, a sunbeam that cuts a line, and a dandelion clock
   // that scatters the stream.
   const POWERS = ['dew', 'bee', 'sun', 'dandelion'];
+  const CLOCK_RING = 4;   // the dandelion clock arrives this many rings out from Erwu, not at the edge
   const INTRO = {
     mushroom: ['Mushrooms', "bouncy, and they can't be picked"],
     ring: ['Flower rings', 'pollen through a ring turns golden and hits twice'],
@@ -1134,7 +1137,17 @@
     // at most one mushroom a turn: more crowded the board and blocked every line of aim
     if (t >= 10 && Math.random() < Math.min(0.75, 0.35 + (t - 10) * 0.025)) add({ kind: 'mushroom' });
     if (t >= 8 && Math.random() < 0.2) add({ kind: 'ring' });
-    if (t > 3 && Math.random() < 0.22) add({ kind: pick(POWERS) });
+    if (t > 3 && Math.random() < 0.22) {
+      const kind = pick(POWERS);
+      // a dandelion clock arrives close to Erwu, where the buds are thickest, so its scatter has
+      // something to spray into: in a free place CLOCK_RING rings out, else at the edge as usual
+      const open = kind === 'dandelion' ? [...Array(SECTORS).keys()].filter((k) => !items.some((i) => !i.dead && i.sector === k && i.ring === CLOCK_RING)) : [];
+      if (open.length) {
+        const sector = pick(open);
+        items.push({ id: nextId++, sector, ring: CLOCK_RING, rf: CLOCK_RING, born: now, pulse: 0, spin: 0, kind });
+        if (!seen.dandelion) { seen.dandelion = true; store.set('seen', seen); introQueue.push('dandelion'); }
+      } else add({ kind });
+    }
     if (t > 2 && Math.random() < 0.12) add({ kind: 'petal' });
     // A seed bud is an ordinary bud of this ring carrying a rare seed; it changes nothing else.
     if (runSeed && !runSeed.spawned && t >= runSeed.turn) {
@@ -1336,7 +1349,8 @@
     const first = visitNews && visitNews.firsts.length ? visitNews.firsts[visitNews.firsts.length - 1] : null;
     const firstLine = first && `${BloomVisits.CAST[first].name} came by ${PLACE_WORDS[BloomVisits.CAST[first].place] || 'the garden'}.`;
     const giftLine = visitNews && visitNews.gift ? `${CAT_NAME} left you something by her basket.` : '';
-    gardenNote = firstLine || news || giftLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
+    const ms = BloomTime.mainStyle(garden), styleLine = ms && Math.random() < 0.6 ? `${STYLE_FLOWER_NAMES[ms.flower]} are spreading: they follow your ${ms.name}.` : '';
+    gardenNote = firstLine || news || giftLine || styleLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
     el.tNote.textContent = gardenMessage();
   }
   // Tier milestones, each told once on the garden's label (living-garden ticket 02).
@@ -1413,6 +1427,8 @@
     return best;
   }
   function chooseKind(base, a) {
+    // her own way of playing grows its own flowers (garden-time.js): a share of new flowers follow it
+    if (!NON_FLOWERS.has(base) && Math.random() < BloomTime.styleShare(garden)) { const k = BloomTime.styleFlower(garden, Math.random()); if (k) return k; }
     const near = nearestFlowering(a);
     if (near && !NON_FLOWERS.has(base) && Math.random() < 0.4) return near.k;
     if (FLOWER_KINDS.includes(base)) {
@@ -1422,7 +1438,17 @@
     }
     return base;
   }
+  // A moment of her style: counted in the garden and in this run's log, and, for the big moments,
+  // its flower flies out to the garden straight away from where it happened.
+  function noteStyle(key, plantFrom = null) {
+    BloomTime.noteStyle(garden, key);
+    if (runLog) { runLog.style = runLog.style || {}; runLog.style[key] = (runLog.style[key] || 0) + 1; }
+    if (plantFrom) plant(BloomTime.STYLE_FLOWERS[key], Math.atan2(plantFrom.y, plantFrom.x), 0.35, 1.06, 2.6, plantFrom, true);
+    gardenDirty = true;
+  }
   const WILDFLOWERS = ['foxglove', 'bluebell', 'sweetpea', 'cornflower', 'rose', 'wild'];
+  const STYLE_FLOWER_NAMES = { foxglove: 'Foxgloves', poppy: 'Poppies', rose: 'Wild roses', peony: 'Peonies', sweetpea: 'Sweet peas', bluebell: 'Bluebells', cornflower: 'Cornflowers' };
+  const STYLE_COLOURS = { foxglove: '#C48AC2', poppy: '#E0573E', rose: '#E58C8C', peony: '#F2B6C4', sweetpea: '#D9A3D6', bluebell: '#7F8FD6', cornflower: '#5C7FD0' };
   const WILD_NAMES = { foxglove: 'Foxgloves', bluebell: 'Bluebells', sweetpea: 'Sweet peas', cornflower: 'Cornflowers', rose: 'A rose bush', wild: 'Wildflowers' };
   const matured = (k) => k === 'grass' ? 'clover' : k === 'clover' || k === 'fern' ? pick(FLOWER_KINDS) : FLOWER_KINDS.includes(k) ? pick(WILDFLOWERS) : null;
   function mature(pref, from) {
@@ -3126,6 +3152,7 @@
   }
 
   function fullBloom(done) {
+    noteStyle('fullBloom', { x: 0, y: -coreR, col: hexRgb('#F2B6C4') });
     // beat one: the petals light up in turn, each with a rising note
     fbT = 0;
     for (let k = 0; k < SECTORS; k++) tone(noteFreq(k + 3), 0.035, 'sine', 0.5, k * 0.055);
@@ -3524,6 +3551,11 @@
       rows.push({ kind: bed.flower, name: BloomBeds.NAMES[bed.flower], where: BloomGardenLayout.placeName(bed.anchor).replace(/^the /, ''), what: BloomBeds.STAGE_NAMES[st] });
     }
     for (const kind of runLog ? runLog.seeds : []) rows.push({ kind, name: `${BloomBeds.NAMES[kind]} seed`, where: 'in your seed tin', what: 'Found', rare: true });
+    // what her play sowed this run: the flowers of her styles, most first
+    for (const [k, n] of Object.entries((runLog && runLog.style) || {}).sort((a, b) => b[1] - a[1]).slice(0, 2)) {
+      const f = BloomTime.STYLE_FLOWERS[k];
+      rows.push({ kind: f, name: STYLE_FLOWER_NAMES[f], where: `from your ${BloomTime.STYLE_NAMES[k]}`, what: `×${n}` });
+    }
     if (rows.length) return { title: 'In the garden this run', rows: rows.slice(0, 4) };
     const bed = BloomBeds.focusBed(garden);
     const next = bed && [[0.2, 'growing well'], [0.55, 'flowering'], [1, 'fully established']].find(([t]) => bed.growth < t);
@@ -3539,7 +3571,7 @@
     runChangedBeds = garden.patches.filter((b) => sum.rows.some((r) => !r.rare && r.kind === b.flower && r.where === BloomGardenLayout.placeName(b.anchor).replace(/^the /, ''))).map((b) => b.id);
     for (const r of sum.rows) {
       const li = document.createElement('li');
-      const sw = document.createElement('i'); sw.style.setProperty('--c', CHIP_COLOURS[r.kind]); if (r.rare) sw.className = 'rare';
+      const sw = document.createElement('i'); sw.style.setProperty('--c', CHIP_COLOURS[r.kind] || STYLE_COLOURS[r.kind] || '#C9B98E'); if (r.rare) sw.className = 'rare';
       const name = document.createElement('b'); name.textContent = r.name;
       const where = document.createElement('small'); where.textContent = r.where;
       const what = document.createElement('span'); what.textContent = r.what;
@@ -3552,6 +3584,8 @@
     state = 'over'; readySnapshot = null;
     cat.mood = 'startled';
     store.del('run3');
+    // a long game is a style of its own: bluebells
+    if (turn >= 50) { noteStyle('long'); plant('bluebell', Math.random() * TAU, 0.35, 1.06, 2.6, null, true); }
     saveGarden();
     const isBest = turn > best;
     if (isBest) { best = turn; store.set('best', best); }
@@ -3630,6 +3664,7 @@
     if (it.stubborn) {
       // the stubborn bud gives in: its pollen, a gold burst and a delighted Erwu
       pending += STUBBORN_PAY;
+      noteStyle('stubborn', { x: p.x, y: p.y, col: hexRgb('#E58C8C') });
       bursts.push({ x: p.x, y: p.y, col: hexRgb(C.honey), t: 0 });
       for (let i = 0; i < 8 && !reduced; i++) { const a = i / 8 * TAU; glint(p.x + Math.cos(a) * p.r * 1.4, p.y + Math.sin(a) * p.r * 1.4, 1.1); }
       addFloat(p.x, p.y - p.r * 1.4, `Stubborn bud! +${STUBBORN_PAY}`, 'honey', 1.15);
@@ -3647,6 +3682,7 @@
       const paid = true;
       shot.tricks++;
       pending++;
+      noteStyle('trick', shot.tricks === 1 ? { x: p.x, y: p.y, col: hexRgb('#C48AC2') } : null);
       bursts.push({ x: p.x, y: p.y, col: hexRgb(C.butter), t: 0 });
       addFloat(p.x, p.y - p.r * 1.3, paid ? 'Trick shot! +1' : 'Trick shot!', 'honey', 1.05);
       [7, 11, 14].forEach((n, i) => tone(noteFreq(n), 0.03, 'triangle', 0.35, i * 0.06));
@@ -3657,6 +3693,7 @@
     if (it.ring <= 1 && !shot.closeCall) {
       // cleared right at Erwu's door
       shot.closeCall = true;
+      noteStyle('closeCall');
       addFloat(p.x, p.y - p.r * 1.3, 'Close one!', 'bud-deep', 1.05);
       cat.happy = Math.max(cat.happy, 1.2); cat.bounce = 1; hearts(2);
     }
@@ -3671,7 +3708,7 @@
       particles.push({ type: 'glint', x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: 0, life: 1, decay: 2.2, size: ballR * 1.1 });
     }
     // a golden seed flies out and a flower comes up in the garden where it lands
-    plant(chooseKind(pick(FLOWER_KINDS), itemAngle(it)), itemAngle(it), 0.35, 1.06, 2.6, { x: p.x, y: p.y, col: hexRgb(C.honey) }, true);
+    noteStyle('chain', { x: p.x, y: p.y, col: hexRgb(C.honey) });
     tone(noteFreq(12), 0.035, 'sine', 0.5); tone(noteFreq(14), 0.03, 'sine', 0.6, 0.07);
     haptic(2);
   }
@@ -3965,7 +4002,8 @@
       }
       // a few of its seeds take root in the garden, near where the clock stood
       const a = Math.atan2(ck.y, ck.x);
-      for (let i = 0; i < 2; i++) plant('wild', a + (Math.random() - 0.5) * 0.8, 0.3, 1.06, 2.6, reduced ? null : { x: ck.x, y: ck.y, col: hexRgb('#F4EFD8') });
+      noteStyle('dandelion');
+      for (let i = 0; i < 2; i++) plant('cornflower', a + (Math.random() - 0.5) * 0.8, 0.3, 1.06, 2.6, reduced ? null : { x: ck.x, y: ck.y, col: hexRgb('#F4EFD8') });
     }
   }
   function updateClocks(dt) {
@@ -6371,7 +6409,7 @@
         { svg: TIN_SVG, text: 'Rare seeds wait in the seed tin until you plant them.' },
       ] },
       { title: 'It grows with you', items: [
-        { icon: both(sprite('garden', 'clump-daisy', 0.5, 0.9, 0.3), sprite('garden', 'clump-forget', 0.5, 0.9, 0.7)), text: 'Every game you play sows wild flowers.' },
+        { icon: both(sprite('garden', 'clump-daisy', 0.5, 0.9, 0.3), sprite('garden', 'clump-forget', 0.5, 0.9, 0.7)), text: 'Every game sows wild flowers, and how you play decides which.' },
         { icon: both(sprite('garden', 'bed-seedlings', 0.46, 0.7, 0.26), arrow, sprite('garden', 'bed-full', 0.46, 0.7, 0.74)), text: 'Beds fill in over a few days.' },
         { icon: sprite('garden', 'clump-leafy', 0.72, 0.9), text: 'It grows a little on its own, too. No need to play for long.' },
       ] },

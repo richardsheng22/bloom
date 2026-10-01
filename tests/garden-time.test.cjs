@@ -71,3 +71,23 @@ test('what flowers when: flowers, then leaves, then rest over winter; beds rest 
 test('times of day follow the local clock', () => {
   assert.deepEqual([6, 12, 18, 23, 2].map((h) => T.dayPart(at(2026, 9, 29, h))), ['dawn', 'day', 'dusk', 'night', 'night']);
 });
+
+test('her way of playing grows its own wild flowers; older saves have no style and stay valid', () => {
+  const G = require('../garden-state.js');
+  const g = G.fresh(Date.UTC(2026, 9, 1), 3); delete g.fresh;
+  assert.ok(G.valid(G.snapshot(g)));
+  assert.equal(T.styleFlower(g, 0.5), null);
+  assert.equal(T.styleShare(g), 0);
+  for (let i = 0; i < 9; i++) T.noteStyle(g, 'trick');
+  T.noteStyle(g, 'chain');
+  assert.equal(T.styleFlower(g, 0.1), 'foxglove');
+  assert.equal(T.styleFlower(g, 0.95), 'poppy');
+  assert.ok(T.styleShare(g) > 0.3 && T.styleShare(g) <= 0.45);
+  assert.equal(T.mainStyle(g).flower, 'foxglove');
+  for (const f of Object.values(T.STYLE_FLOWERS)) assert.ok(G.KINDS ? G.KINDS.has(f) : true, f);
+  const snap = G.snapshot(g);
+  assert.deepEqual(snap.style, { trick: 9, chain: 1 });
+  assert.ok(G.valid(snap));
+  assert.ok(!G.valid({ ...snap, style: { trick: -1 } }), 'a broken style is rejected');
+  T.noteStyle(g, 'nonsense'); assert.equal(g.style.nonsense, undefined);
+});

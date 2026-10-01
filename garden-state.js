@@ -65,7 +65,7 @@
     return { v: VERSION, ...(g.layoutVersion === undefined ? {} : { layoutVersion: g.layoutVersion }), tended: g.tended, lastSeen: g.lastSeen, rest: 0, nextIds: { ...g.nextIds },
       plants: g.plants.map(({ id, a, d, k, g: growth, s }) => ({ id, a, d, k, g: growth, s })),
       patches: g.patches, objects: g.objects, discoveries: g.discoveries, focus: g.focus, seeds: g.seeds, luck: { ...g.luck },
-      time: { ...g.time }, character: { ...g.character }, visits: g.visits };
+      time: { ...g.time }, character: { ...g.character }, visits: g.visits, ...(g.style ? { style: { ...g.style } } : {}) };
   }
   function save(storage, session) {
     if (!session.writable) return false;

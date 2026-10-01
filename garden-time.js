@@ -25,8 +25,45 @@
     return { time: { day: dayIndex(now), turns: 0, planted: 0, grown: dayIndex(now) },
       character: Object.fromEntries(CHARACTER_KEYS.map((k) => [k, 0])) };
   }
+  // ----- How she plays, in flowers. Each way of playing well has a wild flower of its own, and
+  // the more of it she does, the more of that flower comes up in her garden, so two players'
+  // gardens grow apart. Kept as a count per style (`g.style`; older saves have none). -----
+  const STYLE_FLOWERS = Object.freeze({
+    trick: 'foxglove',     // trick shots off a mushroom
+    chain: 'poppy',        // long chains of blooms in one launch
+    stubborn: 'rose',      // stubborn buds coaxed open
+    fullBloom: 'peony',    // full blooms of the big flower
+    closeCall: 'sweetpea', // buds cleared right next to Erwu
+    long: 'bluebell',      // long games
+    dandelion: 'cornflower', // dandelion clocks
+  });
+  const STYLE_NAMES = Object.freeze({ trick: 'trick shots', chain: 'chains', stubborn: 'stubborn buds', fullBloom: 'full blooms',
+    closeCall: 'close calls', long: 'long games', dandelion: 'dandelion clocks' });
+  const validStyle = (s) => s === undefined || (!!s && typeof s === 'object' && Object.keys(s).every((k) => STYLE_FLOWERS[k] && finite(s[k]) && s[k] >= 0));
+  function noteStyle(g, key, amount = 1) {
+    if (!STYLE_FLOWERS[key]) return;
+    g.style = g.style || {};
+    g.style[key] = (g.style[key] || 0) + amount;
+  }
+  // The share of new wild flowers that follow her style: none at first, up to `max` once she has
+  // a dozen or so moments of style behind her.
+  const styleShare = (g, max = 0.45) => { const n = Object.values(g.style || {}).reduce((a, v) => a + v, 0); return Math.min(max, n / 25); };
+  // A wild flower in her style, chosen in proportion to how often she plays each way (`r` in 0–1).
+  function styleFlower(g, r) {
+    const entries = Object.entries(g.style || {}).filter(([, v]) => v > 0), total = entries.reduce((a, [, v]) => a + v, 0);
+    if (!total) return null;
+    let x = r * total;
+    for (const [k, v] of entries) { if ((x -= v) < 0) return STYLE_FLOWERS[k]; }
+    return STYLE_FLOWERS[entries[entries.length - 1][0]];
+  }
+  // Her strongest style, for the garden to mention.
+  function mainStyle(g) {
+    const e = Object.entries(g.style || {}).sort((a, b) => b[1] - a[1])[0];
+    return e && e[1] >= 3 ? { key: e[0], flower: STYLE_FLOWERS[e[0]], name: STYLE_NAMES[e[0]] } : null;
+  }
   function valid(g) {
     const t = g && g.time, c = g && g.character;
+    if (g && !validStyle(g.style)) return false;
     return !!t && Number.isSafeInteger(t.day) && Number.isSafeInteger(t.grown) && Number.isSafeInteger(t.turns) && t.turns >= 0 &&
       Number.isSafeInteger(t.planted) && t.planted >= 0 && !!c && CHARACTER_KEYS.every((k) => finite(c[k]) && c[k] >= 0);
   }
@@ -102,6 +139,6 @@
     return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
   }
 
-  return { DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
+  return { STYLE_FLOWERS, STYLE_NAMES, noteStyle, styleShare, styleFlower, mainStyle, DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
     mayPlant, notePlanted, note, season, seasonOfMonth, flowering, plantPhase, bedsFlowering, dayPart };
 });
