@@ -1623,7 +1623,7 @@
   // The garden's painted pieces (beds, clumps, wild flowers) are drawn over the backdrop, after
   // its light has been graded, so at dusk or by starlight they stood out bright. They're drawn
   // from a copy of their atlas lit the same way as the backdrop, rebuilt when the light changes.
-  let litAtlas = { key: null, src: null, img: null };
+  let litAtlas = { key: null, src: null, img: null, checked: 0 };
   function currentLights() {
     const out = [], cal = calendar();
     if (!seasonPlates) out.push([SEASON_LIGHT[cal.name], 1 - cal.blend], [SEASON_LIGHT[cal.next], cal.blend]);
@@ -1633,8 +1633,13 @@
   function litGarden(img) {
     const lights = currentLights();
     if (!lights.length) return img;
-    const key = lightKey();
-    if (litAtlas.key === key && litAtlas.src === img) return litAtlas.img;
+    const key = lightKey(), now = performance.now();
+    if (litAtlas.key === key && litAtlas.src === img) {
+      // a copy that couldn't be made: draw the plain sheet, and try again in a few seconds
+      if (!litAtlas.img) { if (now - litAtlas.checked < 5000) return img; }
+      else if (now - litAtlas.checked < 3000) return litAtlas.img;
+      else { litAtlas.checked = now; if (atlasLooksRight(litAtlas.img)) return litAtlas.img; relitLost(); }
+    }
     const w = img.naturalWidth, h = img.naturalHeight;
     const c = litAtlas.src === img && litAtlas.img ? litAtlas.img : document.createElement('canvas');
     c.width = w; c.height = h;
@@ -1648,9 +1653,26 @@
     // keep the pieces' own outlines: the multiply fill also coloured the transparent gaps
     g.globalCompositeOperation = 'destination-in'; g.drawImage(img, 0, 0);
     g.globalCompositeOperation = 'source-over';
-    litAtlas = { key, src: img, img: c };
     gradedCache.clear();
+    if (!atlasLooksRight(c)) { c.width = c.height = 0; litAtlas = { key, src: img, img: null, checked: now }; relitLost(); return img; }
+    litAtlas = { key, src: img, img: c, checked: now };
     return c;
+  }
+  // iPhones can lose a canvas's picture without an error: drawn while memory was short, or dropped
+  // while the app sat in the background. The lit sheet then came back as one flat tint, and every
+  // plant, bed and stone in the garden showed as a pale box (2026-10-02). The sheet's corners are
+  // empty and its stone and cushion are solid, so a few pixels tell whether it's whole.
+  function atlasLooksRight(c) {
+    try {
+      const g = c.getContext('2d'), w = c.width, h = c.height, a = (x, y) => g.getImageData(x, y, 1, 1).data[3];
+      if (!w || !h || a(0, 0) || a(w - 1, 0) || a(0, h - 1) || a(w - 1, h - 1)) return false;
+      return ['stone', 'cushion'].every((n) => { const f = ART.garden.frames[n]; return !f || a(f[0] + (f[2] >> 1), f[1] + Math.round(f[3] * 0.6)) > 0; });
+    } catch { return true; }
+  }
+  // Everything made from the lit sheet is redrawn: the relit pieces, the beds and the garden layer.
+  function relitLost() {
+    if (litAtlas.img) { litAtlas.img.width = litAtlas.img.height = 0; litAtlas.img = null; }
+    litAtlas.key = null; gradedCache.clear(); bedArtVariants.clear(); gardenCache = null; gardenDirty = true;
   }
   const paintedGarden = () => presentation === 'garden' && !!artImage('garden');
   // Where the painted garden backdrop sits on the screen: whole and uncropped, since its
@@ -6673,7 +6695,11 @@
     }
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { clearAim(); silenceAmbience(); garden.lastSeen = Date.now(); saveGarden(); }
-      else { welcomeBack(); saveGarden(); updateHud(); if (presentation === 'garden' && greetPending) erwuEnter(); }
+      else {
+        // the phone may have dropped canvases while the app was away: check the lit sheet now, repaint the rest
+        litAtlas.checked = 0; gradedCache.clear(); bedArtVariants.clear(); bgCache = null; gardenDirty = true;
+        welcomeBack(); saveGarden(); updateHud(); if (presentation === 'garden' && greetPending) erwuEnter();
+      }
     });
     window.addEventListener('pagehide', saveGarden);
     const run = (data && data.run) || store.get('run3', null);
