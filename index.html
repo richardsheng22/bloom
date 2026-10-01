@@ -1341,6 +1341,10 @@
   function welcomeBack() {
     const now = Date.now(), away = Math.max(0, now - garden.lastSeen);
     BloomGarden.arrive(garden, now);
+    // a new season: half the annual wild flowers have gone to seed (garden-time.js), and their
+    // seeds drift off on the breeze when the garden is next drawn
+    const turned = BloomTime.turnover(garden, seasonClock());
+    if (turned) { seasonTurn = { ...turned, at: performance.now(), drifted: false }; saveGarden(); }
     const news = growOnItsOwn(BloomTime.arrive(garden, now));
     // who came by (living-garden ticket 05); drawn once the visitor art is in (ticket 10)
     visitNews = BloomVisits.arrive(garden, now, visitWorld(), BloomGarden.allocateId);
@@ -1351,7 +1355,10 @@
     const firstLine = first && `${BloomVisits.CAST[first].name} came by ${PLACE_WORDS[BloomVisits.CAST[first].place] || 'the garden'}.`;
     const giftLine = visitNews && visitNews.gift ? `${CAT_NAME} left you something by her basket.` : '';
     const ms = BloomTime.mainStyle(garden), styleLine = ms && Math.random() < 0.6 ? `${STYLE_FLOWER_NAMES[ms.flower]} are spreading: they follow your ${ms.name}.` : '';
-    gardenNote = firstLine || news || giftLine || styleLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
+    const SEASON_WORDS = { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' };
+    const turnLine = turned && turned.removed.length ? `${SEASON_WORDS[turned.season]} is here. The ${turned.from} annuals have gone to seed, leaving room for new flowers.`
+      : turned ? `${SEASON_WORDS[turned.season]} is here.` : '';
+    gardenNote = turnLine || firstLine || news || giftLine || styleLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
     el.tNote.textContent = gardenMessage();
   }
   // Tier milestones, each told once on the garden's label (living-garden ticket 02).
@@ -1365,6 +1372,10 @@
       garden.discoveries.push({ id: BloomGarden.allocateId(garden, 'discovery'), type: 'milestone', tier: t, at: Date.now() });
       told = MILESTONES[t];
     }
+    // filled again this season: the air fills with the season's petals, leaves or snow (drawSeasonAir)
+    if (BloomTime.flourish(garden, seasonClock(), flourishing())) told = `The garden is flourishing this ${calendar().name}.`;
+    // a season that has only just turned keeps the label; the milestone is still recorded
+    if (told && seasonTurn && performance.now() - seasonTurn.at < 9000) { saveGarden(); told = ''; }
     if (told) { gardenNote = told; el.tNote.textContent = gardenMessage(); saveGarden(); }
   }
   function tendGarden() {
@@ -1622,6 +1633,7 @@
     const c = litAtlas.src === img && litAtlas.img ? litAtlas.img : document.createElement('canvas');
     c.width = w; c.height = h;
     const g = c.getContext('2d');
+    if (!g) return img;
     g.clearRect(0, 0, w, h); g.drawImage(img, 0, 0);
     for (const [l, k] of lights) {
       if (l.mult) { g.globalCompositeOperation = 'multiply'; g.fillStyle = rgb(l.mult.map((v) => Math.round(v + (255 - v) * (1 - k)))); g.fillRect(0, 0, w, h); }
@@ -1981,6 +1993,9 @@
         g.putImageData(pixels, 0, 0);
       }
     }
+    // if the phone is out of canvas memory the copy comes out blank: draw the plain bed instead
+    try { const mid = g.getImageData(0, Math.floor(h * 0.3), w, Math.max(1, Math.floor(h * 0.4))).data; let any = false; for (let i = 3; i < mid.length && !any; i += 16) any = mid[i] > 0; if (!any) { c.width = c.height = 0; return null; } }
+    catch { return null; }
     const variant = { image: c, frame: [0, 0, w, h, ax, ay] };
     bedArtVariants.set(key, variant);
     return variant;
@@ -2716,7 +2731,7 @@
     }
     return { x: 0, y: m.path.top + 20 };
   }
-  let visitorShown = null, giftBeat = -1, giftSpot = null;
+  let visitorShown = null, giftBeat = -1, giftSpot = null, traceSpots = [];
   const visitorFrame = (n) => ART && ART.visitors && ART.visitors.frames[n];
   function currentVisitor(sc, m) {
     const p = garden.visits && garden.visits.present, look = p && VISITOR_LOOK[p.kind];
@@ -2739,10 +2754,13 @@
     if (!pal) return;
     // traces, and a present by the basket's gate
     const tr = (garden.visits && garden.visits.traces) || [];
+    traceSpots = [];
     tr.forEach((x, i) => {
       if (!visitorFrame(x.trace)) return;
       const at = visitorSpot(x.place, sc, m, i + 3, true), w = sc.nest * (/tracks|earth|clover|splash/.test(x.trace) ? 0.85 : 0.45) * depthAt(at.y);
       paintPiece(ctx, 'visitors', x.trace, at.x, at.y + w * 0.25, w, false, 0.9);
+      // a trace that is also a keepsake (a feather) can be picked up for the shelf
+      if (BloomVisits.KEEPSAKES[x.trace]) traceSpots.push({ index: i, x: at.x, y: at.y - w * 0.1, r: Math.max(26, w * 0.7) });
     });
     const gift = garden.visits && garden.visits.gift;
     giftSpot = null;
@@ -2789,10 +2807,14 @@
   // A tap near the visitor says who it is.
   // Erwu's present: tapped, it goes onto her keepsake shelf, with a glint flying to the shelf.
   function tapGift(x, y) {
-    if (!giftSpot || Math.hypot(x - giftSpot.x, y - giftSpot.y) > giftSpot.r) return false;
-    const at = giftSpot, item = BloomVisits.pickUp(garden);
+    let at = null, item = null;
+    if (giftSpot && Math.hypot(x - giftSpot.x, y - giftSpot.y) <= giftSpot.r) { at = giftSpot; item = BloomVisits.pickUp(garden); }
+    else {
+      const t = traceSpots.find((q) => Math.hypot(x - q.x, y - q.y) <= q.r);
+      if (t) { at = t; item = BloomVisits.pickUpTrace(garden, t.index); }
+    }
     if (!item) return false;
-    saveGarden(); gardenDirty = true; giftSpot = null;
+    saveGarden(); gardenDirty = true; giftSpot = null; traceSpots = [];
     gardenNote = `${BloomVisits.KEEPSAKES[item]} for Erwu's shelf.`;
     el.tNote.textContent = gardenMessage();
     [9, 12, 16].forEach((n, i) => tone(noteFreq(n), 0.03, 'sine', 0.6, i * 0.08));
@@ -2830,10 +2852,13 @@
   const dormant = (p, rest) => rest > 0.01 && dormantAt(p) < rest * DORMANT_MAX;
   let paintedRest = null, lastVisible = null;
   const waking = new Map();                                   // plant id -> time it began to reappear
+  let gardenCanvasEl = null, bgCanvasEl = null, maskCanvasEl = null;
   function paintGarden() {
     swaying = [];
     paintedRest = shownRest == null ? garden.rest : shownRest;
-    const c = gardenCache || document.createElement('canvas');
+    // one canvas for the garden's plants, reused: iPhones free dropped canvases slowly, and past
+    // their total canvas memory new canvases come out blank (a bed vanished, 2026-10-01)
+    const c = gardenCache || gardenCanvasEl || (gardenCanvasEl = document.createElement('canvas'));
     c.width = canvas.width; c.height = canvas.height;
     const g = c.getContext('2d');
     const origin = sceneOrigin();
@@ -4348,9 +4373,24 @@
     for (const p of garden.plants) if (!dormant(p, garden.rest)) sum += Math.min(1, p.g + 0.2);
     return Math.max(0, Math.min(1, sum / GARDEN_TIERS[GARDEN_TIERS.length - 1]));
   }
+  // A garden that has filled again this season (90% of its room) is flourishing: its air is
+  // twice as full, with warm golden motes among the petals, leaves or snow.
+  let seasonTurn = null;
+  const flourishing = () => garden.plants.length >= MAX_PLANTS * 0.9;
+  function driftSeeds() {
+    if (!seasonTurn || seasonTurn.drifted || presentation !== 'garden' || !gardenScene || reduced) return;
+    seasonTurn.drifted = true;
+    for (const p of seasonTurn.removed.slice(0, 40)) {
+      const q = BloomGardenLayout.projectPlant(p, gardenScene);
+      for (let i = 0; i < 3 && particles.length < 420; i++)
+        particles.push({ type: 'fluff', x: q.x + (Math.random() - 0.5) * 10, y: q.y - 6 - Math.random() * 10, vx: R * (0.05 + Math.random() * 0.2), vy: -R * (0.05 + Math.random() * 0.12),
+          rot: 0, vr: 0, ph: Math.random() * TAU, life: 1.6 + Math.random() * 1.2, decay: 0.42, size: 2 + Math.random(), delay: Math.random() * 1.6 });
+    }
+  }
   // What drifts on the air in each season, behind the flower: motes of summer pollen,
   // autumn leaves, and fireflies in the evening and starlight.
   function drawSeasonAir(now) {
+    driftSeeds();
     const part = BloomTime.dayPart(seasonClock()), season = calendar().name;
     const air = presentation === 'run' ? TIMES[timeAt(turn)].air || SEASON_AIR[season]
       : season === 'summer' && (part === 'dusk' || part === 'night') ? 'firefly' : SEASON_AIR[season];
@@ -4358,7 +4398,10 @@
     const t = reduced ? 0 : now / 1000, rnd = seeded(29);
     ctx.save();
     if (air === 'firefly') ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < (air === 'leaf' || air === 'petal' ? 12 : air === 'snow' ? 40 : 16); i++) {
+    // more air while the season is turning (a few seconds' gust), and while the garden flourishes
+    const turning = seasonTurn && !reduced ? Math.max(0, 1 - (performance.now() - seasonTurn.at) / 9000) : 0;
+    const full = flourishing(), more = 1 + (full ? 1 : 0) + turning * 2;
+    for (let i = 0; i < Math.round((air === 'leaf' || air === 'petal' ? 12 : air === 'snow' ? 40 : 16) * more); i++) {
       const sx = rnd(), sy = rnd(), sp = 0.5 + rnd(), ph = rnd() * TAU;
       if (air === 'snow') {
         const y = ((sy * H + t * 18 * sp) % (H + 20)) - 10, x = sx * W + Math.sin(t * 0.7 * sp + ph) * 16;
@@ -4382,10 +4425,23 @@
         ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, 10, 0, TAU); ctx.fill();
       }
     }
+    if (full) {
+      // a flourishing garden: warm golden motes rising slowly among the season's air
+      ctx.globalCompositeOperation = 'lighter';
+      const gr2 = seeded(83);
+      for (let i = 0; i < 14; i++) {
+        const sx = gr2(), sy = gr2(), sp = 0.5 + gr2(), ph = gr2() * TAU;
+        const y = H - ((sy * H + t * 9 * sp) % (H + 20)), x = sx * W + Math.sin(t * 0.5 * sp + ph) * 22;
+        const tw = reduced ? 0.6 : 0.35 + 0.65 * Math.sin(t * 1.6 * sp + ph) ** 2, r = 5 + sp * 3;
+        const g2 = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g2.addColorStop(0, `rgba(255,214,120,${0.55 * tw})`); g2.addColorStop(1, 'rgba(255,214,120,0)');
+        ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+      }
+    }
     ctx.restore();
   }
   function paintBackground() {
-    const c = document.createElement('canvas');
+    const c = bgCanvasEl || (bgCanvasEl = document.createElement('canvas'));
     c.width = canvas.width; c.height = canvas.height;
     const g = c.getContext('2d');
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -4405,7 +4461,7 @@
         // the sides and the foot give way to plain lawn, and fill back in as the garden grows.
         const bare = 1 - bgLush, lawnCol = mix(C.ground, C.sage, 0.5);
         if (bare > 0.01) {
-          const m = document.createElement('canvas'); m.width = c.width; m.height = c.height;
+          const m = maskCanvasEl || (maskCanvasEl = document.createElement('canvas')); m.width = c.width; m.height = c.height;
           const mg = m.getContext('2d'); mg.setTransform(DPR, 0, 0, DPR, 0, 0);
           const edge = (x0, y0, x1, y1) => {
             const gr = mg.createLinearGradient(x0, y0, x1, y1);
@@ -6473,6 +6529,7 @@
     try { icon(g, s); } catch {}
   }
   function showGuidePage() {
+    for (const cv of el.guideItems.querySelectorAll('canvas')) cv.width = cv.height = 0;
     const pages = guide.which === 'shelf' ? [shelfPage()] : GUIDES[guide.which], page = pages[guide.page], last = guide.page === pages.length - 1;
     el.guideTitle.textContent = page.title;
     el.guideLead.textContent = page.lead || '';

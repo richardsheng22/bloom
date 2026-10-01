@@ -91,3 +91,25 @@ test('her way of playing grows its own wild flowers; older saves have no style a
   assert.ok(!G.valid({ ...snap, style: { trick: -1 } }), 'a broken style is rejected');
   T.noteStyle(g, 'nonsense'); assert.equal(g.style.nonsense, undefined);
 });
+
+test('the turn of the seasons: half the annual wild flowers go to seed; style flowers stay; a young garden keeps everything', () => {
+  const G = require('../garden-state.js');
+  const make = (n) => { const g = G.fresh(Date.UTC(2026, 7, 20), 3); delete g.fresh;
+    for (let i = 0; i < n; i++) g.plants.push({ id: G.allocateId(g), a: i, d: 1.5, k: i % 2 ? 'daisy' : 'foxglove', g: 1, s: i }); return g; };
+  const g = make(100);
+  assert.equal(T.turnover(g, Date.UTC(2026, 7, 20)), null, 'the first opening only notes the season');
+  assert.equal(g.seasonSeen, 'summer');
+  assert.equal(T.turnover(g, Date.UTC(2026, 7, 25)), null, 'same season: nothing');
+  const r = T.turnover(g, Date.UTC(2026, 8, 2));
+  assert.equal(r.season, 'autumn'); assert.equal(r.from, 'summer');
+  assert.equal(r.removed.length, 25, 'half of the 50 daisies');
+  assert.ok(r.removed.every((p) => p.k === 'daisy'));
+  assert.equal(g.plants.filter((p) => p.k === 'foxglove').length, 50, 'style flowers all stay');
+  assert.ok(G.valid(G.snapshot(g)), 'the season mark saves');
+  const young = make(44); T.turnover(young, Date.UTC(2026, 7, 20));
+  assert.equal(T.turnover(young, Date.UTC(2026, 8, 2)).removed.length, 4, 'never below 40 plants');
+  assert.equal(T.flourish(g, Date.UTC(2026, 8, 3), false), false);
+  assert.equal(T.flourish(g, Date.UTC(2026, 8, 3), true), true);
+  assert.equal(T.flourish(g, Date.UTC(2026, 8, 9), true), false, 'once a season');
+  assert.ok(!G.valid({ ...G.snapshot(g), seasonSeen: 'monsoon' }));
+});

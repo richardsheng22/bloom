@@ -61,9 +61,37 @@
     const e = Object.entries(g.style || {}).sort((a, b) => b[1] - a[1])[0];
     return e && e[1] >= 3 ? { key: e[0], flower: STYLE_FLOWERS[e[0]], name: STYLE_NAMES[e[0]] } : null;
   }
+  // ----- The turn of the seasons. The first time the garden opens in a new season, half of the
+  // annual wild flowers have gone to seed and are gone, leaving room for what comes next; style
+  // flowers and perennials stay. A garden too young to have filled in keeps everything.
+  // `seasonSeen` is the season it last opened in; `flourished` the season it last filled. -----
+  const ANNUALS = Object.freeze(['daisy', 'cosmos', 'forget', 'buttercup', 'clover', 'grass', 'wild']);
+  const TURNOVER = Object.freeze({ share: 0.5, keepAtLeast: 40 });
+  const validSeasonMark = (s) => s === undefined || SEASONS.includes(s);
+  // Returns { season, from, removed: [plants] } when the season has turned, else null.
+  function turnover(g, now, rnd = Math.random) {
+    const season = seasonOfMonth(new Date(now).getMonth());
+    if (g.seasonSeen === undefined) { g.seasonSeen = season; return null; }
+    if (g.seasonSeen === season) return null;
+    const from = g.seasonSeen;
+    g.seasonSeen = season;
+    const annuals = g.plants.filter((p) => ANNUALS.includes(p.k));
+    const n = Math.min(Math.floor(annuals.length * TURNOVER.share), Math.max(0, g.plants.length - TURNOVER.keepAtLeast));
+    const removed = annuals.map((p) => [rnd(), p]).sort((a, b) => a[0] - b[0]).slice(0, Math.max(0, n)).map(([, p]) => p);
+    const gone = new Set(removed);
+    g.plants = g.plants.filter((p) => !gone.has(p));
+    return { season, from, removed };
+  }
+  // A garden that has filled again this season: true once, the first time it gets there.
+  function flourish(g, now, full) {
+    const season = seasonOfMonth(new Date(now).getMonth());
+    if (!full || g.flourished === season) return false;
+    g.flourished = season;
+    return true;
+  }
   function valid(g) {
     const t = g && g.time, c = g && g.character;
-    if (g && !validStyle(g.style)) return false;
+    if (g && (!validStyle(g.style) || !validSeasonMark(g.seasonSeen) || !validSeasonMark(g.flourished))) return false;
     return !!t && Number.isSafeInteger(t.day) && Number.isSafeInteger(t.grown) && Number.isSafeInteger(t.turns) && t.turns >= 0 &&
       Number.isSafeInteger(t.planted) && t.planted >= 0 && !!c && CHARACTER_KEYS.every((k) => finite(c[k]) && c[k] >= 0);
   }
@@ -139,6 +167,6 @@
     return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
   }
 
-  return { STYLE_FLOWERS, STYLE_NAMES, noteStyle, styleShare, styleFlower, mainStyle, DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
+  return { ANNUALS, TURNOVER, turnover, flourish, STYLE_FLOWERS, STYLE_NAMES, noteStyle, styleShare, styleFlower, mainStyle, DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
     mayPlant, notePlanted, note, season, seasonOfMonth, flowering, plantPhase, bedsFlowering, dayPart };
 });

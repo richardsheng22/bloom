@@ -92,6 +92,16 @@
     v.gift = null;
     return gift.item;
   }
+  // A visitor's trace that is a keepsake too (a blue jay's feather): tapped, it goes onto the
+  // shelf as well, and the trace is gone. Returns the keepsake's kind, or null.
+  function pickUpTrace(g, index) {
+    const v = g.visits, x = v.traces[index];
+    if (!x || !KEEPSAKES[x.trace]) return null;
+    v.shelf = v.shelf || {};
+    v.shelf[x.trace] = (v.shelf[x.trace] || 0) + 1;
+    v.traces.splice(index, 1);
+    return x.trace;
+  }
   const shelfCount = (g) => Object.values((g.visits && g.visits.shelf) || {}).reduce((a, n) => a + n, 0);
   function note(v, kind, t, first, allocate, g) {
     v.seen[kind] = (v.seen[kind] || 0) + 1;
@@ -158,5 +168,5 @@
     v.checked = now;
     return out.present || out.traces.length || out.gift ? out : null;
   }
-  return { CAST, GIFTS, RATE, RARE, SLOT, MAX_AWAY, KEEPSAKES, fresh, valid, arrive, roll, eligible, pickUp, shelfCount };
+  return { CAST, GIFTS, RATE, RARE, SLOT, MAX_AWAY, KEEPSAKES, fresh, valid, arrive, roll, eligible, pickUp, pickUpTrace, shelfCount };
 });

@@ -104,3 +104,14 @@ test("Erwu's present goes onto her shelf when picked up; old saves have an empty
   g.visits.shelf = { acorn: 0 };
   assert.ok(!V.valid(g), 'a broken shelf is rejected');
 });
+
+test("a visitor's trace that is a keepsake (a feather) can be picked up for the shelf; tracks can't", () => {
+  const G = require('../garden-state.js');
+  const g = G.fresh(Date.UTC(2026, 9, 1), 5); delete g.fresh;
+  g.visits.traces = [{ kind: 'fox', trace: 'fox-tracks', until: 9e15 }, { kind: 'bluejay', trace: 'feather', until: 9e15 }];
+  assert.equal(V.pickUpTrace(g, 0), null, 'tracks stay where they are');
+  assert.equal(V.pickUpTrace(g, 1), 'feather');
+  assert.deepEqual(g.visits.shelf, { feather: 1 });
+  assert.equal(g.visits.traces.length, 1);
+  assert.ok(V.valid(g));
+});
