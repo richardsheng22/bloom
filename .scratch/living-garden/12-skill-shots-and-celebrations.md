@@ -79,3 +79,17 @@ Owner feedback: the "A stubborn bud" card appeared, but nothing showed which bud
 - Tapping Erwu's present in the garden picks it up. It flies to a new shelf button under the sound switch, with a chime and a purr.
 - The shelf button opens "Erwu's keepsakes": the eight things she can bring, each shown with how many you have. Ones not found yet are faint shapes.
 - **Saving:** it's stored as `visits.shelf`, a count per keepsake. Saves without it are still valid, and older versions of the game ignore it. `BloomVisits.pickUp` and `shelfCount` are tested.
+
+## Difficulty curve (2026-10-01)
+
+The owner asked for a median game of about 60–70 turns, down from 86, with the difficulty climbing faster but not in the first few turns. Buds now toughen a little more each turn from turn 12, where before this extra ramp only started at turn 60.
+
+Bot games (aiming at the nearest bud, 8× speed), run one at a time:
+
+| Extra toughening per turn | Games | Median | Mean |
+|---|---|---|---|
+| 0.006 | 92, 36, 84, 54, 58, 91, 100, 74 | 79 | 74 |
+| 0.009 | 48, 65, 53, 47, 84, 56, 65, 71 | 60 | 61 |
+| **0.008 (chosen)** | (between the two) | about 65 expected | |
+
+Several bot games running at once on the same machine gave much shorter games, around 40 turns. Their numbers aren't comparable, so they aren't used.

@@ -1035,12 +1035,13 @@
   let cat = freshCat();
   let nextId = 1;
 
-  const RAMP = { from: 12, rate: 0.009 };
+  const RAMP = { from: 12, rate: 0.008 };
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
-    // From turn 12 the buds toughen a little more each turn (1.2x by turn 30, 1.5x by 55, 1.8x by
-    // 80), so a run builds towards an ending around turn 60-70 instead of levelling out; the first
-    // turns are untouched (owner tuning, 2026-10-01: a median of 86 was too long).
+    // From turn 12 the buds toughen a little more each turn (1.14x by turn 30, 1.34x by 55, 1.54x
+    // by 80), so a run builds towards an ending around turn 60-70 instead of levelling out; the
+    // first turns are untouched (owner tuning, 2026-10-01: a median of 86 was too long). Bot
+    // games, one at a time: rate 0.006 median 79, 0.009 median 60; 0.008 sits between.
     const late = 1 + Math.max(0, t - RAMP.from) * RAMP.rate;
     const base = (0.46 * t + 0.34 * ballCount) * late;
     let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.55)));
