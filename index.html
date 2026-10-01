@@ -3002,7 +3002,9 @@
   }
   function updateFlies(dt) {
     if (reduced) return;
-    const want = Math.max(0, Math.min(4, gardenTier() - 1) - Math.round(garden.rest * 2));
+    // a flourishing garden draws a few more of them while you're looking at it
+    const extra = presentation === 'garden' && flourishing() ? 3 : 0;
+    const want = Math.max(0, Math.min(4, gardenTier() - 1) + extra - Math.round(garden.rest * 2));
     if (flies.filter((f) => !f.temp).length < want && Math.random() < dt * 0.5) {
       const side = Math.random() < 0.5 ? -1 : 1;
       addFly(side * (W / 2 + 20), (Math.random() - 0.5) * H * 0.6, false);
