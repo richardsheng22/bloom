@@ -1035,7 +1035,7 @@
   let cat = freshCat();
   let nextId = 1;
 
-  const RAMP = { from: 12, rate: 0.006 };
+  const RAMP = { from: 12, rate: 0.009 };
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
     // From turn 12 the buds toughen a little more each turn (1.2x by turn 30, 1.5x by 55, 1.8x by
