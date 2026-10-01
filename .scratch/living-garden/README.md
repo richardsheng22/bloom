@@ -1,77 +1,22 @@
-# A living garden: time, seasons, visitors and power-ups with weight
+# A living garden
 
-Planning date: 2026-09-29. Branch: `claude/ios-game-improvements-gadloe`. Source baseline: `0f6d259` (play-feedback round).
+The garden grows over days and real seasons, has visitors while you're away, and grows in the style you play. The series was planned on 2026-09-29 and built through 2026-10-01. Its finished tickets (01–11), the measurements behind them and the review evidence are on the `archive/docs-2026-10-01` branch.
 
-This series comes before the remaining iOS 1.0 tickets (04 onward). It changes what the game *is* for its player, so it has to land before device acceptance (iOS 13) and the beta (iOS 14) evaluate it.
+## What it is now
 
-## Why
+- **Days:** the garden grows a little every day on its own, and faster from play. Each day's first 25 turns count fully toward growth; later turns count less. Missing a day costs nothing. (`garden-time.js`)
+- **Seasons:** the real northern calendar sets the backdrop, the rose bed, which flowers bloom, and the light. Wild flowers turn autumnal from September and wintry in winter.
+- **The garden as you leave it:** nothing recedes or dies back. A full garden (170 wild plants) keeps maturing instead: grass into clover, clover into flowers, common flowers into rarer ones.
+- **Visitors:** a North American cast (blue jay, cottontail, chipmunk, fox and others) comes by while you're away and leaves traces. Erwu leaves presents for her keepsake shelf. (`garden-visits.js`)
+- **Your style:** each way of playing well sows its own flower ([ticket 13](13-a-garden-in-your-style.md)).
+- **In a game:** four power-ups, trick shots off mushrooms, chains, stubborn buds and celebrations ([ticket 12](12-skill-shots-and-celebrations.md)).
+- **Sound:** a synthesised soundscape of breeze gusts, fountain drips and crickets. (`garden-sound.js`)
 
-A review on 2026-09-29 played the game with a bot that aims at the most threatening bud. Its runs ended at turns 88 and 90, close to where the owner's wife got bored (about turn 80). Random aim died around turn 25. Measured in one run:
+## Here
 
-- **The beds finish in one run.** With all three beds planted before the run, all three were fully established by turn 31. `garden-beds.js` says its pacing was tuned on random-aim runs of 9–18 turns. Real runs are five to eight times longer.
-- **The growth meters finish in one run.** The five garden buds under **Best** were full by turn 20–30, and the wild garden hit its 170-plant cap.
-- **The garden starts nearly finished.** The painted backdrop (`garden-plate.webp`) has full flower borders from first launch. The art brief wanted the borders to "fill in as the garden grows, so the lushness is earned"; the delivered plate has them built in.
-- **Coming back brings nothing new.** After a few hours away the garden dims and asks for "a few turns" to wake it.
-- **Power-ups barely register.** They deal 1–2 hits to buds that carry 40–150 hits late in a run.
-
-Together these explain the play feedback: she didn't notice the background changing, because it changed early over a backdrop that already looked finished, and she was bored by turn 80, because the garden was done by turn 30.
-
-## Direction
-
-The garden becomes slow, seasonal and alive. It grows over days and weeks, follows the real calendar, reflects how she plays, and has something new waiting whenever she opens it. The run gets power-ups that feel like events.
-
-Principles kept from the v0.8/v0.9 plan: no deadlines, no streaks, no lost progress, no obligation, one-thumb play, calm pacing. Missing a day costs nothing.
-
-## Owner decisions (2026-09-29)
-
-| Question | Decision |
+| File | What it is |
 |---|---|
-| Existing gardens | **Everyone starts bare in 1.0**, including the owner's family. Old saves are left untouched in storage, never deleted, but the game starts a new garden. |
-| Hemisphere | **Northern.** Seasons follow the northern calendar. |
-| Growth without play | **Yes.** The garden grows a little each day on its own; play grows it faster. |
-| Rare visitors | **Roughly every two to three weeks** each, not twice a season. |
-| Cast | Agreed, plus a **cottontail rabbit** (the white-tailed rabbit that visits the owner's garden) and a **blue jay instead of the robin**. |
-| Power-ups | **Redesign them to have real impact** (for example a sunbeam that sweeps half the board). |
-
-Because the owner's garden has blue jays and cottontails (North America), the whole visitor cast is North American. The hedgehog from the first sketch is replaced by a chipmunk, since hedgehogs don't live wild there.
-
-## Tickets
-
-| Ticket | Result | Needs art | Depends on |
-|---|---|---|---|
-| [01](01-garden-time.md) | Growth paced by days: a daily tending budget, growth on its own, rest-dimming retired | No | — |
-| [02](02-bare-start-and-milestones.md) | A new, bare garden in save v4 that fills in over weeks, with milestone moments | Bare backdrop (08) for the final look | 01 |
-| [03](03-calendar-seasons.md) | Real northern seasons: light, what flowers when, winter dormancy, snow and leaves | Seasonal backdrops and clumps (08, 09) for the final look | 01 |
-| [04](04-a-garden-that-reflects-play.md) | Kinds and places shaped by how she plays: buds decide flowers, drifts spread, power-ups leave marks | Three new clump kinds (09) | 01 |
-| [05](05-while-you-were-away.md) | On opening: something happened. Seeded visits, traces, Erwu's gifts, first-visit labels | Visitors and keepsakes (10) to show them | 01, 03 |
-| [06](06-visitor-cast-and-erwu.md) | The cast, their conditions and cadence, and how Erwu reacts to each | Visitors (10) | 05 |
-| [07](07-power-ups-with-impact.md) | Sunbeam sweeps half the board, dew shower soaks and pushes back, a bee swarm | No | — |
-| [08](08-art-bare-and-seasonal-backdrops.md) | Art: the bare backdrop in four seasonal versions | Owner generates | — |
-| [09](09-art-seasonal-clumps.md) | Art: seasonal clumps and three new flower kinds | Owner generates | — |
-| [10](10-art-visitors-and-keepsakes.md) | Art: two visitor sheets and a keepsakes sheet | Owner generates | — |
-| [11](11-garden-soundscape.md) | Optional: a quiet garden soundscape by season and time of day | Audio (owner choice) | 03 |
-
-## Order
-
-1. **No art needed:** 07, then 01, 03 and 04 in code with existing art standing in, then the engine of 05. At the end of this step she sees a garden that changes daily and seasonally and differs by how she plays.
-2. **Art round (owner):** 08, 09 and 10 can be generated in parallel from the prompts in [ART-PROMPTS.md](ART-PROMPTS.md). Each sheet is packed by `tools/build-art.cjs`, whose regions are set by hand after the sheet arrives.
-3. **With the art:** finish 02, 03 and 04 visually, and show visitors (05, 06).
-4. **Optional:** 11.
-
-## Status
-
-| Ticket | Status |
-|---|---|
-| 01 | Implemented; pacing measured (a common bed in about five days) |
-| 02 | Implemented with the bare seasonal backdrops |
-| 03 | Implemented with seasonal backdrops, rose beds and clumps |
-| 04 | Implemented with the painted tulips, peonies and poppies |
-| 05 | Implemented: visitors, traces and presents are shown |
-| 06 | Implemented with Erwu's reactions; the owner's look at the cottontail and blue jay remains |
-| 07 | Implemented and balanced against bot runs |
-| 08 | Done: seasonal backdrops and rose beds |
-| 09–10 | Done. Erwu walks in five views: side, diagonal toward and away, straight toward and away (ART-PROMPTS 8f) |
-| 11 | Synthesised soundscape implemented; bird calls would need recordings |
-| [12](12-skill-shots-and-celebrations.md) | Bank shots, chain blooms, and celebrations on existing moments |
-
-Update this table with the tickets.
+| [ART-PROMPTS.md](ART-PROMPTS.md) | Prompts for the backdrops, rose beds, clumps, visitors and keepsakes |
+| `rose-bed-reference.png` | Reference for the seasonal rose beds |
+| [12](12-skill-shots-and-celebrations.md) | Skill shots, celebrations, the stubborn bud and the difficulty curve |
+| [13](13-a-garden-in-your-style.md) | A garden in your style |

@@ -8,7 +8,7 @@ Status: planning only. Created 2026-09-28 on `develop`; reconciled with `d86c314
 
 Deliver Bloom as a reliable, offline-capable iPhone application that preserves the current game, owned garden and Erwu's storybook identity. The finish line is a tested TestFlight candidate followed by an approved, available App Store 1.0 release. **Public App Store distribution is confirmed by the owner (2026-09-28)**: store installs don't expire, update themselves, and show how the game is received beyond the family.
 
-This is a platform/release milestone. The album from [legacy ticket 09](../09-discoveries-and-memory-album.md) remains deferred. The physical acceptance deferred in [legacy ticket 10](../10-integration-and-phone-acceptance.md) now lives in iOS ticket 13, with prerequisites covering lifecycle, audio/haptics, accessibility and performance.
+This is a platform/release milestone. The album from legacy ticket 09 (on the `archive/docs-2026-10-01` branch) remains deferred. The physical acceptance deferred in legacy ticket 10 now lives in iOS ticket 13, with prerequisites covering lifecycle, audio/haptics, accessibility and performance.
 
 ## Verified starting point
 

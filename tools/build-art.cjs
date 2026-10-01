@@ -9,7 +9,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 
-// The storybook sheets (the "-v2" sources, generated from .scratch/art-direction/PROMPTS.md).
+// The storybook sheets (the "-v2" sources, generated from .scratch/art-direction/PROMPTS.md; their
+// style studies and progress shots are on the archive/docs-2026-10-01 branch).
 // Source regions [x, y, w, h] on each sheet. The generated sheets are not exact grids, and a
 // few neighbours touch, so every region is set by hand; split lines sit in the gaps between.
 // Options: `split` cuts a region into its separate parts (the stepping stones); `scale`
@@ -36,17 +37,12 @@ const ERWU = [
   // Straight views use a centred-tail half stride; the renderer mirrors it deterministically.
   ...['front', 'back'].map((view) => ({ file: V3(`walk-${view}`), match: 'erwu', walk: true, fit: 240,
     anchorTop: 0.3, grid: { cols: 4, rows: 1, names: frames(`walk-${view}-`).slice(0, 4) } })),
-  // Each diagonal source is one frame: first four exact crops, last four opposite-leg edits.
-  // Until all eight of a view are in assets/erwu-v3, that view comes from its eight-frame sheet
-  // (whose first row the crops are).
-  ...['front', 'back'].flatMap((view) => {
-    const single = [1, 2, 3, 4, 5, 6, 7, 8];
-    if (single.every((n) => has(V3(`diag-${view}-${n}`)))) return single.map((n) => ({
-      file: V3(`diag-${view}-${n}`), match: 'erwu', walk: true, fit: 240,
-      grid: { cols: 1, rows: 1, names: [`walk-diag-${view}-${n - 1}`] },
-    }));
-    return [{ file: V3(`walk-diag-${view}`), match: 'erwu', walk: true, fit: 240, grid: { cols: 4, rows: 2, names: frames(`walk-diag-${view}-`) } }];
-  }),
+  // walking diagonally toward us and away (facing right): one image per frame, the first four
+  // crops of the drawn stride, the last four the same frames with the legs swapped
+  ...['front', 'back'].flatMap((view) => [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+    file: V3(`diag-${view}-${n}`), match: 'erwu', walk: true, fit: 240,
+    grid: { cols: 1, rows: 1, names: [`walk-diag-${view}-${n - 1}`] },
+  }))),
   // her swat and her delight, chest-high, cropped above the basket rim (its front is drawn over
   // her): redrawn in v3 when that sheet is there, else the play-pieces sheet's
   has(V3('basket-actions'))

@@ -1,5 +1,8 @@
 # Image prompts for the target style
 
+> **Note (2026-10-01):** these prompts produced the storybook sheets still in use (`garden-pieces-v2.png`, `garden-beds.png`, `garden-clumps.png`, `play-pieces.png`). Erwu's sheets mentioned below have been replaced by the v3 art (`.scratch/erwu-redraw-v3/README.md`). The older sheets, the target mockup and the progress shots are on the `archive/docs-2026-10-01` branch.
+
+
 > The living-garden sheets (bare seasonal backdrops, seasonal clumps, visitors and keepsakes) are in [`../living-garden/ART-PROMPTS.md`](../living-garden/ART-PROMPTS.md).
 
 Every prompt is complete on its own. For each one, attach **`target-mockup.webp`** as the style reference, plus any files the prompt names. When the sheets are done, put them in `assets/` on `develop` under the names given; the build tool picks them up from there.
