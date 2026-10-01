@@ -293,7 +293,11 @@
     color: var(--ink);
     font-variant-numeric: tabular-nums lining-nums;
   }
-  .card .newbest { color: var(--bud-deep); font-weight: 600; }
+  /* the score: a big number, its unit in small caps, and the best as a stitched pill */
+  #over-unit { margin-top: 2px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft); }
+  .over-pill { margin-top: 10px !important; padding: 4px 12px; border-radius: 999px; font-size: 13px !important; color: var(--ink-soft); background: color-mix(in srgb, var(--ground) 55%, transparent); border: 1px dashed var(--stitch); }
+  .over-pill b { font: 600 14px/1 var(--serif); color: var(--ink); font-variant-numeric: lining-nums; }
+  .card .over-pill.newbest { color: var(--bud-deep); font-weight: 600; border-color: color-mix(in srgb, var(--bud-deep) 45%, transparent); background: color-mix(in srgb, var(--bud-deep) 9%, transparent); }
   .card .note { margin-top: 10px; font-size: 13.5px; text-wrap: balance; }
   /* the run's garden news: a small stitched list, one row per bed or seed */
   .over-garden-title { margin: 2px 0 6px; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-soft); }
@@ -740,7 +744,8 @@
     <canvas id="card-cat" width="408" height="240" aria-hidden="true"></canvas>
     <p id="over-title">Erwu's curled up for a nap</p>
     <div class="big" id="over-turn">0</div>
-    <p id="over-best">turns</p>
+    <p id="over-unit">turns</p>
+    <p id="over-best" class="over-pill" hidden></p>
     <div class="note" id="over-note">The garden keeps everything you grew.</div>
     <button id="again" class="wood">Play again</button>
     <button id="to-garden" class="linkish">Back to the garden</button>
@@ -784,7 +789,7 @@
     ff: $('#ff'), sound: $('#sound'), tSound: $('#t-sound'), restart: $('#restart'),
     tGuide: $('#t-guide'), rGuide: $('#r-guide'), guide: $('#guide'), guideClose: $('#guide-close'), guideTitle: $('#guide-title'),
     guideItems: $('#guide-items'), guideLead: $('#guide-lead'), shelfBtn: $('#shelf-btn'), shelfCount: $('#shelf-count'), guideDots: $('#guide-dots'), guideBack: $('#guide-back'), guideNext: $('#guide-next'),
-    over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overNote: $('#over-note'), again: $('#again'),
+    over: $('#over'), overTitle: $('#over-title'), overTurn: $('#over-turn'), overBest: $('#over-best'), overUnit: $('#over-unit'), overNote: $('#over-note'), again: $('#again'),
     garden: $('#garden'), banner: $('#banner'),
     title: $('#title'), tStatus: $('#t-status'), tNote: $('#t-note'), play: $('#play'), toGarden: $('#to-garden'),
     cardCat: $('#card-cat'), haptic: $('#haptic'), app: $('#app'),
@@ -1208,7 +1213,7 @@
     charges = new Array(SECTORS).fill(0); shownCharges = new Array(SECTORS).fill(0);
     cat = freshCat();
     // Seed pacing is part of the garden, so it survives from run to run.
-    runSeed = BloomBeds.planRun(garden); runLog = { beds: bedStages(), seeds: [] };
+    runSeed = BloomBeds.planRun(garden); runLog = { beds: bedStages(), seeds: [], plants: garden.plants.length };
     powersMissed = 0; powerTipShown = false; runBestShown = false; combo = null;
     special = { next: 12, kind: null, last: null, bonus: 0 };
     saveGarden();
@@ -3604,12 +3609,16 @@
     if (rows.length) return { title: 'In the garden this run', rows: rows.slice(0, 4) };
     const bed = BloomBeds.focusBed(garden);
     const next = bed && [[0.2, 'growing well'], [0.55, 'flowering'], [1, 'fully established']].find(([t]) => bed.growth < t);
-    return { title: '', text: !bed ? 'The garden keeps everything you grew.'
+    // nothing reached a new stage: say what did come up, rather than a tutorial line
+    const grew = runLog && typeof runLog.plants === 'number' ? garden.plants.length - runLog.plants : 0;
+    if (grew > 0) return { title: '', text: grew === 1 ? 'A new wild flower came up this run.' : `${grew} new wild flowers came up this run.` };
+    return { title: '', text: !bed ? ''
       : next[0] - bed.growth < 0.1 ? `${bedName(bed).replace(/^the /, 'The ')} is nearly ${next[1]}.` : `${bedName(bed).replace(/^the /, 'The ')} grew a little.` };
   }
   function showSummary() {
     const sum = runSummary();
     el.overNote.replaceChildren();
+    el.overNote.hidden = !sum.rows && !sum.text;
     if (!sum.rows) { el.overNote.textContent = sum.text; return; }
     const h = document.createElement('p'); h.className = 'over-garden-title'; h.textContent = sum.title;
     const ul = document.createElement('ul'); ul.className = 'over-garden';
@@ -3632,7 +3641,7 @@
     // a long game is a style of its own: bluebells
     if (turn >= 50) { noteStyle('long'); plant('bluebell', Math.random() * TAU, 0.35, 1.06, 2.6, null, true); }
     saveGarden();
-    const isBest = turn > best;
+    const isBest = turn > best, hadBest = best > 0;
     if (isBest) { best = turn; store.set('best', best); }
     [4, 2, 0].forEach((n, i) => tone(noteFreq(n), 0.05, 'sine', 0.5, i * 0.16));
     updateHud();
@@ -3644,7 +3653,11 @@
       overKind = Math.random() < 0.5 ? 'nap' : 'play';
       el.overTitle.textContent = overKind === 'play' ? `${CAT_NAME} started playing with the flowers` : `${CAT_NAME}'s curled up for a nap`;
       countUp(el.overTurn, turn);
-      el.overBest.textContent = isBest ? 'turns, a new best' : `turns, best is ${best}`;
+      el.overUnit.textContent = turn === 1 ? 'turn' : 'turns';
+      // the best as a pill: a new one (not on the very first game, when every score is one), or the one to beat
+      el.overBest.hidden = isBest && !hadBest;
+      if (isBest) el.overBest.textContent = '✿ A new best';
+      else { el.overBest.textContent = 'Best '; const b = document.createElement('b'); b.textContent = best; el.overBest.append(b); }
       showSummary();
       el.overBest.classList.toggle('newbest', isBest);
       drawCardCat();
