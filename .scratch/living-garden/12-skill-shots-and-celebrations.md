@@ -89,7 +89,9 @@ Bot games (aiming at the nearest bud, 8× speed), run one at a time:
 | Extra toughening per turn | Games | Median | Mean |
 |---|---|---|---|
 | 0.006 | 92, 36, 84, 54, 58, 91, 100, 74 | 79 | 74 |
-| 0.009 | 48, 65, 53, 47, 84, 56, 65, 71 | 60 | 61 |
-| **0.008 (chosen)** | (between the two) | about 65 expected | |
+| **0.009 (now)** | 48, 65, 53, 47, 84, 56, 65, 71 | 60 | 61 |
+| 0.008 (first choice) | (between the two) | about 65 expected | |
+
+0.008 still played a little easy for the owner, so the rate went up to 0.009.
 
 Several bot games running at once on the same machine gave much shorter games, around 40 turns. Their numbers aren't comparable, so they aren't used.
