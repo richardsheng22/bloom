@@ -1388,7 +1388,8 @@
     gardenNote = '';
   }
   // ----- Cultivation: ordinary play grows the chosen bed -----
-  const bedName = (bed) => bed.flower ? `the ${BloomBeds.NAMES[bed.flower].toLowerCase()} in ${BloomGardenLayout.placeName(bed.anchor)}` : BloomGardenLayout.placeName(bed.anchor);
+  // beds go by what's growing in them (their place names went with the arranging)
+  const bedName = (bed) => bed.flower ? `the ${BloomBeds.NAMES[bed.flower].toLowerCase()}` : 'the flower bed';
   const stageWords = { planted: 'is planted', growing: 'is growing well', flowering: 'is flowering', established: 'is fully established' };
   function bedGrew(change) {
     if (!change) return;
@@ -3388,7 +3389,8 @@
       button.hidden = !arrangementAvailable || !bed;
       button.classList.toggle('available', !!(tinSeed && bed));
       button.style.left = (gardenScene.width/2+q.x)+'px'; button.style.top = (gardenScene.height/2+q.y)+'px';
-      button.setAttribute('aria-label', !bed ? q.name : item.flower ? `${BloomBeds.NAMES[item.flower]} in ${q.name}` : `Empty flower bed, ${q.name}`);
+      const side = { 'bed-left': 'on the left', 'bed-top': 'at the back', 'bed-right': 'on the right' }[q.id] || '';
+      button.setAttribute('aria-label', !bed ? q.name : item.flower ? `${BloomBeds.NAMES[item.flower]}, ${side}` : `Empty flower bed, ${side}`);
     }
   }
   function inspectObject(item) {
@@ -3426,8 +3428,7 @@
   }
   function refreshBed(bed) {
     const flower = bed.flower, st = BloomBeds.stage(bed), focused = BloomBeds.focusBed(garden) === bed;
-    const place = BloomGardenLayout.label(garden, bed);
-    el.inspectionName.textContent = flower ? `${BloomBeds.NAMES[flower]} · ${place.toLowerCase()}` : place;
+    el.inspectionName.textContent = flower ? BloomBeds.NAMES[flower] : BloomGardenLayout.label(garden, bed);
     const choosing = !flower || replanting || plantingDraft;
     el.bedChoices.replaceChildren();
     if (choosing) {
@@ -3592,7 +3593,7 @@
       if (!bed.flower || bed.anchor === null) continue;
       const st = BloomBeds.stage(bed);
       if (before[bed.id] === bed.flower + ':' + st) continue;
-      rows.push({ kind: bed.flower, name: BloomBeds.NAMES[bed.flower], where: BloomGardenLayout.placeName(bed.anchor).replace(/^the /, ''), what: BloomBeds.STAGE_NAMES[st] });
+      rows.push({ kind: bed.flower, bed: bed.id, name: BloomBeds.NAMES[bed.flower], where: '', what: BloomBeds.STAGE_NAMES[st] });
     }
     for (const kind of runLog ? runLog.seeds : []) rows.push({ kind, name: `${BloomBeds.NAMES[kind]} seed`, where: 'in your seed tin', what: 'Found', rare: true });
     // what her play sowed this run: the flowers of her styles, most first
@@ -3612,14 +3613,14 @@
     if (!sum.rows) { el.overNote.textContent = sum.text; return; }
     const h = document.createElement('p'); h.className = 'over-garden-title'; h.textContent = sum.title;
     const ul = document.createElement('ul'); ul.className = 'over-garden';
-    runChangedBeds = garden.patches.filter((b) => sum.rows.some((r) => !r.rare && r.kind === b.flower && r.where === BloomGardenLayout.placeName(b.anchor).replace(/^the /, ''))).map((b) => b.id);
+    runChangedBeds = sum.rows.filter((r) => r.bed).map((r) => r.bed);
     for (const r of sum.rows) {
       const li = document.createElement('li');
       const sw = document.createElement('i'); sw.style.setProperty('--c', CHIP_COLOURS[r.kind] || STYLE_COLOURS[r.kind] || '#C9B98E'); if (r.rare) sw.className = 'rare';
       const name = document.createElement('b'); name.textContent = r.name;
       const where = document.createElement('small'); where.textContent = r.where;
       const what = document.createElement('span'); what.textContent = r.what;
-      const label = document.createElement('div'); label.append(name, where);
+      const label = document.createElement('div'); label.append(name); if (r.where) label.append(where);
       li.append(sw, label, what); ul.append(li);
     }
     el.overNote.append(h, ul);
@@ -3639,7 +3640,9 @@
     overTimer = setTimeout(() => {
       if (presentation !== 'run' || state !== 'over') return;
       el.app.inert = true;
-      el.overTitle.textContent = `${CAT_NAME}'s curled up for a nap`;
+      // two endings, at random: a nap in the flowers, or a game with them
+      overKind = Math.random() < 0.5 ? 'nap' : 'play';
+      el.overTitle.textContent = overKind === 'play' ? `${CAT_NAME} started playing with the flowers` : `${CAT_NAME}'s curled up for a nap`;
       countUp(el.overTurn, turn);
       el.overBest.textContent = isBest ? 'turns, a new best' : `turns, best is ${best}`;
       showSummary();
@@ -6046,6 +6049,7 @@
     };
   }
 
+  let overKind = 'nap';
   function drawCardCat(now = performance.now()) {
     const c = el.cardCat, g = c.getContext('2d'), W = Math.min(c.width * 0.86, c.height * 1.5);
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -6057,11 +6061,22 @@
       groundShadow(g, 0, W * 0.12, W * 0.62, 0.16);
       for (const [k, x, y, w] of [['clump-cosmos', -0.3, 0.06, 0.3], ['clump-lavender', 0.3, 0.05, 0.28], ['clump-daisy', -0.12, 0.0, 0.26], ['clump-forget', 0.13, 0.01, 0.26]])
         paintPiece(g, 'garden', k, x * W, y * W, w * W, x > 0);
-      g.save(); g.translate(0, W * 0.13); g.scale(1, breathe); paintPiece(g, 'erwu', 'curl', 0, 0, W * 0.5); g.restore();
+      if (overKind === 'play') {
+        // on her back, batting at a bloom that bobs just above her paws
+        const bob = reduced ? 0 : Math.sin(now / 420), tilt = reduced ? 0 : Math.sin(now / 700) * 0.04;
+        g.save(); g.translate(0, W * 0.16); g.rotate(tilt); paintPiece(g, 'erwu', 'belly-up', 0, 0, W * 0.58); g.restore();
+        g.save(); g.translate(-W * 0.13 + bob * W * 0.015, -W * (0.12 + 0.025 * bob)); g.rotate(bob * 0.35); paintPiece(g, 'play', 'open-rose', 0, W * 0.05, W * 0.12); g.restore();
+        if (!reduced) for (let i = 0; i < 4; i++) {
+          // a few loose petals tumbling off it
+          const t = ((now / 2200) + i / 4) % 1, x = W * (-0.2 + i * 0.045 + Math.sin(t * 5 + i) * 0.03), y = -W * (0.12 - t * 0.2);
+          g.save(); g.translate(x, y); g.rotate(t * 5 + i); g.globalAlpha = Math.sin(t * Math.PI) * 0.85;
+          g.fillStyle = i % 2 ? '#F4B6C2' : '#F9D3DA'; g.beginPath(); g.ellipse(0, 0, W * 0.014, W * 0.007, 0, 0, TAU); g.fill(); g.restore();
+        }
+      } else { g.save(); g.translate(0, W * 0.13); g.scale(1, breathe); paintPiece(g, 'erwu', 'curl', 0, 0, W * 0.5); g.restore(); }
       for (const [k, x, y, w] of [['open-peony', -0.33, 0.2, 0.17], ['open-tulip', -0.17, 0.25, 0.14], ['open-rose', 0.03, 0.27, 0.15], ['open-bell', 0.2, 0.24, 0.13], ['open-poppy', 0.35, 0.19, 0.16]])
         paintPiece(g, 'play', k, x * W, y * W, w * W, x > 0.1);
     } else { const r = c.height * 0.36; drawNest(g, r); drawCatCurled(g, r, now); }
-    if (!reduced) {
+    if (!reduced && overKind === 'nap') {
       // z's drifting up and away
       g.textAlign = 'center'; g.textBaseline = 'middle';
       for (let i = 0; i < 3; i++) {

@@ -62,7 +62,7 @@
   const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
   // Things are named by where they are, not by number.
   function label(g, record) {
-    if (record.kind === 'flower-patch') return record.anchor ? capital(placeName(record.anchor)) : 'A spare flower bed';
+    if (record.kind === 'flower-patch') return record.anchor ? 'A flower bed' : 'A spare flower bed';
     return kinds[record.kind]?.name || 'Garden item';
   }
   function plan(g, id, destination) {

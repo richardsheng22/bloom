@@ -70,7 +70,7 @@ test('beds move with their plantings, and everything is named by place', () => {
   left.flower = 'lavender'; left.growth = 0.6;
   assert.ok(L.apply(g, L.plan(g, left.id, 'bed-top')));
   assert.deepEqual([left.anchor, left.flower, left.growth, top.anchor], ['bed-top', 'lavender', 0.6, 'bed-left']);
-  assert.equal(L.label(g, left), 'The high bed');
+  assert.equal(L.label(g, left), 'A flower bed');
   assert.equal(L.label(g, g.objects[1]), 'Sunny stone');
   assert.match(L.describe(g, L.plan(g, g.objects[0].id, null)), /cushion goes back to your collection/);
 });
