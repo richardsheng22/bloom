@@ -84,7 +84,8 @@ const oldSaves = { 'bloom.garden1': JSON.stringify(legacy), 'bloom.garden2': JSO
       const days = Math.min(7, Math.floor(hours / 24));
       const bed = g.patches.find((b) => b.flower === 'daisy');
       assert.ok(Math.abs(bed.growth - Math.min(1, 0.6 + 0.03 * days)) < 1e-9, `bed growth after ${hours}h: ${bed.growth}`);
-      assert.ok(g.plants.length >= fixturePlants.length && g.plants.length <= fixturePlants.length + days);
+      // two wild plants a day on their own; a garden this small (under 40 plants) never recedes
+      assert.ok(g.plants.length >= fixturePlants.length && g.plants.length <= fixturePlants.length + 2 * days);
       if (hours===0||hours===168) await page.screenshot({path:path.join(output,hours===0?'awake.png':'a-week-away.png')});
       if (hours===168) {
         await page.reload(); await page.waitForTimeout(1800);

@@ -1040,13 +1040,13 @@
   let cat = freshCat();
   let nextId = 1;
 
-  const RAMP = { from: 12, rate: 0.009 };
+  const RAMP = { from: 12, rate: 0.01 };
   function hpFor(t) {
     if (t <= 2) return 1 + (Math.random() < 0.3 ? 1 : 0);
-    // From turn 12 the buds toughen a little more each turn (1.16x by turn 30, 1.39x by 55, 1.61x
-    // by 80), so a run builds towards an ending around turn 60 instead of levelling out; the
-    // first turns are untouched (owner tuning, 2026-10-01: a median of 86 was too long, and 0.008
-    // still played a little easy). Bot games, one at a time: rate 0.006 median 79, 0.009 median 60.
+    // From turn 12 the buds toughen a little more each turn (1.18x by turn 30, 1.43x by 55, 1.68x
+    // by 80), so a run builds towards an ending instead of levelling out; the first turns are
+    // untouched (owner tuning: a median of 86 was too long; 0.008, then 0.009, still played a
+    // little easy, 2026-10-07). Bot games, one at a time: rate 0.006 median 79, 0.009 median 60.
     const late = 1 + Math.max(0, t - RAMP.from) * RAMP.rate;
     const base = (0.46 * t + 0.34 * ballCount) * late;
     let h = Math.max(1, Math.round(base * (0.7 + Math.random() * 0.55)));
@@ -1343,13 +1343,17 @@
     if (days) { BloomBeds.noteFlowering(garden, BloomGarden.allocateId); gardenDirty = true; }
     return news;
   }
+  let heldNote = -Infinity;
   function welcomeBack() {
-    const now = Date.now(), away = Math.max(0, now - garden.lastSeen);
+    const now = Date.now(), away = Math.max(0, now - garden.lastSeen), days = BloomTime.daysAway(garden, now);
     BloomGarden.arrive(garden, now);
     // a new season: half the annual wild flowers have gone to seed (garden-time.js), and their
     // seeds drift off on the breeze when the garden is next drawn
     const turned = BloomTime.turnover(garden, seasonClock());
-    if (turned) { seasonTurn = { ...turned, at: performance.now(), drifted: false }; saveGarden(); }
+    if (turned) { seasonTurn = { ...turned, at: performance.now() }; goneToSeed.push(...turned.removed); saveGarden(); }
+    // and between days, wild flowers recede, most of all by the play lawn (garden-time.js)
+    const receded = BloomTime.recede(garden, days);
+    if (receded.length) { goneToSeed.push(...receded); saveGarden(); }
     const news = growOnItsOwn(BloomTime.arrive(garden, now));
     // who came by (living-garden ticket 05); drawn once the visitor art is in (ticket 10)
     visitNews = BloomVisits.arrive(garden, now, visitWorld(), BloomGarden.allocateId);
@@ -1363,7 +1367,10 @@
     const SEASON_WORDS = { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' };
     const turnLine = turned && turned.removed.length ? `${SEASON_WORDS[turned.season]} is here. The ${turned.from} annuals have gone to seed, leaving room for new flowers.`
       : turned ? `${SEASON_WORDS[turned.season]} is here.` : '';
-    gardenNote = turnLine || firstLine || news || giftLine || styleLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
+    const recedeLine = receded.length >= 3 ? (days > 1 ? `While you were away, ${receded.length} wild flowers went to seed. There's room to grow again.`
+      : `Overnight, ${receded.length} wild flowers went to seed. There's room to grow again.`) : '';
+    if (turnLine || recedeLine) heldNote = performance.now();
+    gardenNote = turnLine || recedeLine || firstLine || news || giftLine || styleLine || (away > 3.6e6 && garden.plants.length ? 'Your garden is here, just as you left it.' : '');
     el.tNote.textContent = gardenMessage();
   }
   // Tier milestones, each told once on the garden's label (living-garden ticket 02).
@@ -1379,8 +1386,8 @@
     }
     // filled again this season: the air fills with the season's petals, leaves or snow (drawSeasonAir)
     if (BloomTime.flourish(garden, seasonClock(), flourishing())) told = `The garden is flourishing this ${calendar().name}.`;
-    // a season that has only just turned keeps the label; the milestone is still recorded
-    if (told && seasonTurn && performance.now() - seasonTurn.at < 9000) { saveGarden(); told = ''; }
+    // news of the season turning or the garden receding keeps the label; the milestone is still recorded
+    if (told && performance.now() - heldNote < 9000) { saveGarden(); told = ''; }
     if (told) { gardenNote = told; el.tNote.textContent = gardenMessage(); saveGarden(); }
   }
   function tendGarden() {
@@ -1693,7 +1700,7 @@
     return { fountain: at(ART.lawn.fountain, ART.lawn.fountain.width * 0.8, 0.21), deadwood: at(ART.lawn.log, ART.lawn.log.width, 0.1),
       back: r.y + (ART.lawn.back ?? 0.2) * r.h - sc.cy,
       // beds in flower stand tall (sunflowers most of all): keep wild plants well clear above them
-      clear: { side: 18, up: 64, roseUp: sc.nest * 1.4 } };
+      clear: { side: 18, up: 64, roseUp: sc.nest * 0.3 } };
   }
   // Draws a painted piece `width` wide with its ground anchor at (x, y). Returns false if it can't.
   function paintPiece(g, key, name, x, y, width, flip = false, alpha = 1, variant = null) {
@@ -2436,11 +2443,11 @@
       g.fillStyle = 'rgba(255,255,255,0.4)'; g.beginPath(); g.ellipse(st.x - st.w * 0.3, st.y - st.h * 0.3, st.w * 0.3, st.h * 0.2, st.rot, 0, TAU); g.fill();
       if (tier >= 2) { g.fillStyle = 'rgba(110,138,74,0.45)'; g.beginPath(); g.ellipse(st.x + st.w * 0.55, st.y + st.h * 0.35, st.w * 0.3, st.h * 0.28, 0.3, 0, TAU); g.fill(); }
     }
-    if (painted && artImage('lawn')) drawPaintedRoseBed(g, m.roses);   // the fountain and log are in the backdrop
+    // (the rose bed itself is drawn with the plants, back to front, so wild flowers can grow behind it)
+    if (painted && artImage('lawn')) { /* the fountain and log are in the backdrop */ }
     else if (painted) {
       const d = m.deadwood, f = m.fountain;
       groundShadow(g, d.x, d.y + 6, d.width * 1.15); paintPiece(g, 'garden', 'log', d.x, d.y + 6, d.width * 1.2);
-      drawPaintedRoseBed(g, m.roses);
       // the fountain stands in the lawn rather than on it: relit, shadowed, with grass at its foot
       const fw = f.width * 1.28, fy = f.y + 2;
       groundShadow(g, f.x + fw * 0.08, fy, fw * 1.25, 0.24);
@@ -2948,7 +2955,12 @@
       }
     }
     // Beds, furnishings and plants back to front, so nothing further back draws over them.
-    const depth = settled.map((p) => ({ y: plantXY(p).y, draw: () => drawPlant(g, p) }));
+    // Wild flowers behind the rose bed are painted still, into this layer under it: swaying
+    // pieces are drawn over the whole garden each frame, and would stand in front of it.
+    const roses = presentation === 'garden' && gardenScene && artImage('garden') && ART.garden.frames['rose-bed'] ? BloomGardenLayout.landmarks(gardenScene).roses : null;
+    const still = (p) => { const keep = swaying; swaying = null; drawPlant(g, p); swaying = keep; };
+    const depth = settled.map((p) => { const y = plantXY(p).y; return { y, draw: roses && y < roses.y ? () => still(p) : () => drawPlant(g, p) }; });
+    if (roses) depth.push({ y: roses.y, draw: () => drawPaintedRoseBed(g, roses) });
     if (presentation === 'garden' && gardenScene && arrangementAvailable) {
       for (const q of BloomGardenLayout.geometry(gardenScene)) {
         const item = BloomGardenLayout.at(garden, q.id);
@@ -4433,10 +4445,13 @@
   // twice as full, with warm golden motes among the petals, leaves or snow.
   let seasonTurn = null;
   const flourishing = () => garden.plants.length >= MAX_PLANTS * 0.9;
+  // plants gone to seed (a season's turn, or a night's receding), their seed drifting off once seen
+  let goneToSeed = [];
   function driftSeeds() {
-    if (!seasonTurn || seasonTurn.drifted || presentation !== 'garden' || !gardenScene || reduced) return;
-    seasonTurn.drifted = true;
-    for (const p of seasonTurn.removed.slice(0, 40)) {
+    if (!goneToSeed.length || presentation !== 'garden' || !gardenScene) return;
+    const gone = goneToSeed; goneToSeed = [];
+    if (reduced) return;
+    for (const p of gone.slice(0, 60)) {
       const q = BloomGardenLayout.projectPlant(p, gardenScene);
       for (let i = 0; i < 3 && particles.length < 420; i++)
         particles.push({ type: 'fluff', x: q.x + (Math.random() - 0.5) * 10, y: q.y - 6 - Math.random() * 10, vx: R * (0.05 + Math.random() * 0.2), vy: -R * (0.05 + Math.random() * 0.12),

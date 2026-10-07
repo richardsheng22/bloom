@@ -113,3 +113,21 @@ test('the turn of the seasons: half the annual wild flowers go to seed; style fl
   assert.equal(T.flourish(g, Date.UTC(2026, 8, 9), true), false, 'once a season');
   assert.ok(!G.valid({ ...G.snapshot(g), seasonSeen: 'monsoon' }));
 });
+
+test('between days the wild flowers recede, most by the play lawn, never below the floor', () => {
+  const now = Date.UTC(2026, 9, 7, 12), g = { plants: [], time: { day: T.dayIndex(now) - 2 } };
+  for (let i = 0; i < 160; i++) g.plants.push({ id: 'p' + i, k: i % 2 ? 'daisy' : 'foxglove', d: i < 80 ? 1.2 : 2.2 });
+  assert.equal(T.daysAway(g, now), 2);
+  assert.equal(T.recede(g, 0).length, 0);
+  let s = 3; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const gone = T.recede(g, 2, rnd);
+  assert.equal(gone.length, Math.round(160 * T.recedeShare(2)));
+  assert.equal(g.plants.length, 160 - gone.length);
+  const near = gone.filter((p) => p.d < T.RECEDE.nearPlay).length, annual = gone.filter((p) => p.k === 'daisy').length;
+  assert.ok(near > gone.length * 0.6, 'mostly by the play lawn');
+  assert.ok(annual > gone.length * 0.6, 'mostly annuals');
+  // a long absence counts at most five days, and never takes the garden below 40 plants
+  const small = { plants: g.plants.slice(0, 45), time: g.time };
+  assert.equal(T.recede(small, 30, rnd).length, 5);
+  assert.ok(T.recedeShare(30) === T.recedeShare(5) && T.recedeShare(5) < 0.7);
+});

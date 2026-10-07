@@ -10,9 +10,9 @@
   const DAY_START_HOUR = 4;
   // The first turns of a garden day count fully; after that each turn counts a quarter. Play
   // grows the garden faster, but no single sitting can finish it (living-garden ticket 01).
-  const BUDGET = Object.freeze({ fullTurns: 25, lateWeight: 0.25, plants: 5 });
+  const BUDGET = Object.freeze({ fullTurns: 25, lateWeight: 0.25, plants: 25 });
   // Growth on its own, per garden day that passed (at most a week's worth at once).
-  const OWN = Object.freeze({ maxDays: 7, bed: 0.03, plants: 1, growth: 0.05 });
+  const OWN = Object.freeze({ maxDays: 7, bed: 0.03, plants: 2, growth: 0.05 });
   const CHARACTER_KEYS = Object.freeze(['blooms', 'misses', 'dew', 'bee', 'sun', 'morning', 'evening']);
   const CHARACTER_DECAY = 0.9;   // per garden day
   const finite = (n) => typeof n === 'number' && Number.isFinite(n);
@@ -82,6 +82,32 @@
     g.plants = g.plants.filter((p) => !gone.has(p));
     return { season, from, removed };
   }
+  // ----- Between days the wild flowers recede: annuals go to seed and grasses die back, most of
+  // all along the lawn's inner edge, where it meets the play ring, so each new day has room to
+  // grow into and play visibly fills it again (a day's play plants up to 25). 15% goes overnight,
+  // a fifth more for each further day away (up to five), annuals first; never below `keepAtLeast` plants. The beds,
+  // the rose bed and everything else in the garden are untouched. (Owner, 2026-10-07: after a
+  // couple of days away the garden hadn't changed at all.) -----
+  const RECEDE = Object.freeze({ firstDay: 0.15, perDay: 0.2, maxDays: 5, keepAtLeast: 40, nearPlay: 1.6, nearWeight: 4, keepWeight: 0.3 });
+  const recedeShare = (days) => {
+    let kept = 1;
+    for (let d = 0; d < Math.min(days, RECEDE.maxDays); d++) kept *= 1 - (d === 0 ? RECEDE.firstDay : RECEDE.perDay);
+    return 1 - kept;
+  };
+  // Removes and returns the plants that receded over `days` garden days.
+  function recede(g, days, rnd = Math.random) {
+    if (!(days > 0)) return [];
+    const n = Math.min(Math.round(g.plants.length * recedeShare(days)), Math.max(0, g.plants.length - RECEDE.keepAtLeast));
+    if (n <= 0) return [];
+    // weighted draw without replacement (keys: rnd^(1/weight), largest first)
+    const weight = (p) => (ANNUALS.includes(p.k) ? 1 : RECEDE.keepWeight) * (p.d < RECEDE.nearPlay ? RECEDE.nearWeight : 1);
+    const removed = g.plants.map((p) => [Math.pow(rnd() || 1e-9, 1 / weight(p)), p]).sort((a, b) => b[0] - a[0]).slice(0, n).map(([, p]) => p);
+    const gone = new Set(removed);
+    g.plants = g.plants.filter((p) => !gone.has(p));
+    return removed;
+  }
+  // How many garden days have passed since the garden was last opened (0 the same day).
+  const daysAway = (g, now) => Math.max(0, Math.min(30, dayIndex(now) - g.time.day));
   // A garden that has filled again this season: true once, the first time it gets there.
   function flourish(g, now, full) {
     const season = seasonOfMonth(new Date(now).getMonth());
@@ -167,6 +193,6 @@
     return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
   }
 
-  return { ANNUALS, TURNOVER, turnover, flourish, STYLE_FLOWERS, STYLE_NAMES, noteStyle, styleShare, styleFlower, mainStyle, DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
+  return { ANNUALS, TURNOVER, turnover, flourish, RECEDE, recedeShare, recede, daysAway, STYLE_FLOWERS, STYLE_NAMES, noteStyle, styleShare, styleFlower, mainStyle, DAY_START_HOUR, BUDGET, OWN, CHARACTER_KEYS, SEASONS, FLOWERING, dayIndex, fresh, valid, arrive, turnWeight, tendTurn,
     mayPlant, notePlanted, note, season, seasonOfMonth, flowering, plantPhase, bedsFlowering, dayPart };
 });
